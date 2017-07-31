@@ -20,6 +20,9 @@
 #include "step-chg-jeita.h"
 #include "storm-watch.h"
 #include "schgm-flash.h"
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
 
 #define smblib_err(chg, fmt, ...)		\
 	pr_err("%s: %s: " fmt, chg->name,	\
@@ -1758,6 +1761,13 @@ static int set_sdp_current(struct smb_charger *chg, int icl_ua)
 	u8 icl_options;
 	const struct apsd_result *apsd_result = smblib_get_apsd_result(chg);
 	union power_supply_propval val = {0, };
+
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge > 0 && icl_ua == USBIN_500MA)
+	{
+		icl_ua = USBIN_900MA;
+	}
+#endif
 
 	if (chg->batt_2s_chg) {
 		val.intval = icl_ua;
