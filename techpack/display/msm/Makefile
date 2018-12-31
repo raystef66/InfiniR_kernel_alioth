@@ -117,7 +117,8 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 	msm_gem_vma.o \
 	msm_smmu.o \
 	msm_prop.o \
-	msm_notifier.o\
+	msm_notifier.o \
+        dsi/exposure_adjustment.o
 
 obj-$(CONFIG_DRM_MSM)	+= msm_drm.o
 
