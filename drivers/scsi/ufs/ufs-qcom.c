@@ -70,9 +70,24 @@ static int ufs_qcom_init_sysfs(struct ufs_hba *hba);
 static void ufs_qcom_dump_regs(struct ufs_hba *hba, int offset, int len,
 		char *prefix)
 {
+	u32 *regs;
+	int i;
+
+	if (offset < 0 || offset % sizeof(*regs) || len <= 0)
+		return;
+
+	/* Register dumps can also run in the no-sleep error path. */
+	regs = kmalloc_array(len, sizeof(*regs), GFP_ATOMIC);
+	if (!regs)
+		return;
+
+	for (i = 0; i < len; i++)
+		regs[i] = ufshcd_readl(hba, offset + i * sizeof(*regs));
+
 	print_hex_dump(KERN_ERR, prefix,
 			len > 4 ? DUMP_PREFIX_OFFSET : DUMP_PREFIX_NONE,
-			16, 4, (void *)hba->mmio_base + offset, len * 4, false);
+			16, 4, regs, len * sizeof(*regs), false);
+	kfree(regs);
 }
 
 static void ufs_qcom_dump_regs_wrapper(struct ufs_hba *hba, int offset, int len,
