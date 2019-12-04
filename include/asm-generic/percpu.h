@@ -78,7 +78,7 @@ do {									\
 
 #define raw_cpu_generic_add_return(pcp, val)				\
 ({									\
-	typeof(&(pcp)) __p = raw_cpu_ptr(&(pcp));			\
+	typeof(pcp) *__p = raw_cpu_ptr(&(pcp));				\
 									\
 	*__p += val;							\
 	*__p;								\
@@ -86,7 +86,7 @@ do {									\
 
 #define raw_cpu_generic_xchg(pcp, nval)					\
 ({									\
-	typeof(&(pcp)) __p = raw_cpu_ptr(&(pcp));			\
+	typeof(pcp) *__p = raw_cpu_ptr(&(pcp));				\
 	typeof(pcp) __ret;						\
 	__ret = *__p;							\
 	*__p = nval;							\
@@ -95,7 +95,7 @@ do {									\
 
 #define raw_cpu_generic_cmpxchg(pcp, oval, nval)			\
 ({									\
-	typeof(&(pcp)) __p = raw_cpu_ptr(&(pcp));			\
+	typeof(pcp) *__p = raw_cpu_ptr(&(pcp));				\
 	typeof(pcp) __ret;						\
 	__ret = *__p;							\
 	if (__ret == (oval))						\
@@ -105,8 +105,8 @@ do {									\
 
 #define raw_cpu_generic_cmpxchg_double(pcp1, pcp2, oval1, oval2, nval1, nval2) \
 ({									\
-	typeof(&(pcp1)) __p1 = raw_cpu_ptr(&(pcp1));			\
-	typeof(&(pcp2)) __p2 = raw_cpu_ptr(&(pcp2));			\
+	typeof(pcp1) *__p1 = raw_cpu_ptr(&(pcp1));			\
+	typeof(pcp2) *__p2 = raw_cpu_ptr(&(pcp2));			\
 	int __ret = 0;							\
 	if (*__p1 == (oval1) && *__p2  == (oval2)) {			\
 		*__p1 = nval1;						\
