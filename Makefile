@@ -547,6 +547,8 @@ else
 CLANG_FLAGS += -fintegrated-as
 endif
 CLANG_FLAGS	+= -Werror=unknown-warning-option
+# Reject optimization flags that Clang accepts but does not implement.
+CLANG_FLAGS	+= -Werror=ignored-optimization-argument
 CLANG_FLAGS	+= $(call cc-option, -Wno-unsequenced)
 KBUILD_CPPFLAGS	+= $(CLANG_FLAGS)
 export CLANG_FLAGS
