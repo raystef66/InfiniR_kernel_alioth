@@ -1,3 +1,1 @@
-* Upstreamed to 4.19.209
-* Built with AOSP Clang from now on
-* Fix gesture issues
+* Rebased on Immensity kernel
