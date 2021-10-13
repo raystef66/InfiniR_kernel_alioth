@@ -1,1 +1,2 @@
-* Rebased on Immensity kernel
+* Updated to 4.19.211
+* Removed zram override
