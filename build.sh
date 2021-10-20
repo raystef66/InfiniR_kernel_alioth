@@ -4,7 +4,7 @@
 
 KERNEL_DEFCONFIG=vendor/alioth_defconfig
 ANYKERNEL3_DIR=$PWD/AnyKernel3/
-FINAL_KERNEL_ZIP=Optimus_Drunk_Alioth_v11.20.zip
+FINAL_KERNEL_ZIP=Optimus_Drunk_Alioth_v11.21.zip
 export ARCH=arm64
 
 # Speed up build process

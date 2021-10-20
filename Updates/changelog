@@ -1,1 +1,2 @@
-* Updated to 4.19.212
+* Updated to 4.19.213
+* Fix GPU target frequency calculation for high refresh rates
