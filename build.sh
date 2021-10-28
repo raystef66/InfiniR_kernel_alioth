@@ -4,7 +4,7 @@
 
 KERNEL_DEFCONFIG=vendor/alioth_defconfig
 ANYKERNEL3_DIR=$PWD/AnyKernel3/
-FINAL_KERNEL_ZIP=Optimus_Drunk_Alioth_v11.21.zip
+FINAL_KERNEL_ZIP=Optimus_Drunk_Alioth_v11.22.zip
 export ARCH=arm64
 
 # Speed up build process
@@ -27,7 +27,7 @@ echo -e "***********************************************$nocol"
 make $KERNEL_DEFCONFIG O=out
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
-                      CC=$KERNELDIR/prebuilts/clang-r433403/bin/clang \
+                      CC=$KERNELDIR/prebuilts/clang-r433403b/bin/clang \
                       CLANG_TRIPLE=aarch64-linux-gnu- \
                       CROSS_COMPILE=$KERNELDIR/prebuilts/aarch64-linux-android-4.9/bin/aarch64-linux-android- \
                       CROSS_COMPILE_ARM32=$KERNELDIR/prebuilts/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-

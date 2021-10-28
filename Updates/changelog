@@ -1,2 +1,2 @@
-* Updated to 4.19.213
-* Fix GPU target frequency calculation for high refresh rates
+* Updated to 4.19.214
+* Updated to clang 13.0.3
