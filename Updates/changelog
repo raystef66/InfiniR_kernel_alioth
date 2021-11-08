@@ -1,4 +1,2 @@
-* Updated to 4.19.215
-* Reverted some scheduler changes (fixes underclocked perf & prime cores)
-* Set scheduler up & down rate limit
-* Added boeffla wakelock blocker (doesn't block anything by default)
+* Updated to 4.19.216
+* Enabled CONFIG_IP_NF_TARGET_TTL
