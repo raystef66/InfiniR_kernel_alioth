@@ -1,4 +1,4 @@
-* Updated to 4.19.217
-* Updated CAF tag to LA.UM.9.12.r1-13400-SMxx50.0
-* Fixed a performance regression
-* Some other small optimisations
+* Updated to 4.19.218
+* Updated more kernel drivers to CAF tag to LA.UM.9.12.r1-13400-SMxx50.0
+* Updated f2fs to google's upstream
+* Aded KCAL support
