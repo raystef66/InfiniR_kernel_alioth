@@ -3283,13 +3283,9 @@ static void binder_transaction(struct binder_proc *proc,
 		t->from = thread;
 		t->async_from_pid = -1;
 		t->async_from_tid = -1;
-	} else {
+	} else
 		t->from = NULL;
-		t->async_from_pid = thread->proc->pid;
-		t->async_from_tid = thread->pid;
-	}
-
-	t->sender_euid = proc->cred->euid;
+	t->sender_euid = task_euid(proc->tsk);
 	t->to_proc = target_proc;
 	t->to_thread = target_thread;
 	t->code = tr->code;
