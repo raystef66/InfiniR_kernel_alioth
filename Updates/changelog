@@ -1,3 +1,4 @@
-* Updated to 4.19.220
-* Merged latest changes from https://github.com/jaegeuk/f2fs-stable
+* Updated to 4.19.221
+* Built with clang 14.0.0
+* Implemented DC Dimming (disabled by default)
 
