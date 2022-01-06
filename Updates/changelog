@@ -1,1 +1,4 @@
-* Updated to 4.19.223
+* Updated to 4.19.224
+* Set westwood as default tcp
+* Fixed some memory leaks
+* Optimisations for GPU & performance
