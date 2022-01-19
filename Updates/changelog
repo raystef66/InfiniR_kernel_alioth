@@ -1,4 +1,4 @@
-* Updated to 4.19.224
-* Set westwood as default tcp
-* Fixed some memory leaks
-* Optimisations for GPU & performance
+* Updated to 4.19.225
+* Set sleepstate timeout
+* Small fixes to thermal & doze brightness
+
