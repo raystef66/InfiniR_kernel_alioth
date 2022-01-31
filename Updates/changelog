@@ -1,4 +1,2 @@
-* Updated to 4.19.225
-* Set sleepstate timeout
-* Small fixes to thermal & doze brightness
-
+* Updated to 4.19.227
+* Optimize PID map reads
