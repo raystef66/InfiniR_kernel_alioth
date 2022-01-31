@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1811,6 +1812,8 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SCORING_CHAN_CONGESTION_WEIGHTAGE);
 	scoring_cfg->weight_cfg.oce_wan_weightage =
 		cfg_get(psoc, CFG_SCORING_OCE_WAN_WEIGHTAGE);
+	scoring_cfg->weight_cfg.sae_pk_ap_weightage =
+		cfg_get(psoc, CFG_SAE_PK_AP_WEIGHTAGE);
 
 	total_weight =  scoring_cfg->weight_cfg.rssi_weightage +
 			scoring_cfg->weight_cfg.ht_caps_weightage +
@@ -1822,15 +1825,16 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 			scoring_cfg->weight_cfg.beamforming_cap_weightage +
 			scoring_cfg->weight_cfg.pcl_weightage +
 			scoring_cfg->weight_cfg.channel_congestion_weightage +
-			scoring_cfg->weight_cfg.oce_wan_weightage;
+			scoring_cfg->weight_cfg.oce_wan_weightage +
+			scoring_cfg->weight_cfg.sae_pk_ap_weightage;
 
 	/*
 	 * If configured weights are greater than max weight,
 	 * fallback to default weights
 	 */
-	if (total_weight > BEST_CANDIDATE_MAX_WEIGHT) {
+	if (total_weight > MAX_BSS_SCORE) {
 		mlme_legacy_err("Total weight greater than %d, using default weights",
-				BEST_CANDIDATE_MAX_WEIGHT);
+				MAX_BSS_SCORE);
 		scoring_cfg->weight_cfg.rssi_weightage = RSSI_WEIGHTAGE;
 		scoring_cfg->weight_cfg.ht_caps_weightage =
 						HT_CAPABILITY_WEIGHTAGE;
@@ -1848,6 +1852,8 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 		scoring_cfg->weight_cfg.channel_congestion_weightage =
 						CHANNEL_CONGESTION_WEIGHTAGE;
 		scoring_cfg->weight_cfg.oce_wan_weightage = OCE_WAN_WEIGHTAGE;
+		scoring_cfg->weight_cfg.sae_pk_ap_weightage =
+						SAE_PK_AP_WEIGHTAGE;
 	}
 
 	scoring_cfg->rssi_score.best_rssi_threshold =

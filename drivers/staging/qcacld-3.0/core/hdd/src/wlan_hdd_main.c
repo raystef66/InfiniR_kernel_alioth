@@ -11647,6 +11647,9 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 		      cfg_get(psoc,
 			      CFG_ACTION_OUI_DISABLE_AGGRESSIVE_EDCA),
 			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_DISABLE_TWT],
+		      cfg_get(psoc, CFG_ACTION_OUI_DISABLE_TWT),
+			      ACTION_OUI_MAX_STR_LEN);
 	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_HOST_RECONN],
 		      cfg_get(psoc, CFG_ACTION_OUI_RECONN_ASSOCTIMEOUT),
 			      ACTION_OUI_MAX_STR_LEN);
@@ -15225,7 +15228,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		goto end;
 
 	hdd_debug("Waiting for SAP to start");
-	qdf_status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_START_BSS_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("SAP Start failed");
@@ -17523,7 +17526,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 
 		hdd_info("Waiting for SAP to start");
 		qdf_status =
-			qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+			qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_START_BSS_TIMEOUT);
 		wlansap_reset_sap_config_add_ie(sap_config,
 				eUPDATE_IE_ALL);
