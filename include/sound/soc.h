@@ -1070,8 +1070,6 @@ struct snd_soc_card {
 	struct mutex dapm_mutex;
 	struct mutex dapm_power_mutex;
 
-	spinlock_t dpcm_lock;
-
 	bool instantiated;
 	bool topology_shortname_created;
 
@@ -1164,6 +1162,8 @@ struct snd_soc_card {
 	u32 pop_time;
 
 	void *drvdata;
+
+	spinlock_t dpcm_lock;
 };
 
 /* SoC machine DAI configuration, glues a codec and cpu DAI together */
