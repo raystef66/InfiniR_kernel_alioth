@@ -4,7 +4,7 @@
 ## AnyKernel setup
 # begin properties
 properties() { '
-kernel.string=Optimus Drunk Kernel by GtrCraft
+kernel.string=Sober Kernel by raystef66
 do.devicecheck=1
 do.modules=0
 do.systemless=1

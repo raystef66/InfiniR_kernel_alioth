@@ -4,8 +4,11 @@
 
 KERNEL_DEFCONFIG=vendor/alioth_defconfig
 ANYKERNEL3_DIR=$PWD/AnyKernel3/
-FINAL_KERNEL_ZIP=Optimus_Drunk_Alioth_v11.35.zip
+FINAL_KERNEL_ZIP=SoberUp_Alioth_v11.36.zip
+export PATH="/home/raystef66/kernel/prebuilts/proton-clang/bin:${PATH}"
 export ARCH=arm64
+export SUBARCH=arm64
+export KBUILD_COMPILER_STRING="$(/home/raystef66/kernel/prebuilts/proton-clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"export ARCH=arm64
 
 # Speed up build process
 MAKE="./makeparallel"
@@ -27,10 +30,9 @@ echo -e "***********************************************$nocol"
 make $KERNEL_DEFCONFIG O=out
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
-                      CC=$KERNELDIR/prebuilts/clang-r437112b/bin/clang \
-                      CLANG_TRIPLE=aarch64-linux-gnu- \
-                      CROSS_COMPILE=$KERNELDIR/prebuilts/aarch64-linux-android-4.9/bin/aarch64-linux-android- \
-                      CROSS_COMPILE_ARM32=$KERNELDIR/prebuilts/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
+                      CC=clang \
+                      CROSS_COMPILE=aarch64-linux-gnu- \
+                      CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
 
 echo -e "$yellow**** Verify Image.gz-dtb & dtbo.img ****$nocol"
 ls $PWD/out/arch/arm64/boot/Image.gz-dtb
@@ -50,7 +52,7 @@ cp $PWD/out/arch/arm64/boot/dtbo.img $ANYKERNEL3_DIR/
 echo -e "$yellow**** Time to zip up! ****$nocol"
 cd $ANYKERNEL3_DIR/
 zip -r9 $FINAL_KERNEL_ZIP * -x README $FINAL_KERNEL_ZIP
-cp $ANYKERNEL3_DIR/$FINAL_KERNEL_ZIP $KERNELDIR/$FINAL_KERNEL_ZIP
+cp $ANYKERNEL3_DIR/$FINAL_KERNEL_ZIP /home/raystef66/kernel/$FINAL_KERNEL_ZIP
 
 echo -e "$yellow**** Done, here is your checksum ****$nocol"
 cd ..
