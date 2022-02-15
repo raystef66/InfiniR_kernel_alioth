@@ -4,7 +4,7 @@
 
 KERNEL_DEFCONFIG=vendor/alioth_defconfig
 ANYKERNEL3_DIR=$PWD/AnyKernel3/
-FINAL_KERNEL_ZIP=InfiniR_Alioth_v1.02.zip
+FINAL_KERNEL_ZIP=InfiniR_Alioth_v1.03.zip
 export ARCH=arm64
 
 # Speed up build process
@@ -27,7 +27,7 @@ echo -e "***********************************************$nocol"
 make $KERNEL_DEFCONFIG O=out
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
-                      CC=/home/raystef66/kernel/prebuilts/clang-r437112b/bin/clang \
+                      CC=/home/raystef66/kernel/prebuilts/clang-r445002/bin/clang \
                       CLANG_TRIPLE=aarch64-linux-gnu- \
                       CROSS_COMPILE=/home/raystef66/kernel/prebuilts/aarch64-linux-android-4.9/bin/aarch64-linux-android- \
                       CROSS_COMPILE_ARM32=/home/raystef66/kernel/prebuilts/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
