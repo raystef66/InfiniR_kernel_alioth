@@ -306,13 +306,8 @@ static void ufshcd_hex_dump(struct ufs_hba *hba, const char * const str,
 	if (!regs)
 		return -ENOMEM;
 
-	for (pos = 0; pos < len; pos += 4) {
-		if (offset == 0 &&
-		    pos >= REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER &&
-		    pos <= REG_UIC_ERROR_CODE_DME)
-			continue;
+	for (pos = 0; pos < len; pos += 4)
 		regs[pos / 4] = ufshcd_readl(hba, offset + pos);
-	}
 
 	ufshcd_hex_dump(prefix, regs, len);
 	kfree(regs);
