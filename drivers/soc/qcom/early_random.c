@@ -4,7 +4,6 @@
  */
 
 #include <linux/kernel.h>
-#include <linux/hw_random.h>
 #include <linux/io.h>
 #include <linux/random.h>
 
