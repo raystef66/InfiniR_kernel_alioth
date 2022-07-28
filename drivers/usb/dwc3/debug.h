@@ -466,12 +466,43 @@ static inline void dwc3_decode_set_isoch_delay(__u8 v, char *str)
 	sprintf(str, "Set Isochronous Delay(Delay = %d ns)", v);
 }
 
+static inline void dwc3_decode_ctrl_generic(char *str, __u8 bRequestType,
+					    __u8 bRequest, __u16 wValue,
+					    __u16 wIndex, __u16 wLength)
+{
+	u8 recip = bRequestType & USB_RECIP_MASK;
+	u8 type = bRequestType & USB_TYPE_MASK;
+
+	snprintf(str, DWC3_MSG_MAX,
+		 "Type=%s Recipient=%s Dir=%s bRequest=%u wValue=%u wIndex=%u wLength=%u",
+		 (type == USB_TYPE_STANDARD)    ? "Standard" :
+		 (type == USB_TYPE_VENDOR)      ? "Vendor" :
+		 (type == USB_TYPE_CLASS)       ? "Class" : "Unknown",
+		 (recip == USB_RECIP_DEVICE)    ? "Device" :
+		 (recip == USB_RECIP_INTERFACE) ? "Interface" :
+		 (recip == USB_RECIP_ENDPOINT)  ? "Endpoint" : "Unknown",
+		 (bRequestType & USB_DIR_IN)    ? "IN" : "OUT",
+		 bRequest, wValue, wIndex, wLength);
+}
+
 /**
- * dwc3_decode_ctrl - returns a string represetion of ctrl request
+ * dwc3_decode_ctrl - return a string representation of a control request
+ * @str: output buffer with DWC3_MSG_MAX bytes
+ * @bRequestType: setup packet request type
+ * @bRequest: setup packet request code
+ * @wValue: setup value in CPU byte order
+ * @wIndex: setup index in CPU byte order
+ * @wLength: setup length in CPU byte order
  */
 static inline const char *dwc3_decode_ctrl(char *str, __u8 bRequestType,
 		__u8 bRequest, __u16 wValue, __u16 wIndex, __u16 wLength)
 {
+	if ((bRequestType & USB_TYPE_MASK) != USB_TYPE_STANDARD) {
+		dwc3_decode_ctrl_generic(str, bRequestType, bRequest, wValue,
+					 wIndex, wLength);
+		return str;
+	}
+
 	switch (bRequest) {
 	case USB_REQ_GET_STATUS:
 		dwc3_decode_get_status(bRequestType, wIndex, wLength, str);
@@ -511,14 +542,8 @@ static inline const char *dwc3_decode_ctrl(char *str, __u8 bRequestType,
 		dwc3_decode_set_isoch_delay(wValue, str);
 		break;
 	default:
-		sprintf(str, "%02x %02x %02x %02x %02x %02x %02x %02x",
-			bRequestType, bRequest,
-			cpu_to_le16(wValue) & 0xff,
-			cpu_to_le16(wValue) >> 8,
-			cpu_to_le16(wIndex) & 0xff,
-			cpu_to_le16(wIndex) >> 8,
-			cpu_to_le16(wLength) & 0xff,
-			cpu_to_le16(wLength) >> 8);
+		dwc3_decode_ctrl_generic(str, bRequestType, bRequest, wValue,
+					 wIndex, wLength);
 	}
 
 	return str;
