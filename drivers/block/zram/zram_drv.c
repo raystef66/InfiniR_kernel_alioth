@@ -1480,8 +1480,8 @@ compress_again:
 	 *  since we can't sleep;
 	 * b) slow path enables preemption and attempts to allocate
 	 *  the page with __GFP_DIRECT_RECLAIM bit set. we have to
-	 *  put per-cpu compression stream and, thus, to re-do
-	 *  the compression once entry is allocated.
+	 *  put the per-cpu stream and reacquire it after allocation. Only
+	 *  compressed pages need to redo compression into the new stream.
 	 *
 	 * if we have a 'non-null' entry here then we are coming
 	 * from the slow path and entry has already been allocated.
@@ -1499,9 +1499,14 @@ compress_again:
 		entry = zram_entry_alloc(zram, comp_len,
 				GFP_NOIO | __GFP_HIGHMEM |
 				__GFP_MOVABLE | __GFP_CMA);
-		if (entry)
+		if (!entry)
+			return -ENOMEM;
+
+		if (comp_len != PAGE_SIZE)
 			goto compress_again;
-		return -ENOMEM;
+
+		/* Restore CPU pinning and refresh zstrm after sleeping. */
+		zstrm = zcomp_stream_get(zram->comp);
 	}
 
 	alloced_pages = zs_get_total_pages(zram->mem_pool);
