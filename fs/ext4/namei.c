@@ -3031,7 +3031,7 @@ bool ext4_empty_dir(struct inode *inode)
 		de = (struct ext4_dir_entry_2 *) (bh->b_data +
 					(offset & (sb->s_blocksize - 1)));
 		if (ext4_check_dir_entry(inode, NULL, de, bh,
-					 bh->b_data, bh->b_size, offset) ||
+					 bh->b_data, bh->b_size, 0, offset) ||
 		    le32_to_cpu(de->inode)) {
 			brelse(bh);
 			return false;
