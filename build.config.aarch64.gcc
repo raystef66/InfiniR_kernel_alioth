@@ -1,0 +1,14 @@
+ARCH=arm64
+
+CROSS_COMPILE=aarch64-elf-
+CROSS_COMPILE_COMPAT=arm-eabi-
+LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=prebuilts/gcc/linux-x86/aarch64/aarch64-elf/bin
+LINUX_GCC_CROSS_COMPILE_ARM32_PREBUILTS_BIN=prebuilts/gcc/linux-x86/arm/arm-eabi/bin/
+
+FILES="
+arch/arm64/boot/Image.gz
+arch/arm64/boot/Image
+vmlinux
+System.map
+Module.symvers
+"
