@@ -1,0 +1,27 @@
+# Common definitions
+BOARD_NAME=kona
+
+# Inheriting configs from ACK
+case ${COMPILER} in
+gcc)
+    _KERNEL_DIR=${KERNEL_DIR}
+    . ${KERNEL_DIR}/build.config.common.gcc
+    KERNEL_DIR=${_KERNEL_DIR}
+    . ${KERNEL_DIR}/build.config.aarch64.gcc
+    ;;
+*)
+    _KERNEL_DIR=${KERNEL_DIR}
+    . ${KERNEL_DIR}/build.config.common
+    KERNEL_DIR=${_KERNEL_DIR}
+    . ${KERNEL_DIR}/build.config.aarch64
+    ;;
+esac
+
+# Artifacts to be copied over for the prebuilt repo.
+FILES+="
+arch/arm64/boot/Image
+arch/arm64/boot/dts/vendor/qcom/kona.dtb
+arch/arm64/boot/dtbo.img
+"
+
+DEFCONFIG=${DEVICE_NAME}_defconfig
