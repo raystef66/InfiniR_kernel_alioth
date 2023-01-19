@@ -4,6 +4,7 @@ DEPMOD=depmod
 BUILDTOOLS_PREBUILT_BIN=build/build-tools/path/linux-x86
 
 DTC_EXT=${ROOT_DIR}/prebuilts/kernel-build-tools/linux-x86/bin/dtc
+MKDTBO_EXT=${ROOT_DIR}/tools/libufdt/utils/src/mkdtboimg.py
 
 KCFLAGS="${KCFLAGS} -D__ANDROID_COMMON_KERNEL__"
 STOP_SHIP_TRACEPRINTK=1
