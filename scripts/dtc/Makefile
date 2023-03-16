@@ -13,6 +13,9 @@ dtc-objs	+= dtc-lexer.lex.o dtc-parser.tab.o
 # Source files need to get at the userspace version of libfdt_env.h to compile
 HOST_EXTRACFLAGS := -I $(srctree)/$(src)/libfdt
 
+# Kernel builds do not produce YAML or link libyaml. Keep the vendored source pristine.
+HOSTCFLAGS_dtc.o := -DNO_YAML
+
 # Generated files need one more search path to include headers in source tree
 HOSTCFLAGS_dtc-lexer.lex.o := -I $(srctree)/$(src)
 HOSTCFLAGS_dtc-parser.tab.o := -I $(srctree)/$(src)
