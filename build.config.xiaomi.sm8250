@@ -20,7 +20,7 @@ esac
 # Artifacts to be copied over for the prebuilt repo.
 FILES+="
 arch/arm64/boot/Image
-arch/arm64/boot/dts/vendor/qcom/kona.dtb
+arch/arm64/boot/dts/vendor/qcom/*.dtb
 arch/arm64/boot/dtbo.img
 "
 
