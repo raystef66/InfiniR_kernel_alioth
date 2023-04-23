@@ -402,5 +402,4 @@ ENTRY(__spectre_bhb_clearbhb_start)
 	clearbhb
 	isb
 ENTRY(__spectre_bhb_clearbhb_end)
-
 #endif
