@@ -1,11 +1,7 @@
-[![Build Status](https://cloud.drone.io/api/badges/UtsavBalar1231/kernel_xiaomi_sm8250/status.svg?ref=refs/heads/android12-stable)](https://cloud.drone.io/UtsavBalar1231/kernel_xiaomi_sm8250)
-![Commits Count](https://img.shields.io/github/commits-since/UtsavBalar1231/kernel_xiaomi_sm8250/6.0.0/android12-stable)
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FUtsavBalar1231%2Fkernel_xiaomi_sm8250&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
-![Downloads](https://img.shields.io/github/downloads/UtsavBalar1231/kernel_xiaomi_sm8250/7.1.0/total)
+![RKK (2)](https://github.com/Rohail33/Realking_kernel_sm8250/assets/56790058/ce11a184-c5f8-430b-a9be-c490f13f4bf5)
 
-![logo](https://github.com/UtsavBalar1231/xda-stuff/raw/master/banner.png "logo was here")
+For Rom Devs: IF you want to inline this kernel in your Roms then do this before building ( In kernel root directory ):
 
-## Technical Information
-- [XDA Thread](https://utsavbalar.netlify.app/community/#xda)
-- [Telegram Support](https://utsavbalar.netlify.app/community/#telegram-groups)
-- [Donate](https://utsavbalar.netlify.app/donate)
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
+Do this Everytime you clone the repo bcz this kernel has the support for Kernel-SU and it needs to be recloned and checkout to latest stable tag.
