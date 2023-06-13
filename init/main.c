@@ -756,7 +756,12 @@ asmlinkage __visible void __init start_kernel(void)
 	init_sync_kmem_pool();
 	init_dma_buf_kmem_pool();
 
+
+	arch_cpu_finalize_init();
+	/* Temporary conditional until everything has been converted */
+#ifndef CONFIG_ARCH_HAS_CPU_FINALIZE_INIT
 	check_bugs();
+#endif
 
 	acpi_subsystem_init();
 	arch_post_acpi_subsys_init();
