@@ -165,8 +165,12 @@
 
 #define FASTRPC_GLINK_LOG_PAGES 8
 #define LOG_FASTRPC_GLINK_MSG(ctx, x, ...)	\
-	ipc_log_string(ctx, "%s (%d, %d): "x,	\
-		current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+	do {				\
+		if (ctx)		\
+			ipc_log_string(ctx, "%s (%d, %d): "x,	\
+				current->comm, current->tgid, current->pid, \
+				##__VA_ARGS__); \
+	} while (0)
 
 static int fastrpc_pdr_notifier_cb(struct notifier_block *nb,
 					unsigned long code,
