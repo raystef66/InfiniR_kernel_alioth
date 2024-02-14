@@ -614,6 +614,7 @@ And public attribution of xiaomi platforms(like alioth and so and)
 	qcom,soc-hi-res;
 	qcom,sun-profile-only;
 	qcom,k11a-batt-profile;
+        qcom,j3s-batt-profile;
 	qcom,soc_decimal_rate = <
 		0  38
 		10 35
@@ -682,6 +683,7 @@ And public attribution of xiaomi platforms(like alioth and so and)
 		qcom,batt-id-range-pct = <15>;
 		#include "fg-gen4-batterydata-alioth-FMT-4520mah.dtsi"
 		#include "fg-gen4-batterydata-alioth-GY-4520mah.dtsi"
+		#include "fg-gen4-batterydata-apollo-sun-5000mah.dtsi"
 	};
 
 	onewire_gpio: onewire_gpio {
