@@ -26,6 +26,12 @@ config PD_POLICY_MANAGER_PSYCHE
 	help
 	  Say Y to include TI PD policy manager.
 
+config CHARGER_BQ25790
+	tristate "TI BQ25790 battery charger driver"
+	depends on I2C
+	help
+	  Say Y to enable support for TI bq2588x charger driver
+
 config BQ2597X_CHARGE_PUMP
 	tristate "BQ2597X power supply framework based driver"
 	depends on I2C
