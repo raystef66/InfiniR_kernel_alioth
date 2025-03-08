@@ -424,25 +424,25 @@ static ssize_t zstd_decompress_safe(struct mount_info *mi,
 				    struct mem_range src, struct mem_range dst)
 {
 	ssize_t result;
-	ZSTD_inBuffer inbuf = {.src = src.data,	.size = src.len};
-	ZSTD_outBuffer outbuf = {.dst = dst.data, .size = dst.len};
+	zstd_in_buffer inbuf = {.src = src.data,	.size = src.len};
+	zstd_out_buffer outbuf = {.dst = dst.data, .size = dst.len};
 
 	result = mutex_lock_interruptible(&mi->mi_zstd_workspace_mutex);
 	if (result)
 		return result;
 
 	if (!mi->mi_zstd_stream) {
-		unsigned int workspace_size = ZSTD_DStreamWorkspaceBound(
+		unsigned int workspace_size = zstd_dstream_workspace_bound(
 						INCFS_DATA_FILE_BLOCK_SIZE);
 		void *workspace = kvmalloc(workspace_size, GFP_NOFS);
-		ZSTD_DStream *stream;
+		zstd_dstream *stream;
 
 		if (!workspace) {
 			result = -ENOMEM;
 			goto out;
 		}
 
-		stream = ZSTD_initDStream(INCFS_DATA_FILE_BLOCK_SIZE, workspace,
+		stream = zstd_init_dstream(INCFS_DATA_FILE_BLOCK_SIZE, workspace,
 				  workspace_size);
 		if (!stream) {
 			kvfree(workspace);
@@ -455,9 +455,9 @@ static ssize_t zstd_decompress_safe(struct mount_info *mi,
 	}
 
 	/* Each IncFS block is an independent frame, including after errors. */
-	ZSTD_resetDStream(mi->mi_zstd_stream);
+	zstd_reset_dstream(mi->mi_zstd_stream);
 
-	result = ZSTD_decompressStream(mi->mi_zstd_stream, &outbuf, &inbuf) ?
+	result = zstd_decompress_stream(mi->mi_zstd_stream, &outbuf, &inbuf) ?
 		-EBADMSG : outbuf.pos;
 
 	mod_delayed_work(system_wq, &mi->mi_zstd_cleanup_work,

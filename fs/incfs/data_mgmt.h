@@ -193,7 +193,7 @@ struct mount_info {
 	/* zstd workspace */
 	struct mutex mi_zstd_workspace_mutex;
 	void *mi_zstd_workspace;
-	ZSTD_DStream *mi_zstd_stream;
+	zstd_dstream *mi_zstd_stream;
 	struct delayed_work mi_zstd_cleanup_work;
 
 	/* sysfs node */
