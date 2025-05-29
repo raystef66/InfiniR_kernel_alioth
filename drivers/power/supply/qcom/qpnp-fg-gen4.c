@@ -2158,14 +2158,14 @@ static int fg_gen4_get_batt_profile(struct fg_dev *fg)
 				profile_node = of_batterydata_get_best_profile(batt_node,
 						fg->batt_id_ohms / 1000, "j2gybm4n_4780mah");
 			} else {
-				if (chip->dt.j3s_batt_profile) {
-					pr_warn("verifty battery fail. use default profile j3ssun_5000mah\n");
-					profile_node = of_batterydata_get_best_profile(batt_node,
-						fg->batt_id_ohms / 1000, "j3ssun_5000mah");
-				} else if (chip->dt.k11a_batt_profile) {
+				if (chip->dt.k11a_batt_profile) {
 					pr_warn("verifty battery fail. use default profile k11a_fmt_4520mah\n");
 					profile_node = of_batterydata_get_best_profile(batt_node,
 						fg->batt_id_ohms / 1000, "K11A_FMT_4520mah");
+				} else if (chip->dt.j3s_batt_profile) {
+					pr_warn("verifty battery fail. use default profile j3ssun_5000mah\n");
+					profile_node = of_batterydata_get_best_profile(batt_node,
+						fg->batt_id_ohms / 1000, "j3ssun_5000mah");
 				} else {
 					pr_warn("verifty battery fail. use default profile j11sun_4700mah\n");
 					profile_node = of_batterydata_get_best_profile(batt_node,
