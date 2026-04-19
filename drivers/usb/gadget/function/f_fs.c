@@ -623,7 +623,7 @@ static ssize_t ffs_ep0_read(struct file *file, char __user *buf,
 
 		/* unlocks spinlock */
 		ret = __ffs_ep0_queue_wait(ffs, data, len);
-		if (likely(ret > 0) && unlikely(copy_to_user(buf, data, len)))
+		if (likely(ret > 0) && unlikely(copy_to_user(buf, data, ret)))
 			ret = -EFAULT;
 		goto done_mutex;
 
