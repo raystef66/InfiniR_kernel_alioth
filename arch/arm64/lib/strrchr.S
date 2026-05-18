@@ -33,11 +33,10 @@ WEAK(strrchr)
 	mov	x3, #0
 	and	w1, w1, #0xff
 1:	ldrb	w2, [x0], #1
-	cbz	w2, 2f
 	cmp	w2, w1
-	b.ne	1b
+	b.ne	2f
 	sub	x3, x0, #1
-	b	1b
-2:	mov	x0, x3
+2:	cbnz	w2, 1b
+	mov	x0, x3
 	ret
 ENDPIPROC(strrchr)
