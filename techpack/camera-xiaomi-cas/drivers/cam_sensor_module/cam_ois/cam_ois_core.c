@@ -6,6 +6,7 @@
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/dma-contiguous.h>
+#include <linux/string.h>
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
@@ -1305,11 +1306,13 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 
 		if (o_ctrl->ois_fw_flag) {
 			CAM_DBG(CAM_OIS, "is_addr_indata = %d", o_ctrl->opcode.is_addr_indata);
-			if(o_ctrl->opcode.is_addr_indata == 121){
-				CAM_DBG(CAM_OIS, "apply sem1215 ois_fw settings begin.");
+			if (o_ctrl->opcode.is_addr_indata == 121 ||
+				strnstr(o_ctrl->ois_name, "sem1215", OIS_NAME_LEN)) {
+				CAM_DBG(CAM_OIS, "apply sem1215 ois_fw settings begin, ois_name: %s",
+					o_ctrl->ois_name);
 				rc = cam_sem1215_ois_fw_download(o_ctrl);
 				CAM_DBG(CAM_OIS, "apply sem1215 ois_fw settings done.");
-			}else if(o_ctrl->opcode.is_addr_indata) {
+			} else if(o_ctrl->opcode.is_addr_indata) {
 				CAM_DBG(CAM_OIS, "apply lc898124 ois_fw settings");
 				rc = cam_lc898124_ois_fw_download(o_ctrl);
 			} else {
