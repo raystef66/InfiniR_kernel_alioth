@@ -28,7 +28,8 @@
 #include "exposure_adjustment.h"
 
 static bool pcc_backlight_enable = false;
-static u32 last_level = ELVSS_OFF_THRESHOLD;
+static u32 last_level;
+static bool pcc_attenuated;
 
 static int ea_panel_send_pcc(u32 bl_lvl)
 {
@@ -40,9 +41,10 @@ static int ea_panel_send_pcc(u32 bl_lvl)
 	struct dsi_display *display = NULL;
 	struct msm_drm_private *priv;
 	u32 ea_coeff;
-	uint64_t val;
 
- 	display = get_main_display();
+	display = get_main_display();
+	if (!display || !display->drm_conn || !display->drm_conn->state)
+		return -ENODEV;
 	crtc = display->drm_conn->state->crtc;
 	if (!crtc) {
 		pr_err("ERROR: Cannot find display panel with CRTC\n");
@@ -57,15 +59,13 @@ static int ea_panel_send_pcc(u32 bl_lvl)
 		return -EINVAL;
 	}
 
-	rc = sde_cp_crtc_get_property(crtc, prop, &val);
-	if (rc) {
-		pr_err("Cannot get CRTC property. Things may go wrong.\n");
-	}
-
 	pr_debug("%s: Backlight = %d\n", __func__, bl_lvl);
 
 	if (bl_lvl < ELVSS_OFF_THRESHOLD) {
-		ea_coeff = bl_lvl * PCC_BACKLIGHT_SCALE + EXPOSURE_ADJUSTMENT_MIN;
+		/* Divide after multiplying to keep the threshold continuous. */
+		ea_coeff = EXPOSURE_ADJUSTMENT_MIN +
+			DIV_ROUND_CLOSEST(bl_lvl * (EXPOSURE_ADJUSTMENT_MAX -
+			EXPOSURE_ADJUSTMENT_MIN), ELVSS_OFF_THRESHOLD);
 	} else {
 		ea_coeff = EXPOSURE_ADJUSTMENT_MAX;
 	}
@@ -89,6 +89,10 @@ static int ea_panel_send_pcc(u32 bl_lvl)
 		pr_err("DSPP: Cannot set PCC: %d.\n", rc);
 	}
 
+	/* The color-processing node retains its own reference on success. */
+	drm_property_blob_put(blob);
+	if (!rc)
+		pcc_attenuated = bl_lvl < ELVSS_OFF_THRESHOLD;
 	return rc;
 }
 
@@ -99,28 +103,30 @@ bool ea_panel_is_enabled(void)
 
 void ea_panel_mode_ctrl(struct dsi_panel *panel, bool enable)
 {
-	if (pcc_backlight_enable != enable) {
-		pcc_backlight_enable = enable;
-		pr_debug("Recover backlight level = %d\n", last_level);
-		dsi_panel_set_backlight(panel, last_level);
-		if (!enable) {
-			ea_panel_send_pcc(ELVSS_OFF_THRESHOLD);
-		}
-	} else if (last_level == 0 && !pcc_backlight_enable) {
-		ea_panel_send_pcc(ELVSS_OFF_THRESHOLD);
-	}
+	if (!panel || pcc_backlight_enable == enable)
+		return;
+
+	pcc_backlight_enable = enable;
+	/* last_level includes zero, so toggling cannot relight a blanked panel. */
+	dsi_panel_set_backlight(panel, last_level);
 }
 
 u32 ea_panel_calc_backlight(u32 bl_lvl)
 {
 	last_level = bl_lvl;
 
-	if (pcc_backlight_enable && bl_lvl != 0 && bl_lvl < ELVSS_OFF_THRESHOLD) {
-		if (ea_panel_send_pcc(bl_lvl))
-			pr_err("ERROR: Failed to send PCC\n");
-
+	if (pcc_backlight_enable && bl_lvl && bl_lvl < ELVSS_OFF_THRESHOLD) {
+		/* Never raise the panel brightness if attenuation could not be set. */
+		if (ea_panel_send_pcc(bl_lvl)) {
+			pr_err("Failed to apply exposure attenuation\n");
+			return bl_lvl;
+		}
 		return ELVSS_OFF_THRESHOLD;
-	} else {
-		return bl_lvl;
 	}
+
+	/* Restore unity when disabling, blanking, or crossing the threshold. */
+	if (pcc_attenuated && ea_panel_send_pcc(ELVSS_OFF_THRESHOLD))
+		pr_err("Failed to restore exposure attenuation\n");
+
+	return bl_lvl;
 }
