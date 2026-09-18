@@ -646,6 +646,7 @@ static inline void kgsl_gpu_sysfs_add_link(struct kobject *dst,
 		return;
 
 	kernfs_create_link(dst->sd, dst_name, old);
+	sysfs_put(old);
 }
 
 static inline bool kgsl_is_compat_task(void)

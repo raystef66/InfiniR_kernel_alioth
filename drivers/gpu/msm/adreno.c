@@ -4187,7 +4187,7 @@ static void adreno_regulator_disable_poll(struct kgsl_device *device)
 static void adreno_gpu_model(struct kgsl_device *device, char *str,
 				size_t bufsz)
 {
-	scnprintf(str, bufsz, adreno_get_gpu_model(device));
+	scnprintf(str, bufsz, "%s", adreno_get_gpu_model(device));
 }
 
 static bool adreno_is_hwcg_on(struct kgsl_device *device)

@@ -1,0 +1,23 @@
+What:           /sys/kernel/gpu/gpu_memory
+Date:           September 2026
+KernelVersion:  4.19 (Alioth downstream)
+Contact:        PocoF3Releases kernel maintainers
+Description:
+                Read-only compatibility link to
+                /sys/class/kgsl/kgsl/page_alloc. Decimal bytes of tracked
+                non-secure KGSL paged allocations, read atomically from
+                kgsl_driver.stats.page_alloc. No GPU wake or hardware
+                register access is performed by this read.
+
+                This is not a dedicated VRAM total or a resident-memory
+                measurement. It excludes separately accounted imported
+                mappings, secure and coherent allocations. Reclaimable
+                allocation backing need not all be resident. Do not add
+                mapped or vmalloc to this number: accounting can overlap.
+                Per-process/pagetable statistics and tuning controls are
+                not exposed by this interface. Android SELinux policy must
+                grant read access to the link and its exact target.
+
+                Applications must implement a reader for this path or the
+                original page_alloc path; creating a node alone cannot
+                guarantee recognition by DevCheck or another application.
