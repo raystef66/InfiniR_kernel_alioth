@@ -348,18 +348,33 @@ int power_supply_am_i_supplied(struct power_supply *psy)
 }
 EXPORT_SYMBOL_GPL(power_supply_am_i_supplied);
 
+/* Optional properties must be advertised before probing a driver. */
+static bool power_supply_declares_property(struct power_supply *psy,
+					  enum power_supply_property psp)
+{
+	size_t i;
+
+	for (i = 0; i < psy->desc->num_properties; i++)
+		if (psy->desc->properties[i] == psp)
+			return true;
+
+	return false;
+}
+
 static int __power_supply_is_system_supplied(struct device *dev, void *data)
 {
 	union power_supply_propval ret = {0,};
 	struct power_supply *psy = dev_get_drvdata(dev);
 	unsigned int *count = data;
 
-	if (!psy->desc->get_property(psy, POWER_SUPPLY_PROP_SCOPE, &ret))
+	if (power_supply_declares_property(psy, POWER_SUPPLY_PROP_SCOPE) &&
+	    !psy->desc->get_property(psy, POWER_SUPPLY_PROP_SCOPE, &ret))
 		if (ret.intval == POWER_SUPPLY_SCOPE_DEVICE)
 			return 0;
 
 	(*count)++;
-	if (psy->desc->type != POWER_SUPPLY_TYPE_BATTERY)
+	if (psy->desc->type != POWER_SUPPLY_TYPE_BATTERY &&
+	    power_supply_declares_property(psy, POWER_SUPPLY_PROP_ONLINE))
 		if (!psy->desc->get_property(psy, POWER_SUPPLY_PROP_ONLINE,
 					&ret))
 			return ret.intval;
