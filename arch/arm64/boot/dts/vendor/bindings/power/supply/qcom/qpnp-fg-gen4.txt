@@ -286,6 +286,37 @@ First Level Node - FG Gen4 device
 		    cycle. If this is not specified, then the default value
 		    used will be 5 (0.5%). Unit is in decipercentage.
 
+- qcom,replacement-battery-type
+	Usage:      optional
+	Value type: <string>
+	Definition: Exact qcom,battery-type in the battery-data node to use when
+		    K11A vendor identification exhausts its retries. If absent,
+		    retain the legacy FMT fallback. A missing named profile is an
+		    error; do not silently select another pack by resistance.
+
+- qcom,replacement-capacity-learning
+	Usage:      optional
+	Value type: <empty>
+	Definition: Use replacement learning limits only after selecting the
+		    configured replacement-battery-type fallback. Without that
+		    property retain normal learning. CHARGE_FULL is learned;
+		    CHARGE_FULL_DESIGN stays nominal. Capacity estimates never
+		    choose a battery type or authorize higher charging limits.
+
+- qcom,replacement-capacity-max-mah
+	Usage:      optional
+	Value type: <u32>
+	Definition: Absolute learned-capacity bound for the replacement path,
+		    in mAh, including restored values. Range: 1 to 32767.
+		    Default: 5300. This is a bound, not a capacity target.
+
+- qcom,replacement-cl-max-increment
+	Usage:      optional
+	Value type: <u32>
+	Definition: Maximum upward correction per qualified learning update,
+		    in decipercent, for the replacement path. Range: 0 to 1000.
+		    Default: 20 (2.0%). Known profiles retain normal learning.
+
 - qcom,cl-max-decrement
 	Usage:      optional
 	Value type: <u32>
@@ -685,3 +716,10 @@ thermal_zones {
 		};
 	};
 };
+
+Replacement cycle-count policy:
+  When qcom,replacement-battery-type names the successfully selected
+  unidentified fallback, report the persistent FG bucket average through
+  CYCLE_COUNT and do not synchronize it into the DS28E16 one-way counter.
+  Identified profiles retain the authenticator-backed count when enabled.
+  No counters are cleared to infer a replacement battery's physical age.

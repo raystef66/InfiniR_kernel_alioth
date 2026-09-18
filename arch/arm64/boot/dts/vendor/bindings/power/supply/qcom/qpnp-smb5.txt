@@ -581,3 +581,10 @@ pm8150b_charger: qcom,qpnp-smb5 {
 					"vreg-ok";
 	};
 };
+
+- qcom,jeita-use-bms-battery-type:
+  Optional boolean. Select software JEITA and step-charge profile by the BMS
+  POWER_SUPPLY_PROP_BATTERY_TYPE string instead of resistance ID. Use for packs
+  with identical identification resistors when the gauge identifies their
+  profile independently. Retry while the BMS has not exposed a matching profile.
+  If absent, retain resistance-based selection.

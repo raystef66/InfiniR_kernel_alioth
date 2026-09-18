@@ -979,6 +979,19 @@ static enum power_supply_property verify_props[] = {
 	POWER_SUPPLY_PROP_AUTHENTIC,
 };
 
+static int ds28e16_decode_cycle_count(const u8 *page, int *cycles)
+{
+	u32 remaining;
+
+	if (!page || !cycles)
+		return -EINVAL;
+	remaining = page[0] | (u32)page[1] << 8 | (u32)page[2] << 16;
+	if (remaining > DC_INIT_VALUE)
+		return -ERANGE;
+	*cycles = DC_INIT_VALUE - remaining;
+	return 0;
+}
+
 static int verify_get_property(struct power_supply *psy,
 			       enum power_supply_property psp,
 			       union power_supply_propval *val)
@@ -1069,11 +1082,12 @@ static int verify_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT:
 		ret = ds28el16_get_page_data_retry(DC_PAGE, pagedata);
-		if (ret == DS_TRUE) {
-			data->cycle_count = (pagedata[2] << 16) +
-					    (pagedata[1] << 8) + pagedata[0];
-			val->intval = DC_INIT_VALUE - data->cycle_count;
-		}
+		if (ret != DS_TRUE)
+			return -EIO;
+		ret = ds28e16_decode_cycle_count(pagedata, &val->intval);
+		if (ret < 0)
+			return ret;
+		data->cycle_count = DC_INIT_VALUE - val->intval;
 		break;
 	default:
 		ds_dbg("unsupported property %d\n", psp);
@@ -1120,7 +1134,10 @@ static int verify_set_property(struct power_supply *psy,
 		auth_BDCONST = val->intval;
 		break;
 	case POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT:
-		DS28E16_cmd_decrementCounter();
+		if (val->intval != 1)
+			return -EINVAL;
+		if (DS28E16_cmd_decrementCounter() != DS_TRUE)
+			return -EIO;
 		break;
 	case POWER_SUPPLY_PROP_AUTHENTIC:
 		if (val->intval == 1) {

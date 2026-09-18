@@ -323,10 +323,12 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 	int rc;
 
 	if (!pdpm->sw_psy)
-		return false;
+		return pdpm->respect_bms_voltage_limit;
 
 	rc = power_supply_get_property(pdpm->sw_psy,
 				       POWER_SUPPLY_PROP_INPUT_SUSPEND, &pval);
+	if (rc < 0 && pdpm->respect_bms_voltage_limit)
+		return true;
 	if (!rc)
 		bq_input_suspend = !!pval.intval;
 
@@ -337,13 +339,13 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 		return true;
 
 	if (!pdpm->bms_psy)
-		return false;
+		return pdpm->respect_bms_voltage_limit;
 
 	rc = power_supply_get_property(pdpm->bms_psy, POWER_SUPPLY_PROP_TEMP,
 				       &pval);
 	if (rc < 0) {
 		pr_info("Couldn't get batt temp prop:%d\n", rc);
-		return false;
+		return pdpm->respect_bms_voltage_limit;
 	}
 	pdpm->cp.bms_batt_temp = pval.intval;
 	batt_temp = pval.intval;
@@ -440,6 +442,49 @@ static bool pd_get_fastcharge_mode_enabled(struct usbpd_pm *pdpm)
 		return true;
 	else
 		return false;
+}
+
+/* Targets round down; measured voltage rounds up, never hiding an excess. */
+static int usbpd_pm_select_control_voltage(int cp_mv, int bms_uv)
+{
+	if (cp_mv < 2500 || cp_mv > 5000 ||
+	    bms_uv < 2500000 || bms_uv > 5000000)
+		return -ENODATA;
+
+	return max(cp_mv, DIV_ROUND_UP(bms_uv, 1000));
+}
+
+/* Millivolt rounding must never raise a microvolt profile limit. */
+static int usbpd_pm_limit_battery_voltage(int board_mv, int profile_uv)
+{
+	if (board_mv <= 0 || profile_uv < 3500000 || profile_uv > 5000000)
+		return -EINVAL;
+
+	return min(board_mv, profile_uv / 1000);
+}
+
+static int usbpd_pm_update_bat_volt_limit(struct usbpd_pm *pdpm)
+{
+	union power_supply_propval prop = {0, };
+	int rc, limit;
+
+	limit = pd_get_fastcharge_mode_enabled(pdpm) ?
+		pdpm->bat_volt_max : pdpm->non_ffc_bat_volt_max;
+	if (pdpm->respect_bms_voltage_limit) {
+		usbpd_check_bms_psy(pdpm);
+		if (!pdpm->bms_psy)
+			return -ENODEV;
+		rc = power_supply_get_property(pdpm->bms_psy,
+				POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN, &prop);
+		if (rc < 0)
+			return rc;
+		limit = usbpd_pm_limit_battery_voltage(limit, prop.intval);
+		if (limit < 0)
+			return limit;
+	}
+
+	pm_config.bat_volt_lp_lmt = limit;
+	return 0;
 }
 /* get bq27z561 fastcharge mode to enable or disabled */
 
@@ -556,9 +601,13 @@ static void usbpd_check_cp_sec_psy(struct usbpd_pm *pdpm)
 static void usbpd_pm_update_cp_status(struct usbpd_pm *pdpm)
 {
 	int ret;
+	int vbat_mv = -ENODATA;
 	union power_supply_propval val = {
 		0,
 	};
+
+	/* A failed read must not reuse the previous polling result. */
+	pdpm->vbat_control_mv = -ENODATA;
 
 	usbpd_check_cp_psy(pdpm);
 
@@ -567,8 +616,10 @@ static void usbpd_pm_update_cp_status(struct usbpd_pm *pdpm)
 
 	ret = power_supply_get_property(
 		pdpm->cp_psy, POWER_SUPPLY_PROP_TI_BATTERY_VOLTAGE, &val);
-	if (!ret)
+	if (!ret) {
 		pdpm->cp.vbat_volt = val.intval;
+		vbat_mv = val.intval;
+	}
 
 	ret = power_supply_get_property(pdpm->cp_psy,
 					POWER_SUPPLY_PROP_TI_BUS_VOLTAGE, &val);
@@ -614,13 +665,17 @@ static void usbpd_pm_update_cp_status(struct usbpd_pm *pdpm)
 				pdpm->cp.ibat_curr = -(val.intval / 1000);
 		}
 
-		if (!pdpm->use_qcom_gauge) {
+		if (!pdpm->use_qcom_gauge || pdpm->respect_bms_voltage_limit) {
 			ret = power_supply_get_property(
 				pdpm->bms_psy, POWER_SUPPLY_PROP_VOLTAGE_NOW,
 				&val);
-			if (!ret)
+			if (!ret) {
 				pdpm->cp.bms_vbat_mv = val.intval / 1000;
-			else
+				if (pdpm->respect_bms_voltage_limit)
+					pdpm->vbat_control_mv =
+						usbpd_pm_select_control_voltage(vbat_mv,
+									val.intval);
+			} else
 				pr_err("Failed to read bms voltage now\n");
 		}
 	}
@@ -1001,14 +1056,18 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 	static int curr_fcc_limit, curr_ibus_limit;
 	int capacity = 0;
 	static int ibus_limit;
+	int control_vbat_mv = pdpm->respect_bms_voltage_limit ?
+		pdpm->vbat_control_mv : pdpm->cp.vbat_volt;
+
+	if (usbpd_pm_update_bat_volt_limit(pdpm) < 0 ||
+	    (pdpm->respect_bms_voltage_limit && control_vbat_mv <= 0))
+		return PM_ALGO_RET_CHG_DISABLED;
 
 	is_fastcharge_mode = pd_get_fastcharge_mode_enabled(pdpm);
 	if (is_fastcharge_mode) {
-		pm_config.bat_volt_lp_lmt = pdpm->bat_volt_max;
 		bq_taper_hys_mv = BQ_TAPER_HYS_MV;
 		pm_config.fc2_taper_current = TAPER_DONE_FFC_MA;
 	} else {
-		pm_config.bat_volt_lp_lmt = pdpm->non_ffc_bat_volt_max;
 		bq_taper_hys_mv = NON_FFC_BQ_TAPER_HYS_MV;
 		pm_config.fc2_taper_current = TAPER_DONE_NORMAL_MA;
 	}
@@ -1124,7 +1183,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 					     effective_fcc_taper * 1000);
 			}
 		}
-	} else if ((pdpm->cp.vbat_volt >
+	} else if ((control_vbat_mv >
 		    pm_config.bat_volt_lp_lmt - bq_taper_hys_mv) &&
 		   !pdpm->chg_enable_k81) {
 		if (ibus_lmt_change_timer++ > IBUS_CHANGE_TIMEOUT &&
@@ -1142,7 +1201,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 					     effective_fcc_taper * 1000);
 			}
 		}
-	} else if (pdpm->cp.vbat_volt < pm_config.bat_volt_lp_lmt - 250) {
+	} else if (control_vbat_mv < pm_config.bat_volt_lp_lmt - 250) {
 		if (!pdpm->use_qcom_gauge) {
 			if (curr_ibus_limit >= HIGH_IBUS_LIMI_THR_MA &&
 			    !pdpm->chg_enable_k81)
@@ -1171,9 +1230,9 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 		else if (pdpm->cp.bms_vbat_mv < pm_config.bat_volt_lp_lmt - 10)
 			step_vbat = pm_config.fc2_steps;
 	} else {
-		if (pdpm->cp.vbat_volt > pm_config.bat_volt_lp_lmt)
+		if (control_vbat_mv > pm_config.bat_volt_lp_lmt)
 			step_vbat = -pm_config.fc2_steps;
-		else if (pdpm->cp.vbat_volt < pm_config.bat_volt_lp_lmt - 10)
+		else if (control_vbat_mv < pm_config.bat_volt_lp_lmt - 10)
 			step_vbat = pm_config.fc2_steps;
 	}
 
@@ -1326,7 +1385,7 @@ reg[%d-%d-%d-%d-%d],step[%d-%d-%d-%d-%d-%d-%d-%d],pmconfig[%d-%d-%d,%d-%d-%d-%d]
 	}
 
 	/* charge pump taper charge */
-	if (pdpm->cp.vbat_volt > pm_config.bat_volt_lp_lmt - TAPER_VOL_HYS &&
+	if (control_vbat_mv > pm_config.bat_volt_lp_lmt - TAPER_VOL_HYS &&
 	    !pdpm->chg_enable_k81 &&
 	    pdpm->cp.ibat_curr < pm_config.fc2_taper_current) {
 		if (fc2_taper_timer++ > TAPER_TIMEOUT) {
@@ -1397,6 +1456,26 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 	int effective_fcc_val = 0;
 	int thermal_level = 0, capacity;
 	static int curr_fcc_lmt, curr_ibus_lmt;
+	int control_vbat_mv = pdpm->respect_bms_voltage_limit ?
+		pdpm->vbat_control_mv : pdpm->cp.vbat_volt;
+
+	/* Check before entering/enabling the pump, not only after tuning starts. */
+	if (pdpm->respect_bms_voltage_limit &&
+	    pdpm->state != PD_PM_STATE_FC2_EXIT) {
+		ret = usbpd_pm_update_bat_volt_limit(pdpm);
+		if (!ret && control_vbat_mv <= 0)
+			ret = control_vbat_mv < 0 ? control_vbat_mv : -ENODATA;
+		/* Do not enable the pump with an already excessive cell reading. */
+		if (!ret && pdpm->state != PD_PM_STATE_FC2_TUNE &&
+		    control_vbat_mv >= pm_config.bat_volt_lp_lmt)
+			ret = -ERANGE;
+		if (ret < 0) {
+			pr_err_ratelimited("Battery voltage data unavailable or out of range, rc=%d\n", ret);
+			stop_sw = false;
+			recover = ret != -ERANGE;
+			usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_EXIT);
+		}
+	}
 
 	switch (pdpm->state) {
 	case PD_PM_STATE_ENTRY:
@@ -1425,7 +1504,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 		if (pdpm->cp.vbat_volt < pm_config.min_vbat_for_cp) {
 			pr_info("batt_volt %d, waiting...\n",
 				pdpm->cp.vbat_volt);
-		} else if ((pdpm->cp.vbat_volt >
+		} else if ((control_vbat_mv >
 				    pm_config.bat_volt_lp_lmt -
 					    VBAT_HIGH_FOR_FC_HYS_MV &&
 			    !pdpm->is_temp_out_fc2_range) ||
@@ -1927,6 +2006,9 @@ static int pd_policy_parse_dt(struct usbpd_pm *pdpm)
 		pr_err("device tree node missing\n");
 		return -EINVAL;
 	}
+
+	pdpm->respect_bms_voltage_limit =
+		of_property_read_bool(node, "mi,respect-bms-voltage-limit");
 
 	rc = of_property_read_u32(node, "mi,pd-bat-volt-max",
 				  &pdpm->bat_volt_max);

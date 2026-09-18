@@ -1,0 +1,19 @@
+What:           /sys/bus/platform/devices/.../cycle_count_info
+Date:           September 2026
+Contact:        johnmart19 <johnivan19999@gmail.com>
+Description:
+                Read-only FG4 cycle-count diagnostics. source is fuel-gauge
+                for the explicitly configured unidentified replacement
+                fallback, or ds28e16 for identified packs when enabled.
+                reported is the exported cycle count, or -1 when unavailable;
+                report_error is the corresponding errno. fg_initialized and
+                fg_last_error describe restoration/storage validity.
+                fg_cycles is the average of the eight raw fg_buckets, or -1
+                before successful restoration. Buckets are 16-bit counters.
+
+                The fuel-gauge history belongs to this device's persistent
+                storage and is not automatically tied to a replacement cell.
+                A high value is not reset merely because a pack is unknown.
+                Profile reload does not reset cycles. Existing physical
+                battery-removal handling is unchanged. This interface cannot
+                infer missing cycle history or the age of reused electronics.

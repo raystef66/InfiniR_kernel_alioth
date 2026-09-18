@@ -218,6 +218,8 @@ struct usbpd_pm {
 
 	int pd_active;
 	bool pps_supported;
+	bool respect_bms_voltage_limit;
+	int vbat_control_mv; /* Invalid until both voltage reads succeed. */
 	bool fc2_exit_flag;
 
 	int request_voltage;

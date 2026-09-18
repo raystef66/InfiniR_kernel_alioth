@@ -52,19 +52,27 @@ static const struct ttf_pt ttf_ln_table[] = {
  */
 int restore_cycle_count(struct cycle_counter *counter)
 {
-	int rc = 0;
+	u16 restored[BUCKET_COUNT] = { 0 };
+	int rc;
 
 	if (!counter)
 		return -ENODEV;
 
 	mutex_lock(&counter->lock);
-	rc = counter->restore_count(counter->data, counter->count,
-			BUCKET_COUNT);
-	if (rc < 0)
+	rc = counter->restore_count(counter->data, restored, BUCKET_COUNT);
+	counter->last_error = rc < 0 ? rc : 0;
+	counter->initialized = rc >= 0;
+	if (rc < 0) {
 		pr_err("failed to restore cycle counter rc=%d\n", rc);
+	} else {
+		memcpy(counter->count, restored, sizeof(restored));
+		memset(counter->started, 0, sizeof(counter->started));
+		memset(counter->last_soc, 0, sizeof(counter->last_soc));
+		counter->last_bucket = -1;
+	}
 	mutex_unlock(&counter->lock);
 
-	return rc;
+	return rc < 0 ? rc : 0;
 }
 
 /**
@@ -77,23 +85,24 @@ int restore_cycle_count(struct cycle_counter *counter)
  */
 void clear_cycle_count(struct cycle_counter *counter)
 {
-	int rc = 0, i;
+	u16 cleared[BUCKET_COUNT] = { 0 };
+	int rc;
 
 	if (!counter)
 		return;
 
 	mutex_lock(&counter->lock);
-	memset(counter->count, 0, sizeof(counter->count));
-	for (i = 0; i < BUCKET_COUNT; i++) {
-		counter->started[i] = false;
-		counter->last_soc[i] = 0;
-	}
-
-	rc = counter->store_count(counter->data, counter->count, 0,
-			BUCKET_COUNT * 2);
-	if (rc < 0)
+	rc = counter->store_count(counter->data, cleared, 0, sizeof(cleared));
+	counter->last_error = rc < 0 ? rc : 0;
+	counter->initialized = rc >= 0;
+	if (rc < 0) {
 		pr_err("failed to clear cycle counter rc=%d\n", rc);
-
+	} else {
+		memcpy(counter->count, cleared, sizeof(cleared));
+	}
+	memset(counter->started, 0, sizeof(counter->started));
+	memset(counter->last_soc, 0, sizeof(counter->last_soc));
+	counter->last_bucket = -1;
 	mutex_unlock(&counter->lock);
 }
 
@@ -107,31 +116,29 @@ void clear_cycle_count(struct cycle_counter *counter)
  */
 static int store_cycle_count(struct cycle_counter *counter, int id)
 {
-	int rc = 0;
-	u16 cyc_count;
+	u16 count;
+	int rc;
 
 	if (!counter)
 		return -ENODEV;
-
-	if (id < 0 || (id > BUCKET_COUNT - 1)) {
-		pr_err("Invalid id %d\n", id);
+	if (id < 0 || id >= BUCKET_COUNT)
 		return -EINVAL;
-	}
+	if (!counter->initialized)
+		return -ENODATA;
 
-	cyc_count = counter->count[id];
-	cyc_count++;
-
-	rc = counter->store_count(counter->data, &cyc_count, id, 2);
+	/* The persistent bucket is 16-bit: never wrap old history to zero. */
+	if (counter->count[id] == (u16)~0U)
+		return 0;
+	count = counter->count[id] + 1;
+	rc = counter->store_count(counter->data, &count, id, sizeof(count));
+	counter->last_error = rc < 0 ? rc : 0;
 	if (rc < 0) {
-		pr_err("failed to write cycle_count[%d] rc=%d\n",
-			id, rc);
+		/* A partial storage write requires restoration before more updates. */
+		counter->initialized = false;
 		return rc;
 	}
-
-	counter->count[id] = cyc_count;
-	pr_debug("Stored count %d in id %d\n", cyc_count, id);
-
-	return rc;
+	counter->count[id] = count;
+	return 0;
 }
 
 /**
@@ -148,62 +155,40 @@ static int store_cycle_count(struct cycle_counter *counter, int id)
 void cycle_count_update(struct cycle_counter *counter, int batt_soc,
 			int charge_status, bool charge_done, bool input_present)
 {
-	int rc = 0, id, i, soc_thresh;
+	int id, i, rc;
 
-	if (!counter)
+	if (!counter || batt_soc < 0 || batt_soc > 255)
 		return;
 
 	mutex_lock(&counter->lock);
+	if (!counter->initialized)
+		goto out;
 
-	/* Find out which id the SOC falls in */
-	id = batt_soc / BUCKET_SOC_PCT;
-
-	if (charge_status == POWER_SUPPLY_STATUS_CHARGING) {
-		if (!counter->started[id] && id != counter->last_bucket) {
+	/* Termination can arrive before the CHARGING status changes. */
+	if (charge_done || !input_present) {
+		for (i = 0; i < BUCKET_COUNT; i++) {
+			if (counter->started[i] &&
+			    batt_soc > counter->last_soc[i] + BUCKET_SOC_PCT / 2) {
+				rc = store_cycle_count(counter, i);
+				if (rc < 0) {
+					pr_err("Error in storing cycle counter rc=%d\n", rc);
+					break;
+				}
+			}
+		}
+		/* An ended session must not leave a stale starting SOC behind. */
+		memset(counter->started, 0, sizeof(counter->started));
+		memset(counter->last_soc, 0, sizeof(counter->last_soc));
+		counter->last_bucket = -1;
+	} else if (charge_status == POWER_SUPPLY_STATUS_CHARGING) {
+		id = batt_soc / BUCKET_SOC_PCT;
+		if (!counter->started[id]) {
 			counter->started[id] = true;
 			counter->last_soc[id] = batt_soc;
 		}
-	} else if (charge_done || !input_present) {
-		for (i = 0; i < BUCKET_COUNT; i++) {
-			soc_thresh = counter->last_soc[i] + BUCKET_SOC_PCT / 2;
-			if (counter->started[i] && batt_soc > soc_thresh) {
-				rc = store_cycle_count(counter, i);
-				if (rc < 0)
-					pr_err("Error in storing cycle_ctr rc: %d\n",
-						rc);
-				counter->last_soc[i] = 0;
-				counter->started[i] = false;
-				counter->last_bucket = i;
-			}
-		}
 	}
-
-	pr_debug("batt_soc: %d id: %d chg_status: %d\n", batt_soc, id,
-		charge_status);
+out:
 	mutex_unlock(&counter->lock);
-}
-
-/**
- * get_bucket_cycle_count -
- * @counter: Cycle counter object
- *
- * Returns the cycle counter for a SOC bucket.
- *
- */
-static int get_bucket_cycle_count(struct cycle_counter *counter)
-{
-	int count;
-
-	if (!counter)
-		return 0;
-
-	if ((counter->id <= 0) || (counter->id > BUCKET_COUNT))
-		return -EINVAL;
-
-	mutex_lock(&counter->lock);
-	count = counter->count[counter->id - 1];
-	mutex_unlock(&counter->lock);
-	return count;
 }
 
 /**
@@ -216,24 +201,21 @@ static int get_bucket_cycle_count(struct cycle_counter *counter)
  */
 int get_cycle_count(struct cycle_counter *counter, int *count)
 {
-	int i, rc, temp = 0;
+	int i, total = 0;
 
-	for (i = 1; i <= BUCKET_COUNT; i++) {
-		counter->id = i;
-		rc = get_bucket_cycle_count(counter);
-		if (rc < 0) {
-			pr_err("Couldn't get cycle count rc=%d\n", rc);
-			return rc;
-		}
-		temp += rc;
+	if (!counter || !count)
+		return -EINVAL;
+
+	mutex_lock(&counter->lock);
+	if (!counter->initialized) {
+		mutex_unlock(&counter->lock);
+		return -ENODATA;
 	}
-
-	/*
-	 * Normalize the counter across each bucket so that we can get
-	 * the overall charge cycle count.
-	 */
-
-	*count = temp / BUCKET_COUNT;
+	/* One snapshot, with no shared mutable bucket selector. */
+	for (i = 0; i < BUCKET_COUNT; i++)
+		total += counter->count[i];
+	*count = total / BUCKET_COUNT;
+	mutex_unlock(&counter->lock);
 	return 0;
 }
 
@@ -247,26 +229,22 @@ int get_cycle_count(struct cycle_counter *counter, int *count)
  */
 int get_cycle_counts(struct cycle_counter *counter, const char **buf)
 {
-	int i, rc, len = 0;
+	int i, len = 0;
 
-	for (i = 1; i <= BUCKET_COUNT; i++) {
-		counter->id = i;
-		rc = get_bucket_cycle_count(counter);
-		if (rc < 0) {
-			pr_err("Couldn't get cycle count rc=%d\n", rc);
-			return rc;
-		}
+	if (!counter || !buf)
+		return -EINVAL;
 
-		if (sizeof(counter->str_buf) - len < 8) {
-			pr_err("Invalid length %d\n", len);
-			return -EINVAL;
-		}
-
-		len += snprintf(counter->str_buf + len, 8, "%d ", rc);
+	mutex_lock(&counter->lock);
+	if (!counter->initialized) {
+		mutex_unlock(&counter->lock);
+		return -ENODATA;
 	}
-
-	counter->str_buf[len] = '\0';
+	for (i = 0; i < BUCKET_COUNT; i++)
+		len += scnprintf(counter->str_buf + len,
+				sizeof(counter->str_buf) - len, "%u ",
+				counter->count[i]);
 	*buf = counter->str_buf;
+	mutex_unlock(&counter->lock);
 	return 0;
 }
 
@@ -291,6 +269,8 @@ int cycle_count_init(struct cycle_counter *counter)
 
 	mutex_init(&counter->lock);
 	counter->last_bucket = -1;
+	counter->initialized = false;
+	counter->last_error = 0;
 	return 0;
 }
 
@@ -304,63 +284,88 @@ int cycle_count_init(struct cycle_counter *counter)
  * or default parameters for the capacity learning algorithm.
  *
  */
-static void cap_learning_post_process(struct cap_learning *cl)
+/* Validate before multiplying capacities by decipercentage factors. */
+static int cap_learning_capacity_limits(struct cap_learning *cl,
+				       int64_t *lower, int64_t *upper)
 {
-	int64_t max_inc_val, min_dec_val, old_cap;
+	int64_t relative_max;
+
+	if (cl->nom_cap_uah <= 0 || cl->nom_cap_uah > INT_MAX ||
+	    cl->dt.max_cap_inc < 0 || cl->dt.max_cap_inc > 1000 ||
+	    cl->dt.max_cap_dec < 0 || cl->dt.max_cap_dec > 1000 ||
+	    cl->dt.max_cap_limit < 0 || cl->dt.max_cap_limit > 1000 ||
+	    cl->dt.min_cap_limit < 0 || cl->dt.min_cap_limit >= 1000 ||
+	    cl->dt.skew_decipct <= -1000 || cl->dt.skew_decipct > 1000 ||
+	    cl->dt.max_cap_uah < 0 || cl->dt.max_cap_uah > INT_MAX)
+		return -EINVAL;
+
+	*lower = 1;
+	*upper = INT_MAX;
+	if (cl->dt.min_cap_limit)
+		*lower = div64_s64(cl->nom_cap_uah *
+				(1000 - cl->dt.min_cap_limit), 1000);
+	if (cl->dt.max_cap_limit) {
+		relative_max = div64_s64(cl->nom_cap_uah *
+				(1000 + cl->dt.max_cap_limit), 1000);
+		if (*upper > relative_max)
+			*upper = relative_max;
+	}
+	if (cl->dt.max_cap_uah > 0 && *upper > cl->dt.max_cap_uah)
+		*upper = cl->dt.max_cap_uah;
+
+	return *lower > 0 && *lower <= *upper ? 0 : -EINVAL;
+}
+
+
+static int cap_learning_post_process(struct cap_learning *cl)
+{
+	int64_t candidate, old_cap, lower, upper, step_lower, step_upper;
 	int rc;
 
-	if (cl->dt.skew_decipct) {
-		pr_debug("applying skew %d on current learnt capacity %lld\n",
-			cl->dt.skew_decipct, cl->final_cap_uah);
-		cl->final_cap_uah = cl->final_cap_uah *
-					(1000 + cl->dt.skew_decipct);
-		cl->final_cap_uah = div64_u64(cl->final_cap_uah, 1000);
+	rc = cap_learning_capacity_limits(cl, &lower, &upper);
+	if (rc < 0)
+		goto out;
+	if (!cl->store_learned_capacity || cl->learned_cap_uah <= 0 ||
+	    cl->learned_cap_uah > INT_MAX || cl->final_cap_uah <= 0 ||
+	    cl->final_cap_uah > INT_MAX) {
+		rc = -ERANGE;
+		goto out;
 	}
-
-	max_inc_val = cl->learned_cap_uah * (1000 + cl->dt.max_cap_inc);
-	max_inc_val = div64_u64(max_inc_val, 1000);
-
-	min_dec_val = cl->learned_cap_uah * (1000 - cl->dt.max_cap_dec);
-	min_dec_val = div64_u64(min_dec_val, 1000);
 
 	old_cap = cl->learned_cap_uah;
-	if (cl->final_cap_uah > max_inc_val)
-		cl->learned_cap_uah = max_inc_val;
-	else if (cl->final_cap_uah < min_dec_val)
-		cl->learned_cap_uah = min_dec_val;
-	else
-		cl->learned_cap_uah = cl->final_cap_uah;
+	candidate = div64_s64(cl->final_cap_uah *
+				(1000 + cl->dt.skew_decipct), 1000);
+	step_lower = div64_s64(old_cap * (1000 - cl->dt.max_cap_dec), 1000);
+	step_upper = div64_s64(old_cap * (1000 + cl->dt.max_cap_inc), 1000);
+	if (candidate < step_lower)
+		candidate = step_lower;
+	if (candidate > step_upper)
+		candidate = step_upper;
 
-	if (cl->dt.max_cap_limit) {
-		max_inc_val = (int64_t)cl->nom_cap_uah * (1000 +
-				cl->dt.max_cap_limit);
-		max_inc_val = div64_u64(max_inc_val, 1000);
-		if (cl->final_cap_uah > max_inc_val) {
-			pr_debug("learning capacity %lld goes above max limit %lld\n",
-				cl->final_cap_uah, max_inc_val);
-			cl->learned_cap_uah = max_inc_val;
-		}
+	/* Bound the accepted candidate, not the unfiltered measurement. */
+	if (candidate < lower)
+		candidate = lower;
+	if (candidate > upper)
+		candidate = upper;
+
+	/* SRAM/SDAM writes are not atomic; a failure is not a learned update. */
+	rc = cl->store_learned_capacity(cl->data, candidate);
+	if (rc < 0) {
+		/* Reinitialize before using counters backed by partially written data. */
+		cl->initialized = false;
+		pr_err("Error in storing learned capacity, rc=%d\n", rc);
+		goto out;
 	}
 
-	if (cl->dt.min_cap_limit) {
-		min_dec_val = (int64_t)cl->nom_cap_uah * (1000 -
-				cl->dt.min_cap_limit);
-		min_dec_val = div64_u64(min_dec_val, 1000);
-		if (cl->final_cap_uah < min_dec_val) {
-			pr_debug("learning capacity %lld goes below min limit %lld\n",
-				cl->final_cap_uah, min_dec_val);
-			cl->learned_cap_uah = min_dec_val;
-		}
-	}
-
-	if (cl->store_learned_capacity) {
-		rc = cl->store_learned_capacity(cl->data, cl->learned_cap_uah);
-		if (rc < 0)
-			pr_err("Error in storing learned_cap_uah, rc=%d\n", rc);
-	}
-
+	cl->learned_cap_uah = candidate;
+	if (cl->successful_updates < UINT_MAX)
+		cl->successful_updates++;
 	pr_debug("final cap_uah = %lld, learned capacity %lld -> %lld uah\n",
 		cl->final_cap_uah, old_cap, cl->learned_cap_uah);
+	rc = 0;
+out:
+	cl->last_error = rc;
+	return rc;
 }
 
 /**
@@ -557,8 +562,9 @@ static int cap_learning_done(struct cap_learning *cl, int batt_soc_cp)
 		}
 	}
 
-	cap_learning_post_process(cl);
+	rc = cap_learning_post_process(cl);
 out:
+	cl->last_error = rc;
 	return rc;
 }
 
@@ -612,7 +618,8 @@ void cap_learning_update(struct cap_learning *cl, int batt_temp,
 
 	mutex_lock(&cl->lock);
 
-	if (batt_temp > cl->dt.max_temp || batt_temp < cl->dt.min_temp ||
+	if (!cl->initialized || batt_temp > cl->dt.max_temp ||
+	    batt_temp < cl->dt.min_temp ||
 		!cl->learned_cap_uah) {
 		cl->active = false;
 		cl->init_cap_uah = 0;
@@ -729,44 +736,56 @@ void cap_learning_abort(struct cap_learning *cl)
  */
 int cap_learning_post_profile_init(struct cap_learning *cl, int64_t nom_cap_uah)
 {
-	int64_t delta_cap_uah, pct_nom_cap_uah;
+	int64_t restored, candidate, delta, lower, upper;
 	int rc;
 
-	if (!cl || !cl->data)
+	if (!cl || !cl->data || !cl->get_learned_capacity ||
+	    !cl->store_learned_capacity)
 		return -EINVAL;
 
 	mutex_lock(&cl->lock);
+	cl->initialized = false;
+	cl->active = false;
+	cl->init_cap_uah = 0;
+	cl->successful_updates = 0;
 	cl->nom_cap_uah = nom_cap_uah;
-	rc = cl->get_learned_capacity(cl->data, &cl->learned_cap_uah);
-	if (rc < 0) {
-		pr_err("Couldn't get learned capacity, rc=%d\n", rc);
+	rc = cap_learning_capacity_limits(cl, &lower, &upper);
+	if (rc < 0)
 		goto out;
+
+	rc = cl->get_learned_capacity(cl->data, &restored);
+	if (rc < 0)
+		goto out;
+
+	candidate = restored;
+	if (candidate <= 0 || candidate > INT_MAX) {
+		candidate = nom_cap_uah;
+	} else {
+		delta = candidate > nom_cap_uah ? candidate - nom_cap_uah :
+						 nom_cap_uah - candidate;
+		if (delta > div64_s64(nom_cap_uah * CAPACITY_DELTA_DECIPCT,
+				     1000))
+			candidate = nom_cap_uah;
 	}
 
-	if (cl->learned_cap_uah != cl->nom_cap_uah) {
-		if (cl->learned_cap_uah == 0)
-			cl->learned_cap_uah = cl->nom_cap_uah;
+	/* Apply bounds even when the restored value equals nominal capacity. */
+	if (candidate < lower)
+		candidate = lower;
+	if (candidate > upper)
+		candidate = upper;
 
-		delta_cap_uah = abs(cl->learned_cap_uah - cl->nom_cap_uah);
-		pct_nom_cap_uah = div64_s64((int64_t)cl->nom_cap_uah *
-				CAPACITY_DELTA_DECIPCT, 1000);
-		/*
-		 * If the learned capacity is out of range by 50% from the
-		 * nominal capacity, then overwrite the learned capacity with
-		 * the nominal capacity.
-		 */
-		if (cl->nom_cap_uah && delta_cap_uah > pct_nom_cap_uah) {
-			pr_debug("learned_cap_uah: %lld is higher than expected, capping it to nominal: %lld\n",
-				cl->learned_cap_uah, cl->nom_cap_uah);
-			cl->learned_cap_uah = cl->nom_cap_uah;
-		}
-
-		rc = cl->store_learned_capacity(cl->data, cl->learned_cap_uah);
+	/* Preserve the existing SDAM-to-SRAM synchronization of aged capacity. */
+	if (restored != nom_cap_uah || candidate != restored) {
+		rc = cl->store_learned_capacity(cl->data, candidate);
 		if (rc < 0)
-			pr_err("Error in storing learned_cap_uah, rc=%d\n", rc);
+			goto out;
 	}
 
+	cl->learned_cap_uah = candidate;
+	cl->initialized = true;
+	rc = 0;
 out:
+	cl->last_error = rc;
 	mutex_unlock(&cl->lock);
 	return rc;
 }
@@ -795,6 +814,9 @@ int cap_learning_init(struct cap_learning *cl)
 		return -EINVAL;
 	}
 
+	cl->initialized = false;
+	cl->successful_updates = 0;
+	cl->last_error = 0;
 	mutex_init(&cl->lock);
 	return 0;
 }

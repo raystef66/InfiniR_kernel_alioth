@@ -25,6 +25,8 @@ struct cycle_counter {
 	bool		started[BUCKET_COUNT];
 	u16		count[BUCKET_COUNT];
 	u8		last_soc[BUCKET_COUNT];
+	bool		initialized;
+	int		last_error;
 	int		id;
 	int		last_bucket;
 	struct mutex	lock;
@@ -41,6 +43,7 @@ struct cl_params {
 	int	max_cap_dec;
 	int	max_cap_limit;
 	int	min_cap_limit;
+	int64_t	max_cap_uah;
 	int	skew_decipct;
 	int	min_delta_batt_soc;
 	int	ibat_flt_thr_ma;
@@ -59,6 +62,9 @@ struct cap_learning {
 	int64_t			learned_cap_uah;
 	int64_t			delta_cap_uah;
 	bool			active;
+	bool			initialized;
+	unsigned int		successful_updates;
+	int			last_error;
 	struct mutex		lock;
 	struct cl_params	dt;
 	bool (*ok_to_begin)(void *data);

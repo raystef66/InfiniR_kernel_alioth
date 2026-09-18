@@ -1,0 +1,20 @@
+What:           /sys/bus/platform/devices/.../capacity_learning
+Date:           September 2026
+Contact:        POCO F3 kernel maintainers
+Description:
+                Read-only FG GEN4 diagnostic snapshot (key=value lines).
+                initialized: profile capacity initialization succeeded.
+                active: a learning interval is in progress.
+                replacement_fallback: the configured replacement was selected.
+                successful_updates: successful learning storage callbacks since
+                profile initialization or a manual CHARGE_FULL write. Restored
+                capacity does not increment this count. Weighted updates are
+                not necessarily full charge cycles. This count is not persistent.
+                last_error: most recent learning/init/manual-write errno, or 0.
+                nominal_uah and learned_uah: algorithm capacities in microamp-hours.
+                maximum_uah: active absolute bound; 0 means disabled.
+                max_increment_decipct: upward correction limit in decipercent.
+                Values are a diagnostic estimate, not battery identification or
+                a manufacturer design-capacity specification. Failed multi-step
+                hardware writes may leave SRAM and SDAM temporarily inconsistent.
+                After a storage failure, learning waits for profile reinitialization.

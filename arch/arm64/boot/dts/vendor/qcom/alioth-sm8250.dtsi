@@ -529,6 +529,8 @@ And public attribution of xiaomi platforms(like alioth and so and)
 	qcom,chg-term-current-ma = <(-220)>;
 	//qcom,step-charging-enable;
 	qcom,sw-jeita-enable;
+	/* Match JEITA to the gauge profile, not the shared 100 kOhm ID. */
+	qcom,jeita-use-bms-battery-type;
 	qcom,chg-warm-th= <480>;
 	qcom,chg-cool-th= <150>;
 	//qcom,suspend-input-on-debug-batt;
@@ -539,7 +541,6 @@ And public attribution of xiaomi platforms(like alioth and so and)
 				4460000  3536000>;
 	mi,six-pin-step-chg;
 	mi,six-pin-soc-th = <22>;
-	mi,fcc-batt-unverify-ua = <2000000>;
 	mi,support-ffc;
 	qcom,lpd-disable;
 	mi,use-bq-pump;
@@ -614,7 +615,16 @@ And public attribution of xiaomi platforms(like alioth and so and)
 	qcom,soc-hi-res;
 	qcom,sun-profile-only;
 	qcom,k11a-batt-profile;
-        qcom,j3s-batt-profile;
+	qcom,j3s-batt-profile;
+	/*
+	 * Unidentified replacement batteries share alioth's ~100 kOhm
+	 * battery ID.  Keep conservative profile/charging limits while
+	 * allowing bounded estimates of usable full-charge capacity.
+	 */
+	qcom,replacement-capacity-learning;
+	qcom,replacement-battery-type = "K11A_custom";
+	qcom,replacement-capacity-max-mah = <5300>;
+	qcom,replacement-cl-max-increment = <20>;
 	qcom,soc_decimal_rate = <
 		0  38
 		10 35
@@ -666,6 +676,7 @@ And public attribution of xiaomi platforms(like alioth and so and)
 		compatible = "xiaomi,usbpd-pm";
 		status = "ok";
 		mi,pd-bat-volt-max = <4460>;
+		mi,respect-bms-voltage-limit;
 		mi,pd-bat-curr-max = <6000>;
 		mi,pd-bus-volt-max = <12000>;
 		mi,pd-bus-curr-max = <3000>;
@@ -683,6 +694,7 @@ And public attribution of xiaomi platforms(like alioth and so and)
 		qcom,batt-id-range-pct = <15>;
 		#include "fg-gen4-batterydata-alioth-FMT-4520mah.dtsi"
 		#include "fg-gen4-batterydata-alioth-GY-4520mah.dtsi"
+		#include "fg-gen4-batterydata-alioth-custom.dtsi"
 		#include "fg-gen4-batterydata-apollo-sun-5000mah.dtsi"
 	};
 
