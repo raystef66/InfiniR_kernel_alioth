@@ -2419,7 +2419,7 @@ int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
 	mem_cgroup_commit_charge(page, memcg, false, false);
 
 	ret = mfill_atomic_install_pte(dst_mm, dst_pmd, dst_vma, dst_addr,
-				       page, true);
+				       page, true, NULL);
 	if (ret)
 		goto out_delete_from_cache;
 
@@ -2434,6 +2434,8 @@ int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
 	return 0;
 out_delete_from_cache:
 	delete_from_page_cache(page);
+	/* The committed charge is released with the final page reference. */
+	goto out_release;
 out_release_uncharge:
 	mem_cgroup_cancel_charge(page, memcg, false);
 out_release:
