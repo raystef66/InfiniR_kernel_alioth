@@ -127,6 +127,20 @@ static int kgsl_pool_size_total(void)
 	return total;
 }
 
+/* Count only pages kgsl_pool_reduce(..., false) is allowed to release. */
+static unsigned long kgsl_pool_size_reclaimable(void)
+{
+	unsigned long total = 0;
+	int i;
+
+	for (i = 0; i < kgsl_num_pools; i++) {
+		if (kgsl_pools[i].allocation_allowed)
+			total += kgsl_pool_size(&kgsl_pools[i]);
+	}
+
+	return total;
+}
+
 /*
  * This will shrink the specified pool by num_pages or its pool_size,
  * whichever is smaller.
@@ -437,26 +451,40 @@ static unsigned long
 kgsl_pool_shrink_scan_objects(struct shrinker *shrinker,
 					struct shrink_control *sc)
 {
-	/* nr represents number of pages to be removed*/
-	int nr = sc->nr_to_scan;
-	int total_pages = kgsl_pool_size_total();
+	unsigned long freed = 0;
+	int i;
 
-	/* Target pages represents new  pool size */
-	int target_pages = (nr > total_pages) ? 0 : (total_pages - nr);
+	/* Reclaim against the budget, not two changing pool-size snapshots. */
+	for (i = kgsl_num_pools - 1; i >= 0 && freed < sc->nr_to_scan; i--) {
+		struct kgsl_page_pool *pool = &kgsl_pools[i];
+		unsigned long nr;
 
-	/* Reduce pool size to target_pages */
-	return kgsl_pool_reduce(target_pages, false);
+		if (!pool->allocation_allowed)
+			continue;
+
+		nr = min_t(unsigned long, sc->nr_to_scan - freed,
+			   kgsl_pool_size(pool));
+		/* Preserve whole compound pages and bound rounding to this pool. */
+		nr = ALIGN(nr, 1UL << pool->pool_order);
+		freed += _kgsl_pool_shrink(pool, nr);
+	}
+
+	/* Pools may have been consumed since count_objects ran. */
+	return freed ? freed : SHRINK_STOP;
 }
 
 static unsigned long
 kgsl_pool_shrink_count_objects(struct shrinker *shrinker,
 					struct shrink_control *sc)
 {
+	unsigned long count;
+
 	/* Trigger mem_workqueue flush to free memory */
 	kgsl_schedule_work(&kgsl_driver.mem_work);
 
-	/* Return total pool size as everything in pool can be freed */
-	return kgsl_pool_size_total();
+	/* Reserved-only pools are kept until driver teardown. */
+	count = kgsl_pool_size_reclaimable();
+	return count ? count : SHRINK_EMPTY;
 }
 
 /* Shrinker callback data*/
