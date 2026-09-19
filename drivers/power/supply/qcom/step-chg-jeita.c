@@ -279,16 +279,24 @@ static int get_step_chg_jeita_setting_from_profile(struct step_chg_info *chip)
 		return -EINVAL;
 	}
 
-	if (!is_bms_available(chip))
+	if (!is_bms_available(chip)) {
+		of_node_put(batt_node);
 		return -ENODEV;
+	}
 
-	power_supply_get_property(chip->bms_psy,
+	rc = power_supply_get_property(chip->bms_psy,
 			POWER_SUPPLY_PROP_RESISTANCE_ID, &prop);
+	if (rc < 0) {
+		of_node_put(batt_node);
+		return rc;
+	}
 	batt_id_ohms = prop.intval;
 
 	/* bms_psy has not yet read the batt_id */
-	if (batt_id_ohms < 0)
+	if (batt_id_ohms < 0) {
+		of_node_put(batt_node);
 		return -EBUSY;
+	}
 
 	if (of_property_read_bool(chip->dev->of_node,
 				"qcom,jeita-use-bms-battery-type")) {
