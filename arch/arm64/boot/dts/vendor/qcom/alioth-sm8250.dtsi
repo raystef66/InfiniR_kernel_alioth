@@ -541,6 +541,8 @@ And public attribution of xiaomi platforms(like alioth and so and)
 				4460000  3536000>;
 	mi,six-pin-step-chg;
 	mi,six-pin-soc-th = <22>;
+	/* Capacity learning does not authenticate a replacement cell. */
+	mi,fcc-batt-unverify-ua = <2000000>;
 	mi,support-ffc;
 	qcom,lpd-disable;
 	mi,use-bq-pump;
