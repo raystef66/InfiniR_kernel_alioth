@@ -9,7 +9,8 @@
 #include "msm_cvp_common.h"
 #include "cvp_core_hfi.h"
 
-int msm_cvp_debug = CVP_ERR | CVP_WARN | CVP_FW;
+/* Continuous firmware debug is opt-in; fatal queue dumps use CVP_ERR. */
+int msm_cvp_debug = CVP_ERR | CVP_WARN;
 EXPORT_SYMBOL(msm_cvp_debug);
 
 int msm_cvp_debug_out = CVP_OUT_PRINTK;
