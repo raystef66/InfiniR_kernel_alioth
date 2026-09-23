@@ -1404,7 +1404,7 @@ static int drm_notifier_callback(struct notifier_block *self,
 	}
 
 	blank = *(int *)(evdata->data);
-	FTS_INFO("DRM event:%lu, blank:%d", event, blank);
+	FTS_DEBUG("DRM event:%lu, blank:%d", event, blank);
 
 	if (blank == MI_DRM_BLANK_UNBLANK) {
 		queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
