@@ -1737,9 +1737,8 @@ int mi_dsi_panel_read_lhbm_white_reg(struct dsi_panel *panel, int fod_lhbm_white
 
 	fod_lhbm_white_cfg = &panel->mi_cfg.fod_lhbm_white_cfg[fod_lhbm_white_state];
 	if (fod_lhbm_white_cfg->update_done) {
-		pr_debug("fod lhbm %d param already updated\n",fod_lhbm_white_state);
-		rc = 0;
-		goto error;
+		pr_debug("fod lhbm %d param already updated\n", fod_lhbm_white_state);
+		return 0;
 	}
 
 	switch(fod_lhbm_white_state) {
@@ -1848,9 +1847,20 @@ int mi_dsi_panel_read_lhbm_white_param(struct dsi_panel *panel)
 {
 	int rc = 0;
 	int retval = 0;
-	struct dsi_display *display = to_dsi_display(panel->host);
+	struct dsi_display *display;
 
-	if (!panel || !panel->cur_mode || !panel->cur_mode->priv_info ||!display) {
+	if (!panel)
+		return -EINVAL;
+
+	if (!panel->mi_cfg.local_hbm_enabled ||
+	    !panel->mi_cfg.fod_lhbm_white_update_flag)
+		return 0;
+
+	if (!panel->host)
+		return -EINVAL;
+
+	display = to_dsi_display(panel->host);
+	if (!panel->cur_mode || !panel->cur_mode->priv_info || !display) {
 		pr_err("invalid params\n");
 		return -EAGAIN;
 	}
