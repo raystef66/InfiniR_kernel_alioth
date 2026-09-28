@@ -885,7 +885,11 @@ config INPUT_SC27XX_VIBRA
 	  To compile this driver as a module, choose M here. The module will
 	  be called sc27xx_vibra.
 
+if MACH_XIAOMI_ALIOTH
 source "drivers/input/misc/aw8697_haptic/Kconfig"
+else
+source "drivers/input/misc/aw8697_haptic_legacy/Kconfig"
+endif
 source "drivers/input/misc/aw86927_haptic/Kconfig"
 source "drivers/input/misc/xiaomi_keyboard/Kconfig"
 
