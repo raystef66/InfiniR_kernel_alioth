@@ -510,6 +510,9 @@ And public attribution of xiaomi platforms(like alioth and so and)
 	status = "ok";
 	aw8697_haptic@5A {
 		compatible = "awinic,aw8697_haptic";
+		/* Restore Alioth stock continuous-mode and F0-detection drive. */
+		vib_cont_drv_lev = <73>;
+		vib_cont_drv_lvl_ov = <73>;
 		vib_bst_vol_default = < 0x11 >;
 		vib_bst_vol_ram = < 0x11 >;
 		vib_bst_vol_rtp = < 0x11 >;

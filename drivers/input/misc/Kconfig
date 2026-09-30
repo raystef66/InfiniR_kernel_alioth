@@ -887,7 +887,8 @@ config INPUT_SC27XX_VIBRA
 
 if MACH_XIAOMI_ALIOTH
 source "drivers/input/misc/aw8697_haptic/Kconfig"
-else
+endif
+if !MACH_XIAOMI_ALIOTH
 source "drivers/input/misc/aw8697_haptic_legacy/Kconfig"
 endif
 source "drivers/input/misc/aw86927_haptic/Kconfig"

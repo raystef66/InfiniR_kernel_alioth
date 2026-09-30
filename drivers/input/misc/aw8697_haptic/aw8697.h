@@ -79,7 +79,7 @@
 			pr_err("[%s]" format, dev_name(dev), ##__VA_ARGS__)
 
 #define aw_dev_info(dev, format, ...) \
-			pr_info("[%s]" format, dev_name(dev), ##__VA_ARGS__)
+			pr_debug("[%s]" format, dev_name(dev), ##__VA_ARGS__)
 
 #define aw_dev_dbg(dev, format, ...) \
 			pr_debug("[%s]" format, dev_name(dev), ##__VA_ARGS__)
@@ -281,7 +281,8 @@ struct aw8697_dts_info {
 	unsigned int parameter1;
 	unsigned int effect_id_boundary;
 	unsigned int effect_max;
-	unsigned int rtp_time[175];
+	unsigned int *rtp_time;
+	unsigned int rtp_time_count;
 	unsigned int trig_config[3][5];
 	unsigned int bst_vol_default;
 	unsigned int bst_vol_ram;
@@ -484,6 +485,8 @@ struct aw8697 {
 	bool vdd_enabled;
 	int effect_type;
 	int effect_id;
+	bool ram_gain_override;
+	u8 ram_gain;
 	int test_val;
 	int is_custom_wave;
 #endif
