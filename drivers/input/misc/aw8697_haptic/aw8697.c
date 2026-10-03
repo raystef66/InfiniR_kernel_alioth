@@ -5612,6 +5612,21 @@ static ssize_t aw8697_custom_wave_show(struct device *dev,
 {
 	struct aw8697 *aw8697 = dev_get_drvdata(dev);
 	ssize_t len = 0;
+	int active = 1;
+	u8 state = 0;
+
+	/* Report queued/startup work as active as well as hardware playback.
+	 * Never block a userspace cancellation behind the RTP worker lock.
+	 */
+	if (!work_busy(&aw8697->rtp_work) && mutex_trylock(&aw8697->lock)) {
+		if (!work_busy(&aw8697->rtp_work)) {
+			int ret = aw8697_i2c_read(aw8697,
+				aw8697->chip_version == AW8697_CHIP_9X ?
+				AW8697_REG_GLB_STATE : AW869XX_REG_GLBRD5, &state);
+			active = ret < 0 ? -1 : !!(state & 0x0f);
+		}
+		mutex_unlock(&aw8697->lock);
+	}
 	len +=
 		snprintf(buf + len, PAGE_SIZE - len, "period_size=%d;",
 		smp_load_acquire(&aw8697->ram_init) ? aw8697->ram.base_addr >> 2 : 0);
@@ -5622,6 +5637,7 @@ static ssize_t aw8697_custom_wave_show(struct device *dev,
 	len +=
 		snprintf(buf + len, PAGE_SIZE - len,
 		"custom_wave_id=%d;abi_version=2;ram_gain_abi=1;", CUSTOME_WAVE_ID);
+	len += snprintf(buf + len, PAGE_SIZE - len, "playback_active=%d;", active);
 	return len;
 }
 
