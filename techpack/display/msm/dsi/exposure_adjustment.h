@@ -32,6 +32,8 @@
 /* Q15 unity: never amplify or clip colors when attenuation is not needed. */
 #define EXPOSURE_ADJUSTMENT_MAX    32768
 
+struct dsi_panel;
+
 void ea_panel_mode_ctrl(struct dsi_panel *panel, bool enable);
 bool ea_panel_is_enabled(void);
 u32 ea_panel_calc_backlight(u32 bl_lvl);

@@ -108,7 +108,9 @@ void ea_panel_mode_ctrl(struct dsi_panel *panel, bool enable)
 
 	pcc_backlight_enable = enable;
 	/* last_level includes zero, so toggling cannot relight a blanked panel. */
-	dsi_panel_set_backlight(panel, last_level);
+	if (dsi_panel_initialized(panel) &&
+	    panel->power_mode == SDE_MODE_DPMS_ON)
+		dsi_panel_set_backlight(panel, last_level);
 }
 
 u32 ea_panel_calc_backlight(u32 bl_lvl)

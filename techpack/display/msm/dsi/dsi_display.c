@@ -12,6 +12,7 @@
 #include "msm_drv.h"
 #include "sde_connector.h"
 #include "msm_mmu.h"
+#include "exposure_adjustment.h"
 #include "dsi_display.h"
 #include "dsi_panel.h"
 #include "dsi_panel_mi.h"
@@ -5076,64 +5077,83 @@ static ssize_t sysfs_hbm_read(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	struct dsi_display *display = dev_get_drvdata(dev);
-	if (!display->panel)
-		return 0;
+
+	if (!display || !display->panel)
+		return -ENODEV;
 
 	return scnprintf(buf, PAGE_SIZE, "%d\n", display->panel->hbm_mode);
 }
 
 static ssize_t sysfs_hbm_write(struct device *dev,
-	    struct device_attribute *attr, const char *buf, size_t count)
+		struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct dsi_display *display = dev_get_drvdata(dev);
-	int ret, hbm_mode;
-        int bl_lvl_before_hbm = display->panel->bl_config.bl_level;
+	int ret, clk_ret, hbm_mode;
+	u32 bl_level;
 
-	if (!display->panel)
-		return -EINVAL;
+	if (!display || !display->panel)
+		return -ENODEV;
 
 	ret = kstrtoint(buf, 10, &hbm_mode);
-	if (ret) {
-		pr_err("kstrtoint failed. ret=%d\n", ret);
+	if (ret)
 		return ret;
-	}
+	if (hbm_mode < 0 || hbm_mode > 1)
+		return -EINVAL;
 
 	mutex_lock(&display->display_lock);
-
+	bl_level = display->panel->bl_config.bl_level;
 	display->panel->hbm_mode = hbm_mode;
 	if (!dsi_panel_initialized(display->panel))
-		goto error;
+		goto unlock;
 
 	ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_ON);
-	if (ret) {
-		pr_err("[%s] failed to enable DSI core clocks, rc=%d\n",
-		       display->name, ret);
-		goto error;
-	}
+	if (ret)
+		goto unlock;
 
 	ret = dsi_panel_apply_hbm_mode(display->panel);
-	if (ret)
-		pr_err("unable to set hbm mode\n");
+	/* Some panels encode a fixed brightness in their HBM-off command. */
+	if (!ret && !hbm_mode && !display->panel->mi_cfg.fod_hbm_enabled)
+		ret = dsi_panel_set_backlight(display->panel, bl_level);
 
-	if (hbm_mode == 0) {
-		/* hbm off cmd sets brightness to an
-		 * arbitrary value; setting it to the right value needs to be done
-		 * separately */
-		dsi_panel_set_backlight(display->panel,bl_lvl_before_hbm);
-	}
-
-	ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
+	clk_ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_OFF);
-	if (ret) {
-		pr_err("[%s] failed to disable DSI core clocks, rc=%d\n",
-		       display->name, ret);
-		goto error;
-	}
-error:
+	if (!ret)
+		ret = clk_ret;
+unlock:
 	mutex_unlock(&display->display_lock);
-	return ret == 0 ? count : ret;
+	return ret ? ret : count;
 }
+
+static ssize_t mdss_fb_set_ea_enable(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct dsi_display *display = dev_get_drvdata(dev);
+	bool enable;
+	int ret;
+
+	if (!display || !display->panel)
+		return -ENODEV;
+	if (strcmp(display->panel->type, "primary"))
+		return -EOPNOTSUPP;
+	ret = kstrtobool(buf, &enable);
+	if (ret)
+		return ret;
+
+	mutex_lock(&display->display_lock);
+	ea_panel_mode_ctrl(display->panel, enable);
+	mutex_unlock(&display->display_lock);
+	return count;
+}
+
+static ssize_t mdss_fb_get_ea_enable(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%d\n", ea_panel_is_enabled());
+}
+
+static DEVICE_ATTR(msm_fb_ea_enable, 0644,
+		mdss_fb_get_ea_enable, mdss_fb_set_ea_enable);
 
 static DEVICE_ATTR(hbm, 0644,
 			sysfs_hbm_read,
@@ -5164,6 +5184,7 @@ static DEVICE_ATTR(fod_ui, 0444,
 static struct attribute *display_fs_attrs[] = {
 	&dev_attr_fod_ui.attr,
 	&dev_attr_hbm.attr,
+	&dev_attr_msm_fb_ea_enable.attr,
 	NULL,
 };
 
