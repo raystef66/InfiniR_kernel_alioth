@@ -81,6 +81,12 @@ static int sdcardfs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		goto out;
 	}
 
+	/* The file was created behind our back on the lower filesystem */
+	if (d_really_is_negative(dentry) && d_really_is_positive(lower_dentry)) {
+		err = 0;
+		goto out;
+	}
+
 	if (dentry < lower_dentry) {
 		spin_lock(&dentry->d_lock);
 		spin_lock_nested(&lower_dentry->d_lock, DENTRY_D_LOCK_NESTED);
