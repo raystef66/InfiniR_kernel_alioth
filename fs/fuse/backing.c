@@ -160,7 +160,8 @@ int fuse_open_backing(struct fuse_bpf_args *fa,
 		return -EINVAL;
 	}
 
-	retval = inode_permission(get_fuse_inode(inode)->backing_inode, mask);
+	retval = inode_permission2(fd->backing_path.mnt,
+				   get_fuse_inode(inode)->backing_inode, mask);
 	if (retval)
 		return retval;
 
@@ -275,9 +276,10 @@ int fuse_create_open_backing(
 		return -EIO;
 
 	inode_lock_nested(dir_fuse_inode->backing_inode, I_MUTEX_PARENT);
-	backing_dentry = lookup_one_len(fa->in_args[1].value,
-					dir_fuse_dentry->backing_path.dentry,
-					strlen(fa->in_args[1].value));
+	backing_dentry = lookup_one_len2(fa->in_args[1].value,
+					 dir_fuse_dentry->backing_path.mnt,
+					 dir_fuse_dentry->backing_path.dentry,
+					 strlen(fa->in_args[1].value));
 	inode_unlock(dir_fuse_inode->backing_inode);
 
 	if (IS_ERR(backing_dentry))
@@ -288,8 +290,9 @@ int fuse_create_open_backing(
 		goto out;
 	}
 
-	err = vfs_create(dir_fuse_inode->backing_inode, backing_dentry,
-			 fci->mode, true);
+	err = vfs_create2(dir_fuse_dentry->backing_path.mnt,
+			  dir_fuse_inode->backing_inode, backing_dentry,
+			  fci->mode, true);
 	if (err)
 		goto out;
 
@@ -1171,7 +1174,9 @@ int fuse_lookup_backing(struct fuse_bpf_args *fa, struct inode *dir,
 	int err;
 
 	inode_lock_nested(dir_backing_inode, I_MUTEX_PARENT);
-	backing_entry = lookup_one_len(entry->d_name.name, dir_backing_entry,
+	backing_entry = lookup_one_len2(entry->d_name.name,
+					dir_fuse_entry->backing_path.mnt,
+					dir_backing_entry,
 					strlen(entry->d_name.name));
 	inode_unlock(dir_backing_inode);
 
@@ -1446,8 +1451,8 @@ int fuse_mknod_backing(
 	mode = fmi->mode;
 	if (!IS_POSIXACL(backing_inode))
 		mode &= ~fmi->umask;
-	err = vfs_mknod(backing_inode, backing_path.dentry,
-			mode, new_decode_dev(fmi->rdev));
+	err = vfs_mknod2(backing_path.mnt, backing_inode, backing_path.dentry,
+			 mode, new_decode_dev(fmi->rdev));
 	inode_unlock(backing_inode);
 	if (err)
 		goto out;
@@ -1523,12 +1528,14 @@ int fuse_mkdir_backing(
 	mode = fmi->mode;
 	if (!IS_POSIXACL(dir_backing_inode))
 		mode &= ~fmi->umask;
-	err = vfs_mkdir(dir_backing_inode, backing_path.dentry, mode);
+	err = vfs_mkdir2(backing_path.mnt, dir_backing_inode, backing_path.dentry,
+			 mode);
 	if (err)
 		goto out;
 	if (d_really_is_negative(backing_path.dentry) ||
 		unlikely(d_unhashed(backing_path.dentry))) {
-		struct dentry *d = lookup_one_len(entry->d_name.name,
+		struct dentry *d = lookup_one_len2(entry->d_name.name,
+					backing_path.mnt,
 					backing_path.dentry->d_parent,
 					entry->d_name.len);
 
@@ -1599,7 +1606,7 @@ int fuse_rmdir_backing(
 	backing_inode = d_inode(backing_parent_dentry);
 
 	inode_lock_nested(backing_inode, I_MUTEX_PARENT);
-	err = vfs_rmdir(backing_inode, backing_path.dentry);
+	err = vfs_rmdir2(backing_path.mnt, backing_inode, backing_path.dentry);
 	inode_unlock(backing_inode);
 
 	dput(backing_parent_dentry);
@@ -1665,9 +1672,10 @@ static int fuse_rename_backing_common(
 		err = -ENOTEMPTY;
 		goto put_parents;
 	}
-	err = vfs_rename(d_inode(old_backing_dir_dentry), old_backing_dentry,
-			 d_inode(new_backing_dir_dentry), new_backing_dentry,
-			 NULL, flags);
+	err = vfs_rename2(old_backing_path.mnt,
+			  d_inode(old_backing_dir_dentry), old_backing_dentry,
+			  d_inode(new_backing_dir_dentry), new_backing_dentry,
+			  NULL, flags);
 	if (err)
 		goto unlock;
 	if (target_inode)
@@ -1814,7 +1822,8 @@ int fuse_unlink_backing(
 	backing_inode = d_inode(backing_parent_dentry);
 
 	inode_lock_nested(backing_inode, I_MUTEX_PARENT);
-	err = vfs_unlink(backing_inode, backing_path.dentry, NULL);
+	err = vfs_unlink2(backing_path.mnt, backing_inode, backing_path.dentry,
+			  NULL);
 	inode_unlock(backing_inode);
 
 	dput(backing_parent_dentry);
@@ -1876,7 +1885,8 @@ int fuse_link_backing(struct fuse_bpf_args *fa, struct dentry *entry,
 	backing_dir_inode = d_inode(backing_dir_dentry);
 
 	inode_lock_nested(backing_dir_inode, I_MUTEX_PARENT);
-	err = vfs_link(backing_old_path.dentry, backing_dir_inode, backing_new_path.dentry, NULL);
+	err = vfs_link2(backing_new_path.mnt, backing_old_path.dentry,
+			backing_dir_inode, backing_new_path.dentry, NULL);
 	inode_unlock(backing_dir_inode);
 	if (err)
 		goto out;
@@ -2096,7 +2106,8 @@ int fuse_setattr_backing(struct fuse_bpf_args *fa,
 	 */
 	new_attr.ia_valid = attr->ia_valid & ~ATTR_FILE;
 	inode_lock(d_inode(backing_path->dentry));
-	res = notify_change(backing_path->dentry, &new_attr, NULL);
+	res = notify_change2(backing_path->mnt, backing_path->dentry, &new_attr,
+			     NULL);
 	inode_unlock(d_inode(backing_path->dentry));
 
 	if (res == 0 && (new_attr.ia_valid & ATTR_SIZE))
@@ -2266,7 +2277,8 @@ int fuse_symlink_backing(
 		return -EBADF;
 
 	inode_lock_nested(backing_inode, I_MUTEX_PARENT);
-	err = vfs_symlink(backing_inode, backing_path.dentry, link);
+	err = vfs_symlink2(backing_path.mnt, backing_inode, backing_path.dentry,
+			   link);
 	inode_unlock(backing_inode);
 	if (err)
 		goto out;
@@ -2470,9 +2482,30 @@ int fuse_access_backing(struct fuse_bpf_args *fa, struct inode *inode, int mask)
 {
 	struct fuse_inode *fi = get_fuse_inode(inode);
 	const struct fuse_access_in *fai = fa->in_args[0].value;
+	struct path backing_path = {};
+	struct dentry *alias;
+	int err;
 
-	return inode_permission(/* For mainline: init_user_ns,*/
-				fi->backing_inode, fai->mask);
+	/*
+	 * Backing filesystems that only implement permission2 (sdcardfs)
+	 * need the vfsmount of the backing path, which lives in the dentry.
+	 */
+	if (!fi->backing_inode->i_op->permission2)
+		return inode_permission(/* For mainline: init_user_ns,*/
+					fi->backing_inode, fai->mask);
+
+	if (fai->mask & MAY_NOT_BLOCK)
+		return -ECHILD;
+
+	alias = d_find_alias(inode);
+	if (alias) {
+		get_fuse_backing_path(alias, &backing_path);
+		dput(alias);
+	}
+
+	err = inode_permission2(backing_path.mnt, fi->backing_inode, fai->mask);
+	path_put(&backing_path);
+	return err;
 }
 
 void *fuse_access_finalize(struct fuse_bpf_args *fa, struct inode *inode, int mask)
