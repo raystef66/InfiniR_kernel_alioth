@@ -31,6 +31,7 @@ static void inherit_derived_state(struct inode *parent, struct inode *child)
 	ci->data->d_uid = pi->data->d_uid;
 	ci->data->under_android = pi->data->under_android;
 	ci->data->under_cache = pi->data->under_cache;
+	ci->data->under_data = pi->data->under_data;
 	ci->data->under_obb = pi->data->under_obb;
 }
 
@@ -45,6 +46,7 @@ void setup_derived_state(struct inode *inode, perm_t perm, userid_t userid,
 	info->data->d_uid = uid;
 	info->data->under_android = false;
 	info->data->under_cache = false;
+	info->data->under_data = false;
 	info->data->under_obb = false;
 }
 
@@ -111,9 +113,11 @@ void get_derived_permission_new(struct dentry *parent, struct dentry *dentry,
 		if (qstr_case_eq(name, &q_data)) {
 			/* App-specific directories inside; let anyone traverse */
 			info->data->perm = PERM_ANDROID_DATA;
+			info->data->under_data = true;
 		} else if (qstr_case_eq(name, &q_sandbox)) {
 			/* App-specific directories inside; let anyone traverse */
 			info->data->perm = PERM_ANDROID_DATA;
+			info->data->under_data = true;
 		} else if (qstr_case_eq(name, &q_obb)) {
 			/* App-specific directories inside; let anyone traverse */
 			info->data->perm = PERM_ANDROID_OBB;
