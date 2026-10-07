@@ -1102,9 +1102,6 @@ static int fg_gen4_get_prop_capacity(struct fg_dev *fg, int *val)
 		return 0;
 	}
 
-	if (fg->empty_restart_fg && (msoc == 0))
-		msoc = EMPTY_REPORT_SOC;
-
 	if (chip->soc_scale_mode) {
 		mutex_lock(&chip->soc_scale_lock);
 		*val = chip->soc_scale_msoc;
@@ -1118,6 +1115,10 @@ static int fg_gen4_get_prop_capacity(struct fg_dev *fg, int *val)
 		else
 			*val = msoc;
 	}
+
+	/* Keep empty-SOC recovery visible until the gauge has recalculated. */
+	if (fg->empty_restart_fg && *val == EMPTY_SOC)
+		*val = EMPTY_REPORT_SOC;
 
 	return 0;
 }
@@ -5383,6 +5384,8 @@ static int fg_psy_get_property(struct power_supply *psy,
 #endif
 	case POWER_SUPPLY_PROP_CAPACITY:
 		rc = fg_gen4_get_prop_capacity(fg, &pval->intval);
+		if (rc < 0)
+			return rc;
 		//Using smooth battery capacity.
 		if (fg->param.batt_soc >= 0 && !chip->rapid_soc_dec_en && !chip->soc_scale_mode)
 			pval->intval = fg->param.batt_soc;
@@ -5400,6 +5403,8 @@ static int fg_psy_get_property(struct power_supply *psy,
 				else
 					shutdown_voltage = SHUTDOWN_DELAY_VOL;
 				rc = fg_get_battery_voltage(fg, &vbatt_uv);
+				if (rc < 0)
+					return rc;
 				if (vbatt_uv/1000 > shutdown_voltage
 					&& fg->charge_status != POWER_SUPPLY_STATUS_CHARGING) {
 					fg->shutdown_delay = true;
@@ -7642,6 +7647,7 @@ static int fg_gen4_probe(struct platform_device *pdev)
 	struct fg_dev *fg;
 	struct power_supply_config fg_psy_cfg = {};
 	int rc, msoc, volt_uv, batt_temp;
+	bool initial_measurements_valid;
 
 	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
 	if (!chip)
@@ -7871,6 +7877,7 @@ static int fg_gen4_probe(struct platform_device *pdev)
 	if (!rc)
 		rc = fg_gen4_get_battery_temp(fg, &batt_temp);
 
+	initial_measurements_valid = !rc;
 	if (!rc)
 		rc = fg_gen4_get_batt_id(chip);
 
@@ -7908,7 +7915,8 @@ static int fg_gen4_probe(struct platform_device *pdev)
 	 * improve user experience when device is shutdown in cold then
 	 * try to power on in normal temperature room.
 	 */
-	if ((volt_uv >= VBAT_RESTART_FG_EMPTY_UV)
+	if (initial_measurements_valid &&
+			(volt_uv >= VBAT_RESTART_FG_EMPTY_UV)
 			&& (msoc == 0) && (batt_temp >= TEMP_THR_RESTART_FG))
 		schedule_delayed_work(&fg->empty_restart_fg_work,
 				msecs_to_jiffies(RESTART_FG_START_WORK_MS));
