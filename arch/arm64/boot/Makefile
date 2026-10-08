@@ -28,7 +28,12 @@ DTB_LIST := $(dtb-y)
 endif
 DTB_OBJS := $(shell find $(obj)/dts/ -name \*.dtb)
 
+ifeq ($(CONFIG_MACH_XIAOMI_SM8250),y)
+include $(srctree)/arch/arm64/boot/dts/vendor/qcom/xiaomi-sm8250-dtbo.mk
+DTBO_OBJS := $(addprefix $(obj)/dts/vendor/qcom/,$(xiaomi-sm8250-dtbo-y))
+else
 DTBO_OBJS := $(shell find $(obj)/dts/ -name \*.dtbo)
+endif
 
 # Add RTIC DTB to the DTB list if RTIC MPGen is enabled
 # Note, we keep this for compatibility with

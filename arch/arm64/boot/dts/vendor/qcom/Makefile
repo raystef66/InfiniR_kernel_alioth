@@ -2,19 +2,8 @@ ifeq ($(CONFIG_MACH_XIAOMI),y)
 
 ifeq ($(CONFIG_MACH_XIAOMI_SM8250),y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-        dtbo-$(CONFIG_ARCH_KONA) += \
-                alioth-sm8250-overlay.dtbo \
-                apollo-sm8250-overlay.dtbo \
-                cas-sm8250-overlay.dtbo \
-                cmi-sm8250-overlay.dtbo \
-                dagu-sm8250-overlay.dtbo \
-                enuma-sm8250-overlay.dtbo \
-                elish-sm8250-overlay.dtbo \
-                lmi-sm8250-overlay.dtbo \
-                munch-sm8250-overlay.dtbo \
-                psyche-sm8250-overlay.dtbo \
-                thyme-sm8250-overlay.dtbo \
-                umi-sm8250-overlay.dtbo
+include $(srctree)/arch/arm64/boot/dts/vendor/qcom/xiaomi-sm8250-dtbo.mk
+dtbo-$(CONFIG_ARCH_KONA) += $(xiaomi-sm8250-dtbo-y)
 
 alioth-sm8250-overlay.dtbo-base := kona.dtb kona-v2.dtb kona-v2.1.dtb
 apollo-sm8250-overlay.dtbo-base := kona.dtb kona-v2.dtb kona-v2.1.dtb
