@@ -23,9 +23,9 @@ LD_COMPAT ?= $(CROSS_COMPILE_COMPAT)ld
 endif
 
 cc32-option = $(call try-run,\
-        $(CC_COMPAT) $(1) -c -x c /dev/null -o "$$TMP",$(1),$(2))
+        $(CC_COMPAT) -Werror $(1) -c -x c /dev/null -o "$$TMP",$(1),$(2))
 cc32-disable-warning = $(call try-run,\
-	$(CC_COMPAT) -W$(strip $(1)) -c -x c /dev/null -o "$$TMP",-Wno-$(strip $(1)))
+	$(CC_COMPAT) -Werror -W$(strip $(1)) -c -x c /dev/null -o "$$TMP",-Wno-$(strip $(1)))
 cc32-as-instr = $(call try-run,\
 	printf "%b\n" "$(1)" | $(CC_COMPAT) $(VDSO_AFLAGS) -c -x assembler -o "$$TMP" -,$(2),$(3))
 
@@ -38,6 +38,10 @@ cc32-as-instr = $(call try-run,\
 
 # KBUILD_CPPFLAGS and NOSTDINC_FLAGS from top-level Makefile
 VDSO_CPPFLAGS := -D__KERNEL__ -nostdinc
+ifeq ($(CONFIG_CC_IS_CLANG), y)
+# This build uses independent flags; retain strict Clang option diagnostics.
+VDSO_CPPFLAGS += -Werror=unknown-warning-option -Werror=ignored-optimization-argument
+endif
 VDSO_CPPFLAGS += -isystem $(shell $(CC_COMPAT) -print-file-name=include 2>/dev/null)
 VDSO_CPPFLAGS += $(LINUXINCLUDE)
 
