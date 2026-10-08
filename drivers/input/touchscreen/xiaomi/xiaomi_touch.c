@@ -167,8 +167,10 @@ int xiaomitouch_register_modedata(struct xiaomi_touch_interface *data)
 	int ret = 0;
 	struct xiaomi_touch_interface *touch_data = NULL;
 
-	if (!touch_pdata)
-		ret = -ENOMEM;
+	if (!data)
+		return -EINVAL;
+	if (!touch_pdata || !touch_pdata->touch_data)
+		return -ENODEV;
 
 	touch_data = touch_pdata->touch_data;
 	MI_TOUCH_LOGI(1, "%s %s: \n", MI_TAG, __func__);
@@ -269,10 +271,9 @@ struct device_attribute *attr, const char *buf, size_t count)
 	int input;
 	int ret;
 
-	ret = sscanf(buf, "%d", &input);
-
-	if (ret < 0)
-		return -EINVAL;
+	ret = kstrtoint(buf, 10, &input);
+	if (ret)
+		return ret;
 
 	pdata->set_update = !!input;
 
@@ -295,12 +296,15 @@ struct device_attribute *attr, const char *buf, size_t count)
 	int input;
 	int ret;
 
-	ret = sscanf(buf, "%d", &input);
+	ret = kstrtoint(buf, 10, &input);
+	if (ret)
+		return ret;
+	/* The platform sysfs interface can precede touchscreen registration. */
+	if (!touch_data || (input && !touch_data->setModeValue) ||
+	    (!input && !touch_data->resetMode))
+		return -ENODEV;
 
-	if (ret < 0)
-		return -EINVAL; // Avoid possible crashes
-
-	if(input) {
+	if (input) {
 		pdata->bump_sample_rate = true;
 		pdata->set_update = true;
 		touch_data->setModeValue(0, 1);
