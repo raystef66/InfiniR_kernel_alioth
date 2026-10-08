@@ -52,9 +52,14 @@ static ssize_t force_fast_charge_show(struct kobject *kobj, struct kobj_attribut
 
 static ssize_t force_fast_charge_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	sscanf(buf, "%d ", &force_fast_charge);
-	if (force_fast_charge < 0 || force_fast_charge > 1)
-		force_fast_charge = 0;
+	int value, ret;
+
+	ret = kstrtoint(buf, 10, &value);
+	if (ret)
+		return ret;
+	if (value < 0 || value > 1)
+		value = 0;
+	force_fast_charge = value;
 
 	return count;
 }
@@ -84,9 +89,6 @@ int force_fast_charge_init(void)
 	}
 
 	force_fast_charge_retval = sysfs_create_group(force_fast_charge_kobj, &force_fast_charge_attr_group);
-
-	if (force_fast_charge_retval)
-		kobject_put(force_fast_charge_kobj);
 
 	if (force_fast_charge_retval)
 		kobject_put(force_fast_charge_kobj);
