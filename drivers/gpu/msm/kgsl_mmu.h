@@ -177,6 +177,7 @@ struct kgsl_mmu {
 extern struct kgsl_mmu_ops kgsl_iommu_ops;
 
 int kgsl_mmu_probe(struct kgsl_device *device);
+int kgsl_mmu_init(struct kgsl_device *device);
 int kgsl_mmu_start(struct kgsl_device *device);
 struct kgsl_pagetable *kgsl_mmu_getpagetable_ptbase(struct kgsl_mmu *mmu,
 						u64 ptbase);

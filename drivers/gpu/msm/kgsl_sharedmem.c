@@ -958,7 +958,7 @@ static int kgsl_shmem_alloc_page(struct page **pages,
 	return 1;
 }
 
-void kgsl_shmem_free_pages(struct kgsl_memdesc *memdesc)
+static void kgsl_shmem_free_pages(struct kgsl_memdesc *memdesc)
 {
 	u32 i, n = 1;
 
@@ -1554,7 +1554,6 @@ EXPORT_SYMBOL(kgsl_sharedmem_alloc_contig);
 static int scm_lock_chunk(struct kgsl_memdesc *memdesc, int lock)
 {
 	struct cp2_lock_req request;
-	unsigned int resp;
 	unsigned int *chunk_list;
 	struct scm_desc desc = {0};
 	int result;
@@ -1598,7 +1597,6 @@ static int scm_lock_chunk(struct kgsl_memdesc *memdesc, int lock)
 	 */
 		result = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
 				   MEM_PROTECT_LOCK_ID2_FLAT), &desc);
-		resp = desc.ret[0];
 
 	kfree(chunk_list);
 	return result;

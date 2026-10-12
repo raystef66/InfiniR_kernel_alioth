@@ -2543,7 +2543,6 @@ static void adreno_dispatcher_work(struct kthread_work *work)
 		container_of(dispatcher, struct adreno_device, dispatcher);
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
 	struct adreno_gpudev *gpudev = ADRENO_GPU_DEVICE(adreno_dev);
-	int count = 0;
 	unsigned int i = 0;
 
 	mutex_lock(&dispatcher->mutex);
@@ -2556,8 +2555,8 @@ static void adreno_dispatcher_work(struct kthread_work *work)
 		struct adreno_dispatcher_drawqueue *drawqueue =
 			DRAWQUEUE(&adreno_dev->ringbuffers[i]);
 
-		count += adreno_dispatch_process_drawqueue(adreno_dev,
-			drawqueue);
+		adreno_dispatch_process_drawqueue(adreno_dev,
+						  drawqueue);
 		if (dispatcher->inflight == 0)
 			break;
 	}

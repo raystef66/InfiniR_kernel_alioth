@@ -1710,8 +1710,8 @@ static void _a6xx_do_crashdump(struct kgsl_device *device)
 	crash_dump_valid = true;
 }
 
-size_t a6xx_snapshot_rscc_registers(struct kgsl_device *device, u8 *buf,
-	size_t remain, void *priv)
+static size_t a6xx_snapshot_rscc_registers(struct kgsl_device *device, u8 *buf,
+					   size_t remain, void *priv)
 {
 	struct kgsl_snapshot_regs *header = (struct kgsl_snapshot_regs *)buf;
 	struct kgsl_snapshot_registers *regs = priv;
@@ -1752,8 +1752,8 @@ size_t a6xx_snapshot_rscc_registers(struct kgsl_device *device, u8 *buf,
 	return (count * 8) + sizeof(*header);
 }
 
-size_t a6xx_snapshot_isense_registers(struct kgsl_device *device, u8 *buf,
-	size_t remain, void *priv)
+static size_t a6xx_snapshot_isense_registers(struct kgsl_device *device, u8 *buf,
+					     size_t remain, void *priv)
 {
 	struct kgsl_snapshot_regs *header = (struct kgsl_snapshot_regs *)buf;
 	struct kgsl_snapshot_registers *regs = priv;

@@ -1057,7 +1057,7 @@ static void adreno_of_get_bimc_iface_clk(struct adreno_device *adreno_dev,
 				"bimc_gpu_clk");
 		if (IS_ERR_OR_NULL(pwr->gpu_bimc_int_clk)) {
 			dev_err(&device->pdev->dev,
-					"dt: Couldn't get bimc_gpu_clk (%d)\n",
+					"dt: Couldn't get bimc_gpu_clk (%ld)\n",
 					PTR_ERR(pwr->gpu_bimc_int_clk));
 			pwr->gpu_bimc_int_clk = NULL;
 		}
@@ -3889,7 +3889,7 @@ static int adreno_readtimestamp(struct kgsl_device *device,
 /**
  * adreno_device_private_create(): Allocate an adreno_device_private structure
  */
-struct kgsl_device_private *adreno_device_private_create(void)
+static struct kgsl_device_private *adreno_device_private_create(void)
 {
 	struct adreno_device_private *adreno_priv =
 			kzalloc(sizeof(*adreno_priv), GFP_KERNEL);
@@ -3906,7 +3906,7 @@ struct kgsl_device_private *adreno_device_private_create(void)
  * and release the perfcounters held by the kgsl fd.
  * @dev_priv: The kgsl device private structure
  */
-void adreno_device_private_destroy(struct kgsl_device_private *dev_priv)
+static void adreno_device_private_destroy(struct kgsl_device_private *dev_priv)
 {
 	struct kgsl_device *device = dev_priv->device;
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);

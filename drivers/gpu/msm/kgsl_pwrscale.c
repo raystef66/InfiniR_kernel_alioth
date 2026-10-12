@@ -521,7 +521,6 @@ int kgsl_devfreq_target(struct device *dev, unsigned long *freq, u32 flags)
 {
 	struct kgsl_device *device = dev_get_drvdata(dev);
 	struct kgsl_pwrctrl *pwr;
-	struct kgsl_pwrlevel *pwr_level;
 	int level;
 	unsigned int i;
 	unsigned long cur_freq, rec_freq;
@@ -548,7 +547,6 @@ int kgsl_devfreq_target(struct device *dev, unsigned long *freq, u32 flags)
 	mutex_lock(&device->mutex);
 	cur_freq = kgsl_pwrctrl_active_freq(pwr);
 	level = pwr->active_pwrlevel;
-	pwr_level = &pwr->pwrlevels[level];
 
 	/* If the governor recommends a new frequency, update it here */
 	if (rec_freq != cur_freq) {

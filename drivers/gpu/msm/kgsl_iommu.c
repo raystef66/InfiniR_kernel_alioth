@@ -256,7 +256,7 @@ static void kgsl_iommu_add_global(struct kgsl_mmu *mmu,
 	global_pt_count++;
 }
 
-struct kgsl_memdesc *kgsl_iommu_get_qdss_global_entry(void)
+static struct kgsl_memdesc *kgsl_iommu_get_qdss_global_entry(void)
 {
 	return &gpu_qdss_desc;
 }
@@ -300,7 +300,7 @@ static inline void kgsl_cleanup_qdss_desc(struct kgsl_mmu *mmu)
 	kgsl_sharedmem_free(&gpu_qdss_desc);
 }
 
-struct kgsl_memdesc *kgsl_iommu_get_qtimer_global_entry(void)
+static struct kgsl_memdesc *kgsl_iommu_get_qtimer_global_entry(void)
 {
 	return &gpu_qtimer_desc;
 }
@@ -612,7 +612,7 @@ static void _get_global_entries(uint64_t faultaddr,
 	}
 }
 
-void __kgsl_get_memory_usage(struct _mem_entry *entry)
+static void __kgsl_get_memory_usage(struct _mem_entry *entry)
 {
 	kgsl_get_memory_usage(entry->name, sizeof(entry->name), entry->flags);
 }
@@ -1141,7 +1141,7 @@ static void _free_pt(struct kgsl_iommu_context *ctx, struct kgsl_pagetable *pt)
 	kfree(iommu_pt);
 }
 
-void _enable_gpuhtw_llc(struct kgsl_mmu *mmu, struct kgsl_iommu_pt *iommu_pt)
+static void _enable_gpuhtw_llc(struct kgsl_mmu *mmu, struct kgsl_iommu_pt *iommu_pt)
 {
 	struct kgsl_device *device = KGSL_MMU_DEVICE(mmu);
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
@@ -1931,16 +1931,8 @@ static int _map_to_one_page(struct kgsl_pagetable *pt, uint64_t addr,
 	if (pages == NULL)
 		return -ENOMEM;
 
-	for (i = 0; i < count; i++) {
-		if (pg_sz != PAGE_SIZE) {
-			struct page *tmp_page = page;
-			int j;
-
-			for (j = 0; j < 16; j++, tmp_page += PAGE_SIZE)
-				pages[i++] = tmp_page;
-		} else
-			pages[i] = page;
-	}
+	for (i = 0; i < count; i++)
+		pages[i] = nth_page(page, i % (pg_sz >> PAGE_SHIFT));
 
 	ret = sg_alloc_table_from_pages(&sgt, pages, count,
 			0, size, GFP_KERNEL);
@@ -2116,7 +2108,7 @@ static int kgsl_iommu_set_pt(struct kgsl_mmu *mmu, struct kgsl_pagetable *pt)
 {
 	struct kgsl_iommu *iommu = _IOMMU_PRIV(mmu);
 	struct kgsl_iommu_context *ctx = &iommu->ctx[KGSL_IOMMU_CONTEXT_USER];
-	uint64_t ttbr0, temp;
+	u64 ttbr0;
 	unsigned int contextidr;
 	unsigned long wait_for_flush;
 
@@ -2133,7 +2125,7 @@ static int kgsl_iommu_set_pt(struct kgsl_mmu *mmu, struct kgsl_pagetable *pt)
 
 	/* memory barrier before reading TTBR0 register */
 	mb();
-	temp = KGSL_IOMMU_GET_CTX_REG_Q(ctx, TTBR0);
+	(void)KGSL_IOMMU_GET_CTX_REG_Q(ctx, TTBR0);
 
 	KGSL_IOMMU_SET_CTX_REG(ctx, TLBIALL, 1);
 	/* make sure the TBLI write completes before we wait */

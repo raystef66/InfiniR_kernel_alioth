@@ -69,7 +69,7 @@ static void kgsl_sync_fence_release(struct dma_fence *fence)
 }
 
 /* Called with ktimeline->lock held */
-bool kgsl_sync_fence_has_signaled(struct dma_fence *fence)
+static bool kgsl_sync_fence_has_signaled(struct dma_fence *fence)
 {
 	struct kgsl_sync_fence *kfence = (struct kgsl_sync_fence *)fence;
 	struct kgsl_sync_timeline *ktimeline = kfence->parent;
@@ -78,7 +78,7 @@ bool kgsl_sync_fence_has_signaled(struct dma_fence *fence)
 	return (timestamp_cmp(ktimeline->last_timestamp, ts) >= 0);
 }
 
-bool kgsl_enable_signaling(struct dma_fence *fence)
+static bool kgsl_enable_signaling(struct dma_fence *fence)
 {
 	return !kgsl_sync_fence_has_signaled(fence);
 }

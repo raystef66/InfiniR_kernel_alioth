@@ -959,7 +959,7 @@ static void a6xx_sptprac_disable(struct adreno_device *adreno_dev)
  * This check should only be performed if the keepalive bit is set or it
  * can be guaranteed that the power state of the GPU will remain unchanged
  */
-bool a6xx_sptprac_is_on(struct adreno_device *adreno_dev)
+static bool a6xx_sptprac_is_on(struct adreno_device *adreno_dev)
 {
 	if (!adreno_has_sptprac_gdsc(adreno_dev))
 		return true;

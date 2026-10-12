@@ -1378,7 +1378,7 @@ static int a6xx_gmu_rpmh_gpu_pwrctrl(struct kgsl_device *device,
 	return ret;
 }
 
-void a6xx_gmu_enable_lm(struct kgsl_device *device)
+static void a6xx_gmu_enable_lm(struct kgsl_device *device)
 {
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	u32 val;

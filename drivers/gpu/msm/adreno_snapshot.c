@@ -560,8 +560,8 @@ struct snapshot_ib_meta {
 	uint64_t ib2size;
 };
 
-void kgsl_snapshot_add_active_ib_obj_list(struct kgsl_device *device,
-		struct kgsl_snapshot *snapshot)
+static void kgsl_snapshot_add_active_ib_obj_list(struct kgsl_device *device,
+						 struct kgsl_snapshot *snapshot)
 {
 	struct adreno_ib_object_list *ib_obj_list;
 	int index = -ENOENT;

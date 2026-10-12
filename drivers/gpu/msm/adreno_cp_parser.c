@@ -644,7 +644,6 @@ static int ib_parse_type7_set_draw_state(struct kgsl_device *device,
 {
 	int size = type7_pkt_size(*ptr);
 	int i;
-	int grp_id;
 	int ret = 0;
 	int flags;
 	uint64_t cmd_stream_dwords;
@@ -658,7 +657,6 @@ static int ib_parse_type7_set_draw_state(struct kgsl_device *device,
 	 * loop counter by 3 always
 	 */
 	for (i = 1; i <= size; i += 3) {
-		grp_id = (ptr[i] & 0x1F000000) >> 24;
 		/* take action based on flags */
 		flags = (ptr[i] & 0x000F0000) >> 16;
 

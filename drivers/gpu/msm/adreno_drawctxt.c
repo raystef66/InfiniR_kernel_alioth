@@ -442,7 +442,6 @@ void adreno_drawctxt_detach(struct kgsl_context *context)
 	struct adreno_device *adreno_dev;
 	struct adreno_gpudev *gpudev;
 	struct adreno_context *drawctxt;
-	struct adreno_ringbuffer *rb;
 	int ret, count, i;
 	struct kgsl_drawobj *list[ADRENO_CONTEXT_DRAWQUEUE_SIZE];
 
@@ -453,7 +452,6 @@ void adreno_drawctxt_detach(struct kgsl_context *context)
 	adreno_dev = ADRENO_DEVICE(device);
 	gpudev = ADRENO_GPU_DEVICE(adreno_dev);
 	drawctxt = ADRENO_CONTEXT(context);
-	rb = drawctxt->rb;
 
 	spin_lock(&drawctxt->lock);
 
