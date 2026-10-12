@@ -1723,6 +1723,8 @@ static int fg_gen4_adjust_ki_coeff_full_soc(struct fg_gen4_chip *chip,
 	} else if (fg->charge_status == POWER_SUPPLY_STATUS_CHARGING) {
 		ki_coeff_full_soc_norm = chip->dt.ki_coeff_full_soc_dischg[0];
 		ki_coeff_full_soc_low = chip->dt.ki_coeff_full_soc_dischg[1];
+	} else {
+		return 0;
 	}
 
 	if (chip->ki_coeff_full_soc[0] == ki_coeff_full_soc_norm &&
@@ -2185,20 +2187,22 @@ static int fg_gen4_get_batt_profile(struct fg_dev *fg)
 		/* if cmdline battery profile vendor is passed to fg driver, use cmdline result */
 		if (is_batt_vendor_gyb && !fg->profile_already_find) {
 			pr_err("is_batt_vendor_gyb is %d\n", is_batt_vendor_gyb);
-			fg->profile_already_find = true;
 			profile_node = of_batterydata_get_best_profile(batt_node,
-					fg->batt_id_ohms / 1000, "j2gybm4n_4780mah");
+					fg->batt_id_ohms / 1000,
+					chip->dt.k11a_batt_profile ?
+					"K11A_GY_4520mah" : "j2gybm4n_4780mah");
 		} else if (is_batt_vendor_nvt && !fg->profile_already_find) {
 			pr_err("is_batt_vendor_nvt is %d\n", is_batt_vendor_nvt);
-			fg->profile_already_find = true;
 			profile_node = of_batterydata_get_best_profile(batt_node,
 					fg->batt_id_ohms / 1000, "j2nvtbm4n_4780mah");
 		} else {
 			pr_err("cmdline of batt profile is not defined, read page0 to reload file\n");
 		}
 		// the battery is xiaomi's batt; FC code, custom id
-		if ((chip->ds_romid[0] == 0x9F) && ((chip->ds_romid[5] & 0xF0) == 0xF0)
-				&& (chip->ds_romid[6] == 04) && !fg->profile_already_find) {
+		if (chip->ds_romid[0] == 0x9F &&
+		    (chip->ds_romid[5] & 0xF0) == 0xF0 &&
+		    chip->ds_romid[6] == 4 && !fg->profile_already_find &&
+		    IS_ERR_OR_NULL(profile_node)) {
 			if ((chip->ds_page0[0] == 'C') || (chip->ds_page0[0] == 'V')) {
 				if (chip->dt.k11a_batt_profile) {
 					profile_node = of_batterydata_get_best_profile(batt_node,
@@ -3257,8 +3261,9 @@ static int fg_gen4_charge_full_update(struct fg_dev *fg)
 		msoc, bsoc, fg->health, fg->charge_status,
 		fg->charge_full);
 	if (fg->charge_done && !fg->charge_full) {
-		if (msoc >= 99 && (fg->health != POWER_SUPPLY_HEALTH_WARM ||
-					fg->health != POWER_SUPPLY_HEALTH_OVERHEAT)) {
+		if (msoc >= 99 &&
+		    fg->health != POWER_SUPPLY_HEALTH_WARM &&
+		    fg->health != POWER_SUPPLY_HEALTH_OVERHEAT) {
 			fg_dbg(fg, FG_STATUS, "Setting charge_full to true\n");
 			fg->charge_full = true;
 		} else {
@@ -3530,8 +3535,8 @@ static int fg_gen4_esr_fast_calib_config(struct fg_gen4_chip *chip, bool en)
 	if (en) {
 		/* Set ESR fast calibration timer to 50 seconds as default */
 		esr_fast_cal_ms = 50000;
-		if (chip->dt.esr_timer_chg_fast > 0 &&
-			chip->dt.delta_esr_disable_count > 0)
+		if (chip->dt.esr_timer_chg_fast[TIMER_MAX] > 0 &&
+		    chip->dt.delta_esr_disable_count > 0)
 			esr_fast_cal_ms = 3 * chip->dt.delta_esr_disable_count *
 				chip->dt.esr_timer_chg_fast[TIMER_MAX] * 1000;
 
@@ -4256,8 +4261,8 @@ static void esr_calib_work(struct work_struct *work)
 	struct fg_gen4_chip *chip = container_of(work, struct fg_gen4_chip,
 				    esr_calib_work);
 	struct fg_dev *fg = &chip->fg;
-	int rc, fg_esr_meas_diff;
-	s16 esr_raw, esr_char_raw, esr_delta, esr_meas_diff, esr_filtered;
+	int rc, fg_esr_meas_diff, esr_delta, esr_meas_diff, esr_filtered;
+	s16 esr_raw, esr_char_raw;
 	u8 buf[2];
 
 	mutex_lock(&chip->esr_calib_lock);
@@ -4316,7 +4321,7 @@ static void esr_calib_work(struct work_struct *work)
 		pr_err("Error in reading ESR_DELTA_DISCHG, rc=%d\n", rc);
 		goto out;
 	}
-	esr_delta = buf[1] << 8 | buf[0];
+	esr_delta = (s16)(buf[1] << 8 | buf[0]);
 	fg_dbg(fg, FG_STATUS, "esr_raw: 0x%x esr_char_raw: 0x%x esr_meas_diff: 0x%x esr_delta: 0x%x\n",
 		esr_raw, esr_char_raw, esr_meas_diff, esr_delta);
 
@@ -4571,7 +4576,7 @@ static void battery_authentic_work(struct work_struct *work)
 
 	rc = power_supply_get_property(fg->fg_psy,
 					POWER_SUPPLY_PROP_AUTHENTIC, &pval);
-	if (pval.intval != true) {
+	if (rc < 0 || pval.intval != 1) {
 		retry_battery_authentic_result++;
 		if (retry_battery_authentic_result < BATTERY_AUTHENTIC_COUNT_MAX) {
 			pr_err("battery authentic work begin to restart.\n");
