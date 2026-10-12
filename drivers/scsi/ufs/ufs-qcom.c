@@ -1085,7 +1085,6 @@ static void ufs_qcom_get_speed_mode(struct ufs_pa_layer_attr *p, char *result)
 {
 	int gear = max_t(u32, p->gear_rx, p->gear_tx);
 	int lanes = max_t(u32, p->lane_rx, p->lane_tx);
-	int pwr;
 
 	/* default to PWM Gear 1, Lane 1 if power mode is not initialized */
 	if (!gear)
@@ -1095,15 +1094,12 @@ static void ufs_qcom_get_speed_mode(struct ufs_pa_layer_attr *p, char *result)
 		lanes = 1;
 
 	if (!p->pwr_rx && !p->pwr_tx) {
-		pwr = SLOWAUTO_MODE;
 		snprintf(result, BUS_VECTOR_NAME_LEN, "MIN");
 	} else if (p->pwr_rx == FAST_MODE || p->pwr_rx == FASTAUTO_MODE ||
 		 p->pwr_tx == FAST_MODE || p->pwr_tx == FASTAUTO_MODE) {
-		pwr = FAST_MODE;
 		snprintf(result, BUS_VECTOR_NAME_LEN, "%s_R%s_G%d_L%d", "HS",
 			 p->hs_rate == PA_HS_MODE_B ? "B" : "A", gear, lanes);
 	} else {
-		pwr = SLOW_MODE;
 		snprintf(result, BUS_VECTOR_NAME_LEN, "%s_G%d_L%d",
 			 "PWM", gear, lanes);
 	}

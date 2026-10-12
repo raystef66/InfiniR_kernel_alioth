@@ -2860,15 +2860,11 @@ static ssize_t ufshcd_hibern8_on_idle_delay_store(struct device *dev,
 {
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 	unsigned long flags, value;
-	bool change = true;
 
 	if (kstrtoul(buf, 0, &value))
 		return -EINVAL;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->hibern8_on_idle.delay_ms == value)
-		change = false;
-
 	if (value >= hba->clk_gating.delay_ms_pwr_save ||
 	    value >= hba->clk_gating.delay_ms_perf) {
 		dev_err(hba->dev, "hibern8_on_idle_delay (%lu) can not be >= to clkgate_delay_ms_pwr_save (%lu) and clkgate_delay_ms_perf (%lu)\n",

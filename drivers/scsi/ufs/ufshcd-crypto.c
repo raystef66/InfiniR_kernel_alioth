@@ -258,7 +258,7 @@ static const struct keyslot_mgmt_ll_ops ufshcd_ksm_ops = {
 	.keyslot_evict		= ufshcd_crypto_keyslot_evict,
 };
 
-enum blk_crypto_mode_num ufshcd_blk_crypto_mode_num_for_alg_dusize(
+static enum blk_crypto_mode_num ufshcd_blk_crypto_mode_num_for_alg_dusize(
 					enum ufs_crypto_alg ufs_crypto_alg,
 					enum ufs_crypto_key_size key_size)
 {
