@@ -361,8 +361,14 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 						&(bcn_report->bcnRepBssInfo[j].
 						pBuf),
 						&out_ie_len);
-			if (QDF_STATUS_E_FAILURE == fill_ie_status)
+			if (QDF_IS_STATUS_ERROR(fill_ie_status)) {
+				if (++bss_counter + j >= bss_count) {
+					cur_result = NULL;
+					break;
+				}
+				cur_result = result_arr[bss_counter + j];
 				continue;
+			}
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
 			sme_debug("Bssid"QDF_MAC_ADDR_FMT" Freq:%d Rssi:%d",

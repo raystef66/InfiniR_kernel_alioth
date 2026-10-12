@@ -4592,23 +4592,30 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 				const struct csr_roam_info *roam_info)
 {
 	union iwreq_data wrqu;
+	const struct ese_bcn_report_rsp *report;
 	char buf[IW_CUSTOM_MAX];
 	char *pos = buf;
-	int nBytes = 0, freeBytes = IW_CUSTOM_MAX;
-	uint8_t i = 0, len = 0;
+	int nBytes = 0, freeBytes = IW_CUSTOM_MAX, header_len;
+	uint8_t i = 0;
+	unsigned int len = 0, num_bss;
 	uint8_t tot_bcn_ieLen = 0;  /* total size of the beacon report data */
 	uint8_t lastSent = 0, sendBss = 0;
 	int bcnRepFieldSize =
-		sizeof(roam_info->pEseBcnReportRsp->bcnRepBssInfo[0].
+		sizeof(report->bcnRepBssInfo[0].
 		       bcnReportFields);
 	uint8_t ieLenByte = 1;
-	/*
-	 * CCXBCNREP=meas_tok<sp>flag<sp>no_of_bss<sp>tot_bcn_ie_len = 18 bytes
-	 */
-#define ESEBCNREPHEADER_LEN  (18)
-
-	if ((!adapter) || (!roam_info))
+	if (!adapter || !roam_info)
 		return;
+	report = roam_info->pEseBcnReportRsp;
+	if (!report)
+		return;
+
+	num_bss = report->numBss;
+	if (num_bss >
+	    QDF_ARRAY_SIZE(report->bcnRepBssInfo)) {
+		hdd_err("Invalid beacon report BSS count");
+		return;
+	}
 
 	/*
 	 * Custom event can pass maximum of 256 bytes of data,
@@ -4621,55 +4628,67 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 	 * CCXBCNREP=meas_tok<sp>flag<sp>no_of_bss<sp>tot_bcn_ie_len = 18 bytes
 	 */
 
-	if ((roam_info->pEseBcnReportRsp->flag >> 1)
-	    && (!roam_info->pEseBcnReportRsp->numBss)) {
+	if ((report->flag >> 1) && !num_bss) {
 		hdd_debug("Measurement Done but no scan results");
 		/* If the measurement is none and no scan results found,
 		 * indicate the supplicant about measurement done
 		 */
 		hdd_indicate_ese_bcn_report_no_results(
 				adapter,
-				roam_info->pEseBcnReportRsp->
+				report->
 				measurementToken,
-				roam_info->pEseBcnReportRsp->flag,
-				roam_info->pEseBcnReportRsp->numBss);
+				report->flag,
+				num_bss);
 	} else {
-		while (lastSent < roam_info->pEseBcnReportRsp->numBss) {
+		while (lastSent < num_bss) {
 			memset(&wrqu, '\0', sizeof(wrqu));
 			memset(buf, '\0', sizeof(buf));
 			tot_bcn_ieLen = 0;
 			sendBss = 0;
 			pos = buf;
 			freeBytes = IW_CUSTOM_MAX;
+			nBytes = snprintf(buf, sizeof(buf), "CCXBCNREP=%d %d %d ",
+					  report->measurementToken,
+					  report->flag,
+					  num_bss);
+			header_len = nBytes + sizeof(tot_bcn_ieLen);
+			if (nBytes < 0 || header_len >= IW_CUSTOM_MAX)
+				return;
 
 			for (i = lastSent;
-			     i < roam_info->pEseBcnReportRsp->numBss; i++) {
+			     i < num_bss; i++) {
+				if (report->bcnRepBssInfo[i].ieLen &&
+				    !report->bcnRepBssInfo[i].pBuf)
+					return;
 				len =
 					bcnRepFieldSize + ieLenByte +
-					roam_info->pEseBcnReportRsp->
+					report->
 					bcnRepBssInfo[i].ieLen;
 				if ((len + tot_bcn_ieLen) >
-				    (IW_CUSTOM_MAX - ESEBCNREPHEADER_LEN)) {
+				    (IW_CUSTOM_MAX - header_len)) {
 					break;
 				}
 				tot_bcn_ieLen += len;
 				sendBss++;
 				hdd_debug("i(%d) sizeof bcnReportFields(%d) IeLength(%d) Length of Ie(%d) totLen(%d)",
 					 i, bcnRepFieldSize, 1,
-					 roam_info->pEseBcnReportRsp->
+					 report->
 					 bcnRepBssInfo[i].ieLen, tot_bcn_ieLen);
 			}
 
+			if (!sendBss)
+				return;
+
 			hdd_debug("Sending %d BSS Info", sendBss);
 			hdd_debug("CCXBCNREP=%d %d %d %d",
-				 roam_info->pEseBcnReportRsp->measurementToken,
-				 roam_info->pEseBcnReportRsp->flag, sendBss,
+				 report->measurementToken,
+				 report->flag, sendBss,
 				 tot_bcn_ieLen);
 
 			nBytes = snprintf(pos, freeBytes, "CCXBCNREP=%d %d %d ",
-					  roam_info->pEseBcnReportRsp->
+					  report->
 					  measurementToken,
-					  roam_info->pEseBcnReportRsp->flag,
+					  report->flag,
 					  sendBss);
 			pos += nBytes;
 			freeBytes -= nBytes;
@@ -4680,104 +4699,86 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 			pos += sizeof(tot_bcn_ieLen);
 			freeBytes -= sizeof(tot_bcn_ieLen);
 
-			for (i = 0; i < sendBss; i++) {
+			for (i = lastSent; i < lastSent + sendBss && i < num_bss; i++) {
 				hdd_debug("ChanNum(%d) Spare(%d) MeasDuration(%d)"
 				       " PhyType(%d) RecvSigPower(%d) ParentTSF(%u)"
 				       " TargetTSF[0](%u) TargetTSF[1](%u) BeaconInterval(%u)"
 				       " CapabilityInfo(%d) BSSID(%02X:%02X:%02X:%02X:%02X:%02X)",
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       ChanNum,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Spare,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       MeasDuration,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       PhyType,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       RecvSigPower,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       ParentTsf,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       TargetTsf[0],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       TargetTsf[1],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       BcnInterval,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       CapabilityInfo,
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[0],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[1],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[2],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[3],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[4],
-				       roam_info->pEseBcnReportRsp->
-				       bcnRepBssInfo[i +
-						     lastSent].bcnReportFields.
+				       report->
+				       bcnRepBssInfo[i].bcnReportFields.
 				       Bssid[5]);
 
 				/* bcn report fields are copied */
 				len =
-					sizeof(roam_info->pEseBcnReportRsp->
-					       bcnRepBssInfo[i +
-							     lastSent].
+					sizeof(report->
+					       bcnRepBssInfo[i].
 					       bcnReportFields);
 				qdf_mem_copy(pos,
 					     (char *)&roam_info->
-					     pEseBcnReportRsp->bcnRepBssInfo[i +
-									     lastSent].
+					     pEseBcnReportRsp->bcnRepBssInfo[i].
 					     bcnReportFields, len);
 				pos += len;
 				freeBytes -= len;
 
 				/* Add 1 byte of ie len */
 				len =
-					roam_info->pEseBcnReportRsp->
-					bcnRepBssInfo[i + lastSent].ieLen;
-				qdf_mem_copy(pos, (char *)&len, sizeof(len));
-				pos += sizeof(len);
-				freeBytes -= sizeof(len);
+					report->
+					bcnRepBssInfo[i].ieLen;
+				qdf_mem_copy(pos,
+					     &report->bcnRepBssInfo[i].ieLen, ieLenByte);
+				pos += ieLenByte;
+				freeBytes -= ieLenByte;
 
 				/* copy IE from scan results */
-				qdf_mem_copy(pos,
-					     (char *)roam_info->
-					     pEseBcnReportRsp->bcnRepBssInfo[i +
-									     lastSent].
-					     pBuf, len);
+				if (len)
+					qdf_mem_copy(pos,
+						     report->bcnRepBssInfo[i].pBuf,
+						     len);
 				pos += len;
 				freeBytes -= len;
 			}
