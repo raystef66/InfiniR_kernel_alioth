@@ -141,18 +141,18 @@ void dwc3_dbg_dma_unmap(struct dwc3 *dwc, u8 ep_num, struct dwc3_request *req)
 {
 	if (req->request.num_sgs > 0) {
 		ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-			"%02X-%-3.3s %-25.25s 0x%pK 0x%lx %u 0x%lx mapped_sgs:%d queued_sgs:%d %d",
+			"%02X-%-3.3s %-25.25s 0x%pK %pad %u %pad mapped_sgs:%d queued_sgs:%d %lu",
 			ep_num >> 1, ep_num & 1 ? "IN":"OUT", "UNMAP",
-			&req->request, sg_dma_address(req->start_sg),
-			sg_dma_len(req->start_sg), req->trb_dma,
+			&req->request, &sg_dma_address(req->start_sg),
+			sg_dma_len(req->start_sg), &req->trb_dma,
 			req->request.num_mapped_sgs, req->num_queued_sgs,
 			req->trb->ctrl & DWC3_TRB_CTRL_HWO);
 	} else {
 		ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-			"%02X-%-3.3s %-25.25s 0x%pK 0x%lx %u 0x%lx %d %u",
+			"%02X-%-3.3s %-25.25s 0x%pK %pad %u %pad %lu %u",
 			ep_num >> 1, ep_num & 1 ? "IN":"OUT", "UNMAP",
-			&req->request, req->request.dma, req->request.length,
-			req->trb_dma, req->trb->ctrl & DWC3_TRB_CTRL_HWO,
+			&req->request, &req->request.dma, req->request.length,
+			&req->trb_dma, req->trb->ctrl & DWC3_TRB_CTRL_HWO,
 			req->request.actual);
 	}
 }
@@ -161,17 +161,17 @@ void dwc3_dbg_dma_map(struct dwc3 *dwc, u8 ep_num, struct dwc3_request *req)
 {
 	if (req->request.num_sgs > 0) {
 		ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-			"%02X-%-3.3s %-25.25s 0x%pK 0x%lx %u 0x%lx mapped_sgs:%d queued_sgs:%d",
+			"%02X-%-3.3s %-25.25s 0x%pK %pad %u %pad mapped_sgs:%d queued_sgs:%d",
 			ep_num >> 1, ep_num & 1 ? "IN":"OUT", "MAP",
-			&req->request, sg_dma_address(req->start_sg),
-			sg_dma_len(req->start_sg), req->trb_dma,
+			&req->request, &sg_dma_address(req->start_sg),
+			sg_dma_len(req->start_sg), &req->trb_dma,
 			req->request.num_mapped_sgs, req->num_queued_sgs);
 	} else {
 		ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-			"%02X-%-3.3s %-25.25s 0x%pK 0x%lx %u 0x%lx",
+			"%02X-%-3.3s %-25.25s 0x%pK %pad %u %pad",
 			ep_num >> 1, ep_num & 1 ? "IN":"OUT", "MAP",
-			&req->request, req->request.dma, req->request.length,
-			req->trb_dma);
+			&req->request, &req->request.dma, req->request.length,
+			&req->trb_dma);
 	}
 }
 
@@ -181,9 +181,9 @@ void dwc3_dbg_dma_dequeue(struct dwc3 *dwc, u8 ep_num, struct dwc3_request *req)
 		return;
 
 	ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-		"%02X-%-3.3s %-25.25s 0x%pK 0x%lx 0x%lx", ep_num >> 1,
+		"%02X-%-3.3s %-25.25s 0x%pK %pad %pad", ep_num >> 1,
 		ep_num & 1 ? "IN":"OUT", "DEQUEUE", &req->request,
-		req->request.dma, req->trb_dma);
+		&req->request.dma, &req->trb_dma);
 }
 
 void dwc3_dbg_dma_queue(struct dwc3 *dwc, u8 ep_num, struct dwc3_request *req)

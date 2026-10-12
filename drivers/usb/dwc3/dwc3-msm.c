@@ -162,7 +162,7 @@ static const char *const state_names[] = {
 	[DRD_STATE_HOST] = "host",
 };
 
-const char *dwc3_drd_state_string(enum dwc3_drd_state state)
+static const char *dwc3_drd_state_string(enum dwc3_drd_state state)
 {
 	if (state < 0 || state >= ARRAY_SIZE(state_names))
 		return "UNKNOWN";

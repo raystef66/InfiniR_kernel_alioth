@@ -1681,4 +1681,6 @@ extern void dwc3_set_notifier(
 extern int dwc3_notify_event(struct dwc3 *dwc3, unsigned int event,
 						unsigned int value);
 void dwc3_usb3_phy_suspend(struct dwc3 *dwc, int suspend);
+void usb_reset_host(void);
+
 #endif /* __DRIVERS_USB_DWC3_CORE_H */

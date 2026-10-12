@@ -1538,7 +1538,7 @@ static int dwc3_probe(struct platform_device *pdev)
 
 	dwc->reset = devm_reset_control_get_optional_shared(dev, NULL);
 	if (IS_ERR(dwc->reset))
-		goto skip_clk_reset;
+		return PTR_ERR(dwc->reset);
 
 	if (dev->of_node) {
 		dwc->num_clks = ARRAY_SIZE(dwc3_core_clks);
@@ -1566,7 +1566,6 @@ static int dwc3_probe(struct platform_device *pdev)
 	if (ret)
 		goto unprepare_clks;
 
-skip_clk_reset:
 	platform_set_drvdata(pdev, dwc);
 
 	init_waitqueue_head(&dwc->wait_linkstate);
