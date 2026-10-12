@@ -1075,7 +1075,7 @@ static void dsi_pll_disable(struct dsi_pll_vco_clk *vco)
 	rsc->pll_on = false;
 }
 
-long vco_10nm_round_rate(struct clk_hw *hw, unsigned long rate,
+static long vco_10nm_round_rate(struct clk_hw *hw, unsigned long rate,
 				unsigned long *parent_rate)
 {
 	unsigned long rrate = rate;
