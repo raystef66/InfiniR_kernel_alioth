@@ -130,17 +130,19 @@ static int32_t encode_qmi(int32_t val)
 		return 0;
 
 	temp_val = val = val / 1000;
+	if (!val)
+		return 0;
 	if (val < 0) {
 		temp_val *= -1;
-		local_val |= 1 << QMI_FL_SIGN_BIT;
+		local_val |= BIT(QMI_FL_SIGN_BIT);
 	}
 	shift = find_last_bit(&temp_val, sizeof(temp_val) * 8);
 	local_val |= ((shift + 127) << QMI_MANTISSA_MSB);
 	temp_val &= ~(1 << shift);
 
 	local_val |= temp_val << (QMI_MANTISSA_MSB - shift);
-	pr_debug("inp:%d shift:%d out:%x temp_val:%x\n",
-			val, shift, local_val, temp_val);
+	pr_debug("inp:%d shift:%d out:%x temp_val:%lx\n",
+		 val, shift, local_val, temp_val);
 
 	return local_val;
 }
@@ -227,8 +229,8 @@ static void qmi_ts_update_temperature(struct qmi_ts_instance *ts,
 	}
 }
 
-void qmi_ts_ind_cb(struct qmi_handle *qmi, struct sockaddr_qrtr *sq,
-				   struct qmi_txn *txn, const void *decoded)
+static void qmi_ts_ind_cb(struct qmi_handle *qmi, struct sockaddr_qrtr *sq,
+			  struct qmi_txn *txn, const void *decoded)
 {
 	const struct ts_temp_report_ind_msg_v01 *ind_msg = decoded;
 	uint8_t notify = 0;

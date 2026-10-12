@@ -19,7 +19,7 @@ static struct qmi_elem_info ts_sensor_type_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
@@ -27,7 +27,7 @@ struct qmi_elem_info ts_get_sensor_list_req_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
@@ -76,7 +76,7 @@ struct qmi_elem_info ts_get_sensor_list_resp_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
@@ -165,7 +165,7 @@ struct qmi_elem_info ts_register_notification_temp_req_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
@@ -184,7 +184,7 @@ struct qmi_elem_info ts_register_notification_temp_resp_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
@@ -247,7 +247,7 @@ struct qmi_elem_info ts_temp_report_ind_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_EOTI,
 		.array_type       = NO_ARRAY,
-		.array_type       = QMI_COMMON_TLV_TYPE,
+		.tlv_type         = QMI_COMMON_TLV_TYPE,
 	},
 };
 
