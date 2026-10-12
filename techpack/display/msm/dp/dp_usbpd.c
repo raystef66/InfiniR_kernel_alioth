@@ -479,7 +479,7 @@ error:
 	return rc;
 }
 
-int dp_usbpd_register(struct dp_hpd *dp_hpd)
+static int dp_usbpd_register(struct dp_hpd *dp_hpd)
 {
 	struct dp_usbpd *dp_usbpd;
 	struct dp_usbpd_private *usbpd;
