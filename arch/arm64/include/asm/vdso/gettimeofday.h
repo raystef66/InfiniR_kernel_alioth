@@ -15,6 +15,11 @@
 
 #define VDSO_HAS_TIME			1
 
+int __kernel_clock_gettime(clockid_t clock, struct __kernel_timespec *ts);
+int __kernel_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz);
+int __kernel_clock_getres(clockid_t clock_id, struct __kernel_timespec *res);
+time_t __kernel_time(time_t *time);
+
 static __always_inline
 int gettimeofday_fallback(struct __kernel_old_timeval *_tv,
 			  struct timezone *_tz)
