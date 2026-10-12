@@ -110,9 +110,6 @@ int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
 	char *bp;
 	char data;
 	int i, bpp;
-	char *dbgbp;
-
-	dbgbp = buf;
 	bp = buf;
 	/* First 7 bytes are cmd header */
 	*bp++ = 0x0A;
@@ -753,17 +750,16 @@ int dsi_panel_update_backlight(struct dsi_panel *panel,
 {
 	int rc = 0;
 	struct mipi_dsi_device *dsi;
-	struct dsi_panel_mi_cfg *mi_cfg = &panel->mi_cfg;
+	struct dsi_panel_mi_cfg *mi_cfg;
 	static int use_count = 10;
-	struct dsi_backlight_config *bl;
 
 	if (!panel || (bl_lvl > 0xffff)) {
 		DSI_ERR("invalid params\n");
 		return -EINVAL;
 	}
 
+	mi_cfg = &panel->mi_cfg;
 	dsi = &panel->mipi_device;
-	bl = &panel->bl_config;
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
@@ -835,7 +831,7 @@ static int dsi_panel_update_pwm_backlight(struct dsi_panel *panel,
 
 	rc = pwm_config(bl->pwm_bl, duty, period_ns);
 	if (rc) {
-		DSI_ERR("[%s] failed to change pwm config, rc=\n", panel->name,
+		DSI_ERR("[%s] failed to change pwm config, rc=%d\n", panel->name,
 			rc);
 		goto error;
 	}
@@ -849,7 +845,7 @@ static int dsi_panel_update_pwm_backlight(struct dsi_panel *panel,
 	if (!bl->pwm_enabled) {
 		rc = pwm_enable(bl->pwm_bl);
 		if (rc) {
-			DSI_ERR("[%s] failed to enable pwm, rc=\n", panel->name,
+			DSI_ERR("[%s] failed to enable pwm, rc=%d\n", panel->name,
 				rc);
 			goto error;
 		}
@@ -1158,11 +1154,9 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	int rc = 0;
 	u64 tmp64 = 0;
 	struct dsi_display_mode *display_mode;
-	struct dsi_display_mode_priv_info *priv_info;
 
 	display_mode = container_of(mode, struct dsi_display_mode, timing);
 
-	priv_info = display_mode->priv_info;
 
 	rc = utils->read_u64(utils->data,
 			"qcom,mdss-dsi-panel-clockrate", &tmp64);
@@ -2852,17 +2846,17 @@ static int dsi_panel_parse_fod_dim_lut(struct dsi_panel *panel,
 
 	len = utils->count_u32_elems(utils->data, "mi,mdss-dsi-dimlayer-brightness-alpha-lut");
 	if (len <= 0 || len % BRIGHTNESS_ALPHA_PAIR_LEN) {
+		rc = -EINVAL;
 		pr_err("[%s] invalid number of elements, rc=%d\n",
 				panel->name, rc);
-		rc = -EINVAL;
 		goto count_fail;
 	}
 
 	array = kcalloc(len, sizeof(u32), GFP_KERNEL);
 	if (!array) {
+		rc = -ENOMEM;
 		pr_err("[%s] failed to allocate memory, rc=%d\n",
 				panel->name, rc);
-		rc = -ENOMEM;
 		goto alloc_array_fail;
 	}
 
