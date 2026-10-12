@@ -7,6 +7,7 @@
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
+#include <linux/cpu_cooling.h>
 #include <linux/of_device.h>
 #include <linux/suspend.h>
 

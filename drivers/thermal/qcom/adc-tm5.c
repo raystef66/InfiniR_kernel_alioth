@@ -422,7 +422,7 @@ static int32_t adc_tm5_manage_thresholds(struct adc_tm_sensor *sensor)
 }
 
 /* Used to notify non-thermal clients of threshold crossing */
-void notify_adc_tm5_fn(struct adc_tm_sensor *adc_tm)
+static void notify_adc_tm5_fn(struct adc_tm_sensor *adc_tm)
 {
 	struct adc_tm_client_info *client_info = NULL;
 	struct adc_tm_chip *chip;

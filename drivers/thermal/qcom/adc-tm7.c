@@ -342,7 +342,7 @@ static int32_t adc_tm7_manage_thresholds(struct adc_tm_sensor *sensor)
 }
 
 /* Used to notify non-thermal clients of threshold crossing */
-void notify_adc_tm7_fn(struct adc_tm_sensor *adc_tm)
+static void notify_adc_tm7_fn(struct adc_tm_sensor *adc_tm)
 {
 	struct adc_tm_client_info *client_info = NULL;
 	struct adc_tm_chip *chip;
@@ -495,7 +495,7 @@ static int32_t adc_tm7_disable_chan_meas(struct adc_tm_chip *chip,
 					struct adc_tm_param *param)
 {
 	int ret, i;
-	uint32_t dt_index = 0, v_channel;
+	u32 v_channel;
 	struct adc_tm_client_info *client_info = NULL;
 
 	ret = adc_tm_is_valid(chip);
@@ -505,7 +505,6 @@ static int32_t adc_tm7_disable_chan_meas(struct adc_tm_chip *chip,
 	for (i = 0; i < chip->dt_channels; i++) {
 		v_channel = V_CHAN(chip->sensor[i]);
 		if (v_channel == param->channel) {
-			dt_index = i;
 			break;
 		}
 	}
