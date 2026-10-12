@@ -7,6 +7,7 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/smem.h>
@@ -30,36 +31,45 @@ struct limits_isense_cdsp_smem_data {
 	uint16_t size_of_partition_data;
 } __packed;
 
+static void limits_isense_cdsp_release(struct kobject *kobj)
+{
+	kfree(container_of(kobj, struct module_kobject, kobj));
+}
+
 static struct kobj_type limits_isense_cdsp_ktype = {
+	.release = limits_isense_cdsp_release,
     .sysfs_ops = &kobj_sysfs_ops,
 };
 
 static struct limits_isense_cdsp_smem_data  *limits_isense_cdsp_data;
+static size_t limits_isense_cdsp_data_size;
 static struct limits_isense_cdsp_sysfs      *limits_isense_cdsp_sysfs;
 
 static ssize_t limits_isense_cdsp_data_show(struct kobject *kobj,
 			struct kobj_attribute *attr, char *buf)
 {
-	if (!limits_isense_cdsp_data)
+	struct limits_isense_cdsp_smem_data *data =
+		READ_ONCE(limits_isense_cdsp_data);
+	u16 len;
+
+	if (!data)
 		return -ENODATA;
 
-	if (!limits_isense_cdsp_data->subsys_cal_done)
+	if (!READ_ONCE(data->subsys_cal_done))
 		return -EAGAIN;
 
-	if (limits_isense_cdsp_data->store_data_in_partition) {
-		if (limits_isense_cdsp_data->size_of_partition_data >
-		    PARTITION_SIZE_BYTES)
-			return -ENOBUFS;
+	if (!READ_ONCE(data->store_data_in_partition))
+		return -ENODATA;
 
-		memcpy(buf,
-		       ((void *)
-		       (&limits_isense_cdsp_data->size_of_partition_data) + 2),
-		       limits_isense_cdsp_data->size_of_partition_data);
+	len = READ_ONCE(data->size_of_partition_data);
+	if (len > PARTITION_SIZE_BYTES ||
+	    len > limits_isense_cdsp_data_size -
+		  sizeof(*data))
+		return -ENOBUFS;
 
-		return limits_isense_cdsp_data->size_of_partition_data;
-	}
-
-	return -ENODATA;
+	memcpy(buf, (u8 *)data +
+	       sizeof(*data), len);
+	return len;
 }
 
 static int limits_create_msm_limits_cdsp_sysfs(struct platform_device *pdev)
@@ -70,12 +80,11 @@ static int limits_create_msm_limits_cdsp_sysfs(struct platform_device *pdev)
 	limits_isense_cdsp_sysfs = devm_kcalloc(&pdev->dev, 1,
 			sizeof(*limits_isense_cdsp_sysfs), GFP_KERNEL);
 	if (!limits_isense_cdsp_sysfs)
-		return PTR_ERR(limits_isense_cdsp_sysfs);
+		return -ENOMEM;
 
-	m_kobj = devm_kcalloc(&pdev->dev, 1,
-			sizeof(*m_kobj), GFP_KERNEL);
+	m_kobj = kzalloc(sizeof(*m_kobj), GFP_KERNEL);
 	if (!m_kobj)
-		return PTR_ERR(m_kobj);
+		return -ENOMEM;
 
 	limits_isense_cdsp_sysfs->m_kobj = m_kobj;
 
@@ -92,20 +101,13 @@ static int limits_create_msm_limits_cdsp_sysfs(struct platform_device *pdev)
 		goto exit_handler;
 	}
 
-	kobject_get(&m_kobj->kobj);
-
-	if (IS_ERR_OR_NULL(&m_kobj->kobj)) {
-		err = PTR_ERR(&m_kobj->kobj);
-		goto exit_handler;
-	}
-
 	sysfs_attr_init(&limits_isense_cdsp_sysfs->attr.attr);
 	limits_isense_cdsp_sysfs->attr.attr.name = "data";
 	limits_isense_cdsp_sysfs->attr.attr.mode = 0444;
 	limits_isense_cdsp_sysfs->attr.show = limits_isense_cdsp_data_show;
 	limits_isense_cdsp_sysfs->attr.store = NULL;
 
-	sysfs_create_file(&m_kobj->kobj, &limits_isense_cdsp_sysfs->attr.attr);
+	err = sysfs_create_file(&m_kobj->kobj, &limits_isense_cdsp_sysfs->attr.attr);
 	if (err) {
 		dev_err(&pdev->dev, "cannot create sysfs file\n");
 		goto exit_handler;
@@ -114,7 +116,8 @@ static int limits_create_msm_limits_cdsp_sysfs(struct platform_device *pdev)
 	return err;
 
 exit_handler:
-	kobject_del(&m_kobj->kobj);
+	kobject_put(&m_kobj->kobj);
+	limits_isense_cdsp_sysfs->m_kobj = NULL;
 
 	return err;
 }
@@ -129,16 +132,24 @@ static int limits_isense_cdsp_probe(struct platform_device *pdev)
 		return 0;
 
 	smem_ptr = qcom_smem_get(QCOM_SMEM_HOST_ANY, LIMITS_SMEM_CONFIG, &size);
-	if (!smem_ptr || !size) {
+	if (IS_ERR(smem_ptr))
+		return PTR_ERR(smem_ptr);
+
+	if (!smem_ptr || size < sizeof(*limits_isense_cdsp_data)) {
 		dev_err(&pdev->dev,
 			"Failed to get limits SMEM Address\n");
-		return PTR_ERR(smem_ptr);
+		return -EINVAL;
 	}
 
 	limits_isense_cdsp_data =
 			(struct limits_isense_cdsp_smem_data *) smem_ptr;
 
+	limits_isense_cdsp_data_size = size;
 	err = limits_create_msm_limits_cdsp_sysfs(pdev);
+	if (err) {
+		limits_isense_cdsp_data = NULL;
+		limits_isense_cdsp_sysfs = NULL;
+	}
 
 	return err;
 }
@@ -150,9 +161,10 @@ static int limits_isense_cdsp_remove(struct platform_device *pdev)
 	if (limits_isense_cdsp_sysfs && limits_isense_cdsp_sysfs->m_kobj) {
 		sysfs_remove_file(&limits_isense_cdsp_sysfs->m_kobj->kobj,
 				  &limits_isense_cdsp_sysfs->attr.attr);
-		kobject_del(&limits_isense_cdsp_sysfs->m_kobj->kobj);
+		kobject_put(&limits_isense_cdsp_sysfs->m_kobj->kobj);
 	}
 
+	limits_isense_cdsp_sysfs = NULL;
 	return 0;
 }
 
@@ -170,7 +182,7 @@ static struct platform_driver limits_isense_cdsp_driver = {
 	},
 };
 
-int __init limits_isense_cdsp_late_init(void)
+static int __init limits_isense_cdsp_late_init(void)
 {
 	int err;
 
