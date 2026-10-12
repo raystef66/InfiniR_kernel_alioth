@@ -1,4 +1,4 @@
-﻿#ifndef __NANO_INPUT_H__
+#ifndef __NANO_INPUT_H__
 #define __NANO_INPUT_H__
 
 // 8 Byte Keyboard ID(0x05) + (Ctrl,shift,alt,gui) + rev + 6byte(Key)
