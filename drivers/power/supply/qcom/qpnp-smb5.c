@@ -2370,7 +2370,7 @@ static int smb5_init_dc_psy(struct smb5 *chip)
 static int smb5_get_prop_input_voltage_regulation(struct smb_charger *chg,
 					union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2388,6 +2388,9 @@ static int smb5_get_prop_input_voltage_regulation(struct smb_charger *chg,
 		rc = power_supply_get_property(chg->wls_chip_psy,
 			POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION, val);
 
+	if (rc < 0)
+		return rc;
+
 	val->intval = 1000*val->intval;//IDT in mV
 
 	return rc;
@@ -2396,7 +2399,7 @@ static int smb5_get_prop_input_voltage_regulation(struct smb_charger *chg,
 static int smb5_get_prop_input_voltage_vrect(struct smb_charger *chg,
 					union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2415,6 +2418,9 @@ static int smb5_get_prop_input_voltage_vrect(struct smb_charger *chg,
 		rc = power_supply_get_property(chg->wls_chip_psy,
 			POWER_SUPPLY_PROP_INPUT_VOLTAGE_VRECT, val);
 
+	if (rc < 0)
+		return rc;
+
 	val->intval = 1000*val->intval;//IDT in mV
 
 	return rc;
@@ -2423,7 +2429,7 @@ static int smb5_get_prop_input_voltage_vrect(struct smb_charger *chg,
 static int smb5_get_prop_rx_iout(struct smb_charger *chg,
 					union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2440,6 +2446,9 @@ static int smb5_get_prop_rx_iout(struct smb_charger *chg,
 		rc = power_supply_get_property(chg->wls_chip_psy,
 			POWER_SUPPLY_PROP_RX_IOUT, val);
 
+	if (rc < 0)
+		return rc;
+
 	val->intval = 1000*val->intval;//IDT in mV
 
 	return rc;
@@ -2448,7 +2457,7 @@ static int smb5_get_prop_rx_iout(struct smb_charger *chg,
 static int smb5_get_prop_wireless_signal(struct smb_charger *chg,
 				union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2471,7 +2480,7 @@ static int smb5_get_prop_wireless_signal(struct smb_charger *chg,
 static int smb5_set_prop_input_voltage_regulation(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2541,7 +2550,7 @@ static int smb5_get_prop_reverse_pen_soc(struct smb_charger *chg,
 static int smb5_set_prop_div2_mode(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	dev_info(chg->dev, "%s: set mode is = %d\n",
 				__func__, val->intval);
@@ -2589,7 +2598,7 @@ static int smb5_get_prop_div2_mode(struct smb_charger *chg,
 static int smb5_set_prop_reverse_chg_mode(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	dev_info(chg->dev, "%s: set mode is = %d\n",
 				__func__, val->intval);
@@ -2615,7 +2624,7 @@ static int smb5_set_prop_reverse_chg_mode(struct smb_charger *chg,
 static int smb5_set_prop_otg_mode(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	dev_info(chg->dev, "%s: set mode is = %d\n",
 				__func__, val->intval);
@@ -2641,7 +2650,7 @@ static int smb5_set_prop_otg_mode(struct smb_charger *chg,
 static int smb5_get_prop_reverse_chg_mode(struct smb_charger *chg,
 				union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2667,7 +2676,7 @@ static int smb5_get_prop_reverse_chg_mode(struct smb_charger *chg,
 static int smb5_get_prop_wirless_chip_ok(struct smb_charger *chg,
 				union power_supply_propval *val)
 {
-	int rc;
+	int rc = -ENODEV;
 
 	chg->idtp_psy = power_supply_get_by_name("idt");
 	if (chg->idtp_psy) {
@@ -2690,7 +2699,7 @@ static int smb5_get_prop_wirless_chip_ok(struct smb_charger *chg,
 	return rc;
 }
 
-int smblib_enable_aicl(struct smb_charger *chg, int enable)
+static int smblib_enable_aicl(struct smb_charger *chg, int enable)
 {
 	int rc = 0;
 	u8 mask = 0;
