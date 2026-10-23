@@ -206,8 +206,8 @@ extern bool initcall_debug;
    */
   #define ___lto_initcall(c, l, fn, id, __sec) \
 	static initcall_t __initcall_##c##_##l##_##fn##id __used \
-		__attribute__((__section__( #__sec \
-			__stringify(.init..##c##_##l##_##fn)))) = fn;
+		__attribute__((__section__(#__sec ".init.." \
+			__stringify(c) "_" __stringify(l) "_" #fn))) = fn;
   #define __lto_initcall(c, l, fn, id, __sec) \
 	___lto_initcall(c, l, fn, id, __sec)
 
