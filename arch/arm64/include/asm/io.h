@@ -105,10 +105,11 @@ static inline u64 __raw_readq_no_log(const volatile void __iomem *addr)
  * consider why they can't support the logging
  */
 
+/* Keep address qualifiers for access; RTB records only the address value. */
 #define __raw_write_logged(v, a, _t) ({ \
 	int _ret; \
-	void *_addr = (void *)(a); \
-	_ret = uncached_logk(LOGK_WRITEL, _addr); \
+	typeof(a) _addr = (a); \
+	_ret = uncached_logk(LOGK_WRITEL, (void *)(unsigned long)_addr); \
 	ETB_WAYPOINT; \
 	__raw_write##_t##_no_log((v), _addr); \
 	if (_ret) \
@@ -122,9 +123,9 @@ static inline u64 __raw_readq_no_log(const volatile void __iomem *addr)
 
 #define __raw_read_logged(a, _l, _t)    ({ \
 	_t __a; \
-	void *_addr = (void *)(a); \
+	typeof(a) _addr = (a); \
 	int _ret; \
-	_ret = uncached_logk(LOGK_READL, _addr); \
+	_ret = uncached_logk(LOGK_READL, (void *)(unsigned long)_addr); \
 	ETB_WAYPOINT; \
 	__a = __raw_read##_l##_no_log(_addr); \
 	if (_ret) \
