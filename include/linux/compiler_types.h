@@ -4,6 +4,10 @@
 #ifndef __ASSEMBLY__
 
 #ifdef __CHECKER__
+/* Clang resource headers also probe this unsupported preprocessor builtin. */
+# ifndef __has_include_next
+#  define __has_include_next(x) 0
+# endif
 # define __user		__attribute__((noderef, address_space(1)))
 # define __kernel	__attribute__((address_space(0)))
 # define __safe		__attribute__((safe))
