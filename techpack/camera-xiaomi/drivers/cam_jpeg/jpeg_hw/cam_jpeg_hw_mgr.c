@@ -266,6 +266,10 @@ static int cam_jpeg_insert_cdm_change_base(
 	uintptr_t iova_addr;
 	uint32_t *ch_base_iova_addr;
 	size_t ch_base_len;
+	size_t offset =
+		config_args->hw_update_entries[CAM_JPEG_CHBASE].offset;
+	/* One DWORD change-base command followed by two padding DWORDs. */
+	const size_t required_len = 3 * sizeof(uint32_t);
 
 	rc = cam_mem_get_cpu_buf(
 		config_args->hw_update_entries[CAM_JPEG_CHBASE].handle,
@@ -276,8 +280,8 @@ static int cam_jpeg_insert_cdm_change_base(
 		return rc;
 	}
 
-	if (config_args->hw_update_entries[CAM_JPEG_CHBASE].offset >=
-		ch_base_len) {
+	if (offset % sizeof(uint32_t) || ch_base_len < required_len ||
+	    offset > ch_base_len - required_len) {
 		CAM_ERR(CAM_JPEG, "Not enough buf");
 		return -EINVAL;
 	}
