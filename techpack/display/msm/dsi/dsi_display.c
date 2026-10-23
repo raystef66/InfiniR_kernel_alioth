@@ -16,6 +16,7 @@
 #include "dsi_display.h"
 #include "dsi_panel.h"
 #include "dsi_panel_mi.h"
+#include "dsi_mi_feature.h"
 #include "dsi_ctrl.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_drm.h"
@@ -5125,6 +5126,73 @@ unlock:
 	return ret ? ret : count;
 }
 
+static ssize_t thermal_hbm_disabled_show(struct device *dev,
+					 struct device_attribute *attr, char *buf)
+{
+	struct dsi_display *display = dev_get_drvdata(dev);
+
+	if (!display || !display->panel)
+		return -ENODEV;
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
+			READ_ONCE(display->panel->mi_cfg.thermal_hbm_disabled));
+}
+
+static ssize_t thermal_hbm_disabled_store(struct device *dev,
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
+{
+	struct dsi_display *display = dev_get_drvdata(dev);
+	int disabled, ret, clk_ret;
+	u32 param;
+
+	if (!display || !display->panel)
+		return -ENODEV;
+	if (strcmp(display->panel->type, "primary"))
+		return -EOPNOTSUPP;
+
+	ret = kstrtoint(buf, 10, &disabled);
+	if (ret)
+		return ret;
+	if (disabled < 0 || disabled > 1)
+		return -EINVAL;
+
+	mutex_lock(&display->display_lock);
+	ret = dsi_panel_set_disp_param(display->panel, disabled ?
+			DISPPARAM_SET_THERMAL_HBM_DISABLE :
+			DISPPARAM_CLEAR_THERMAL_HBM_DISABLE);
+	if (ret || !dsi_panel_initialized(display->panel))
+		goto unlock;
+
+	ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
+				   DSI_CORE_CLK, DSI_CLK_ON);
+	if (ret)
+		goto unlock;
+
+	/* Preserve the stock thermal HBM behavior and requested HBM state. */
+	if (display->panel->mi_cfg.hbm_enabled) {
+		param = (disabled ? DISPPARAM_HBM_OFF : DISPPARAM_HBM_ON) |
+			DISPPARAM_THERMAL_SET;
+		ret = dsi_panel_set_disp_param(display->panel, param);
+		if (!ret && display->panel->mi_cfg.hbm_brightness &&
+		    !display->panel->mi_cfg.fod_hbm_enabled)
+			ret = dsi_panel_update_backlight(display->panel, disabled ?
+					2047 : display->panel->mi_cfg.last_bl_level);
+	}
+
+	clk_ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
+				       DSI_CORE_CLK, DSI_CLK_OFF);
+	if (!ret)
+		ret = clk_ret;
+unlock:
+	mutex_unlock(&display->display_lock);
+	if (ret)
+		return ret;
+	return count;
+}
+
+static DEVICE_ATTR_RW(thermal_hbm_disabled);
+
 static ssize_t mdss_fb_set_ea_enable(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -5184,6 +5252,7 @@ static DEVICE_ATTR(fod_ui, 0444,
 static struct attribute *display_fs_attrs[] = {
 	&dev_attr_fod_ui.attr,
 	&dev_attr_hbm.attr,
+	&dev_attr_thermal_hbm_disabled.attr,
 	&dev_attr_msm_fb_ea_enable.attr,
 	NULL,
 };

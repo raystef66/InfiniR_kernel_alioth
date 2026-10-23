@@ -1,0 +1,8 @@
+What:		/sys/devices/platform/soc/soc:qcom,dsi-display-primary/thermal_hbm_disabled
+Date:		October 2026
+Description:
+		Read or write the Xiaomi primary display HBM thermal inhibit.
+		0 permits requested HBM; 1 inhibits it. Other values are rejected.
+		Inhibiting HBM preserves the requested state for restoration when
+		the limit clears. Fingerprint HBM arbitration remains unchanged.
+		The thermal daemon owns writes; this is not a user HBM toggle.
