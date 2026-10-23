@@ -2583,7 +2583,12 @@ static int __must_check ffs_do_os_descs(struct ffs_data *ffs,
 }
 
 /**
- * Validate contents of the buffer from userspace related to OS descriptors.
+ * __ffs_data_do_os_desc - validate OS descriptors supplied by userspace
+ * @type: descriptor type
+ * @h: OS descriptor header
+ * @data: descriptor payload
+ * @len: payload length
+ * @priv: FunctionFS instance
  */
 static int __ffs_data_do_os_desc(enum ffs_os_desc_type type,
 				 struct usb_os_desc_header *h, void *data,
@@ -4130,7 +4135,7 @@ static int ffs_mutex_lock(struct mutex *mutex, unsigned nonblock)
  * ffs_prepare_buffer() - copy userspace buffer into kernel.
  * @buf: userspace buffer
  * @len: length of the buffer
- * @extra_alloc_buf: Extra buffer allocation if required by UDC.
+ * @extra_buf_alloc: Extra buffer allocation if required by UDC.
  *
  * This function returns pointer to the copied buffer
  */
