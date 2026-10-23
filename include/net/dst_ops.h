@@ -12,15 +12,6 @@ struct sk_buff;
 struct sock;
 struct net;
 
-/* *** ANDROID FIXUP ***
- * These typedefs are used to help fixup the ABI break caused by commit
- * 92f1655aa2b2 ("net: fix __dst_negative_advice() race") where the
- * negative_advice callback changed function signatures.
- * See b/343727534 for more details.
- * *** ANDROID FIXUP ***
- */
-typedef void (*android_dst_ops_negative_advice_new_t)(struct sock *sk, struct dst_entry *);
-typedef struct dst_entry * (*android_dst_ops_negative_advice_old_t)(struct dst_entry *);
 
 struct dst_ops {
 	unsigned short		family;
@@ -34,7 +25,13 @@ struct dst_ops {
 	void			(*destroy)(struct dst_entry *);
 	void			(*ifdown)(struct dst_entry *,
 					  struct net_device *dev, int how);
+#ifdef __GENKSYMS__
+	/* Retain the frozen symbol-version view; the layout is unchanged. */
 	struct dst_entry *	(*negative_advice)(struct dst_entry *);
+#else
+	void			(*negative_advice)(struct sock *,
+						   struct dst_entry *);
+#endif
 	void			(*link_failure)(struct sk_buff *);
 	void			(*update_pmtu)(struct dst_entry *dst, struct sock *sk,
 					       struct sk_buff *skb, u32 mtu,

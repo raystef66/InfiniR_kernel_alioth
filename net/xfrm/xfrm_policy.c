@@ -110,16 +110,14 @@ bool xfrm_selector_match(const struct xfrm_selector *sel, const struct flowi *fl
 	return false;
 }
 
+/* Caller holds rcu_read_lock() until it has finished using afinfo. */
 static const struct xfrm_policy_afinfo *xfrm_policy_get_afinfo(unsigned short family)
 {
 	const struct xfrm_policy_afinfo *afinfo;
 
 	if (unlikely(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
 		return NULL;
-	rcu_read_lock();
 	afinfo = rcu_dereference(xfrm_policy_afinfo[family]);
-	if (unlikely(!afinfo))
-		rcu_read_unlock();
 	return afinfo;
 }
 
@@ -137,9 +135,12 @@ struct dst_entry *__xfrm_dst_lookup(struct net *net, int tos, int oif,
 	const struct xfrm_policy_afinfo *afinfo;
 	struct dst_entry *dst;
 
+	rcu_read_lock();
 	afinfo = xfrm_policy_get_afinfo(family);
-	if (unlikely(afinfo == NULL))
+	if (unlikely(!afinfo)) {
+		rcu_read_unlock();
 		return ERR_PTR(-EAFNOSUPPORT);
+	}
 
 	dst = afinfo->dst_lookup(net, tos, oif, saddr, daddr, mark);
 
@@ -599,9 +600,12 @@ static void xfrm_hash_rebuild(struct work_struct *work)
 
 	/* reset the bydst and inexact table in all directions */
 	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
+		struct xfrm_policy_hash *htab = &net->xfrm.policy_bydst[dir];
+
 		INIT_HLIST_HEAD(&net->xfrm.policy_inexact[dir]);
-		hmask = net->xfrm.policy_bydst[dir].hmask;
-		odst = net->xfrm.policy_bydst[dir].table;
+		hmask = htab->hmask;
+		odst = rcu_dereference_protected(htab->table,
+						 lockdep_is_held(&net->xfrm.xfrm_policy_lock));
 		for (i = hmask; i >= 0; i--)
 			INIT_HLIST_HEAD(odst + i);
 		if ((dir & XFRM_POLICY_MASK) == XFRM_POLICY_OUT) {
@@ -886,10 +890,13 @@ EXPORT_SYMBOL(xfrm_policy_byid);
 static inline int
 xfrm_policy_flush_secctx_check(struct net *net, u8 type, bool task_valid)
 {
+	struct netns_xfrm *xfrm = &net->xfrm;
 	int dir, err = 0;
 
 	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
+		struct xfrm_policy_hash *htab = &xfrm->policy_bydst[dir];
 		struct xfrm_policy *pol;
+		struct hlist_head *table;
 		int i;
 
 		hlist_for_each_entry(pol,
@@ -903,9 +910,9 @@ xfrm_policy_flush_secctx_check(struct net *net, u8 type, bool task_valid)
 			}
 		}
 		for (i = net->xfrm.policy_bydst[dir].hmask; i >= 0; i--) {
-			hlist_for_each_entry(pol,
-					     net->xfrm.policy_bydst[dir].table + i,
-					     bydst) {
+			table = rcu_dereference_protected(htab->table,
+							  lockdep_is_held(&xfrm->xfrm_policy_lock));
+			hlist_for_each_entry(pol, table + i, bydst) {
 				if (pol->type != type)
 					continue;
 				err = security_xfrm_policy_delete(
@@ -930,6 +937,7 @@ xfrm_policy_flush_secctx_check(struct net *net, u8 type, bool task_valid)
 
 int xfrm_policy_flush(struct net *net, u8 type, bool task_valid)
 {
+	struct netns_xfrm *xfrm = &net->xfrm;
 	int dir, err = 0, cnt = 0;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
@@ -939,7 +947,9 @@ int xfrm_policy_flush(struct net *net, u8 type, bool task_valid)
 		goto out;
 
 	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
+		struct xfrm_policy_hash *htab = &xfrm->policy_bydst[dir];
 		struct xfrm_policy *pol;
+		struct hlist_head *table;
 		int i;
 
 	again1:
@@ -961,9 +971,9 @@ int xfrm_policy_flush(struct net *net, u8 type, bool task_valid)
 
 		for (i = net->xfrm.policy_bydst[dir].hmask; i >= 0; i--) {
 	again2:
-			hlist_for_each_entry(pol,
-					     net->xfrm.policy_bydst[dir].table + i,
-					     bydst) {
+			table = rcu_dereference_protected(htab->table,
+							  lockdep_is_held(&xfrm->xfrm_policy_lock));
+			hlist_for_each_entry(pol, table + i, bydst) {
 				if (pol->type != type)
 					continue;
 				__xfrm_policy_unlink(pol, dir);
@@ -1362,10 +1372,15 @@ xfrm_get_saddr(struct net *net, int oif, xfrm_address_t *local,
 	       xfrm_address_t *remote, unsigned short family, u32 mark)
 {
 	int err;
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	const struct xfrm_policy_afinfo *afinfo;
 
-	if (unlikely(afinfo == NULL))
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(family);
+
+	if (unlikely(!afinfo)) {
+		rcu_read_unlock();
 		return -EINVAL;
+	}
 	err = afinfo->get_saddr(net, oif, local, remote, mark);
 	rcu_read_unlock();
 	return err;
@@ -1475,9 +1490,12 @@ static int xfrm_get_tos(const struct flowi *fl, int family)
 	const struct xfrm_policy_afinfo *afinfo;
 	int tos;
 
+	rcu_read_lock();
 	afinfo = xfrm_policy_get_afinfo(family);
-	if (!afinfo)
+	if (!afinfo) {
+		rcu_read_unlock();
 		return 0;
+	}
 
 	tos = afinfo->get_tos(fl);
 
@@ -1488,12 +1506,17 @@ static int xfrm_get_tos(const struct flowi *fl, int family)
 
 static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
 {
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	const struct xfrm_policy_afinfo *afinfo;
 	struct dst_ops *dst_ops;
 	struct xfrm_dst *xdst;
 
-	if (!afinfo)
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(family);
+
+	if (!afinfo) {
+		rcu_read_unlock();
 		return ERR_PTR(-EINVAL);
+	}
 
 	switch (family) {
 	case AF_INET:
@@ -1524,12 +1547,16 @@ static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
 static inline int xfrm_init_path(struct xfrm_dst *path, struct dst_entry *dst,
 				 int nfheader_len)
 {
-	const struct xfrm_policy_afinfo *afinfo =
-		xfrm_policy_get_afinfo(dst->ops->family);
+	const struct xfrm_policy_afinfo *afinfo;
 	int err;
 
-	if (!afinfo)
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(dst->ops->family);
+
+	if (!afinfo) {
+		rcu_read_unlock();
 		return -EINVAL;
+	}
 
 	err = afinfo->init_path(path, dst, nfheader_len);
 
@@ -1541,12 +1568,16 @@ static inline int xfrm_init_path(struct xfrm_dst *path, struct dst_entry *dst,
 static inline int xfrm_fill_dst(struct xfrm_dst *xdst, struct net_device *dev,
 				const struct flowi *fl)
 {
-	const struct xfrm_policy_afinfo *afinfo =
-		xfrm_policy_get_afinfo(xdst->u.dst.ops->family);
+	const struct xfrm_policy_afinfo *afinfo;
 	int err;
 
-	if (!afinfo)
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(xdst->u.dst.ops->family);
+
+	if (!afinfo) {
+		rcu_read_unlock();
 		return -EINVAL;
+	}
 
 	err = afinfo->fill_dst(xdst, dev, fl);
 
@@ -2017,10 +2048,14 @@ error:
 static struct dst_entry *make_blackhole(struct net *net, u16 family,
 					struct dst_entry *dst_orig)
 {
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	const struct xfrm_policy_afinfo *afinfo;
 	struct dst_entry *ret;
 
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(family);
+
 	if (!afinfo) {
+		rcu_read_unlock();
 		dst_release(dst_orig);
 		return ERR_PTR(-EINVAL);
 	} else {
@@ -2290,11 +2325,16 @@ xfrm_policy_ok(const struct xfrm_tmpl *tmpl, const struct sec_path *sp, int star
 int __xfrm_decode_session(struct sk_buff *skb, struct flowi *fl,
 			  unsigned int family, int reverse)
 {
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	const struct xfrm_policy_afinfo *afinfo;
 	int err;
 
-	if (unlikely(afinfo == NULL))
+	rcu_read_lock();
+	afinfo = xfrm_policy_get_afinfo(family);
+
+	if (unlikely(!afinfo)) {
+		rcu_read_unlock();
 		return -EAFNOSUPPORT;
+	}
 
 	afinfo->decode_session(skb, fl, reverse);
 
@@ -2731,7 +2771,7 @@ int xfrm_policy_register_afinfo(const struct xfrm_policy_afinfo *afinfo, int fam
 		if (likely(dst_ops->mtu == NULL))
 			dst_ops->mtu = xfrm_mtu;
 		if (likely(dst_ops->negative_advice == NULL))
-			dst_ops->negative_advice = (android_dst_ops_negative_advice_old_t)xfrm_negative_advice;
+			dst_ops->negative_advice = xfrm_negative_advice;
 		if (likely(dst_ops->link_failure == NULL))
 			dst_ops->link_failure = xfrm_link_failure;
 		if (likely(dst_ops->neigh_lookup == NULL))
@@ -2752,7 +2792,7 @@ void xfrm_policy_unregister_afinfo(const struct xfrm_policy_afinfo *afinfo)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(xfrm_policy_afinfo); i++) {
-		if (xfrm_policy_afinfo[i] != afinfo)
+		if (rcu_access_pointer(xfrm_policy_afinfo[i]) != afinfo)
 			continue;
 		RCU_INIT_POINTER(xfrm_policy_afinfo[i], NULL);
 		break;
@@ -2838,7 +2878,7 @@ static int __net_init xfrm_policy_init(struct net *net)
 		INIT_HLIST_HEAD(&net->xfrm.policy_inexact[dir]);
 
 		htab = &net->xfrm.policy_bydst[dir];
-		htab->table = xfrm_hash_alloc(sz);
+		RCU_INIT_POINTER(htab->table, xfrm_hash_alloc(sz));
 		if (!htab->table)
 			goto out_bydst;
 		htab->hmask = hmask;
@@ -2864,7 +2904,8 @@ out_bydst:
 		struct xfrm_policy_hash *htab;
 
 		htab = &net->xfrm.policy_bydst[dir];
-		xfrm_hash_free(htab->table, sz);
+		/* Initialization failed before this namespace was published. */
+		xfrm_hash_free(rcu_dereference_protected(htab->table, 1), sz);
 	}
 	xfrm_hash_free(net->xfrm.policy_byidx, sz);
 out_byidx:
@@ -2886,13 +2927,16 @@ static void xfrm_policy_fini(struct net *net)
 
 	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
 		struct xfrm_policy_hash *htab;
+		struct hlist_head *table;
 
 		WARN_ON(!hlist_empty(&net->xfrm.policy_inexact[dir]));
 
 		htab = &net->xfrm.policy_bydst[dir];
 		sz = (htab->hmask + 1) * sizeof(struct hlist_head);
-		WARN_ON(!hlist_empty(htab->table));
-		xfrm_hash_free(htab->table, sz);
+		/* Namespace teardown has exclusive ownership of the table. */
+		table = rcu_dereference_protected(htab->table, 1);
+		WARN_ON(!hlist_empty(table));
+		xfrm_hash_free(table, sz);
 	}
 
 	sz = (net->xfrm.policy_idx_hmask + 1) * sizeof(struct hlist_head);
