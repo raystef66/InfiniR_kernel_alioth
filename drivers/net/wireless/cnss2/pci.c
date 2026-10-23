@@ -1072,12 +1072,14 @@ int cnss_pci_is_device_down(struct device *dev)
 EXPORT_SYMBOL(cnss_pci_is_device_down);
 
 void cnss_pci_lock_reg_window(struct device *dev, unsigned long *flags)
+	__acquires(&pci_reg_window_lock)
 {
 	spin_lock_bh(&pci_reg_window_lock);
 }
 EXPORT_SYMBOL(cnss_pci_lock_reg_window);
 
 void cnss_pci_unlock_reg_window(struct device *dev, unsigned long *flags)
+	__releases(&pci_reg_window_lock)
 {
 	spin_unlock_bh(&pci_reg_window_lock);
 }
@@ -3818,7 +3820,7 @@ int cnss_smmu_map(struct device *dev,
 
 	pci_priv->smmu_iova_ipa_current = iova + len;
 	*iova_addr = (uint32_t)(iova + paddr - rounddown(paddr, PAGE_SIZE));
-	cnss_pr_dbg("IOMMU map: iova_addr %lx\n", *iova_addr);
+	cnss_pr_dbg("IOMMU map: iova_addr %x\n", *iova_addr);
 
 	return 0;
 }
@@ -4616,7 +4618,7 @@ static int cnss_pci_update_fw_name(struct cnss_pci_data *pci_priv)
 	switch (pci_priv->device_id) {
 	case QCA6390_DEVICE_ID:
 		if (plat_priv->device_version.major_version < FW_V2_NUMBER) {
-			cnss_pr_dbg("Device ID:version (0x%lx:%d) is not supported\n",
+			cnss_pr_dbg("Device ID:version (0x%x:%u) is not supported\n",
 				    pci_priv->device_id,
 				    plat_priv->device_version.major_version);
 			return -EINVAL;
@@ -5138,7 +5140,7 @@ static const struct dev_pm_ops cnss_pm_ops = {
 			   cnss_pci_runtime_idle)
 };
 
-struct pci_driver cnss_pci_driver = {
+static struct pci_driver cnss_pci_driver = {
 	.name     = "cnss_pci",
 	.id_table = cnss_pci_id_table,
 	.probe    = cnss_pci_probe,
