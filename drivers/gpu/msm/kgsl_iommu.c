@@ -187,6 +187,7 @@ int kgsl_iommu_map_global_secure_pt_entry(struct kgsl_device *device,
 static void kgsl_iommu_remove_global(struct kgsl_mmu *mmu,
 		struct kgsl_memdesc *memdesc)
 {
+	struct kgsl_device *device = KGSL_MMU_DEVICE(mmu);
 	int i;
 
 	if (memdesc->gpuaddr == 0 || !(memdesc->priv & KGSL_MEMDESC_GLOBAL))
@@ -194,11 +195,16 @@ static void kgsl_iommu_remove_global(struct kgsl_mmu *mmu,
 
 	for (i = 0; i < global_pt_count; i++) {
 		if (global_pt_entries[i].memdesc == memdesc) {
+			u64 size = kgsl_memdesc_footprint(memdesc);
 			u64 offset = memdesc->gpuaddr -
 				KGSL_IOMMU_GLOBAL_MEM_BASE(mmu);
 
 			bitmap_clear(global_map, offset >> PAGE_SHIFT,
-				kgsl_memdesc_footprint(memdesc) >> PAGE_SHIFT);
+				size >> PAGE_SHIFT);
+
+			/* Count globals once until their final removal. */
+			if (memdesc->priv & KGSL_MEMDESC_MAPPED)
+				kgsl_trace_gpu_mem_total(device, -(s64)size);
 
 			memdesc->gpuaddr = 0;
 			memdesc->priv &= ~KGSL_MEMDESC_GLOBAL;
