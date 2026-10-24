@@ -379,7 +379,7 @@ int
 kgsl_mmu_map(struct kgsl_pagetable *pagetable,
 				struct kgsl_memdesc *memdesc)
 {
-	int size;
+	u64 size;
 
 	if (!memdesc->gpuaddr)
 		return -EINVAL;
