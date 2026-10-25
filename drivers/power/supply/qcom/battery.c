@@ -107,7 +107,7 @@ struct pl_data {
 	u32			float_voltage_uv;
 };
 
-struct pl_data *the_chip;
+static struct pl_data *the_chip;
 
 enum print_reason {
 	PR_PARALLEL	= BIT(0),

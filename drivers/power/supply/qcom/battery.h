@@ -6,6 +6,10 @@
 #ifndef __BATTERY_H
 #define __BATTERY_H
 
+#include <linux/types.h>
+
+extern bool off_charge_flag;
+
 struct charger_param {
 	u32 fcc_step_delay_ms;
 	u32 fcc_step_size_ua;
