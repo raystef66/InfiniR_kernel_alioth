@@ -472,7 +472,6 @@ CFG_REL_DIR := $(WLAN_COMMON_ROOT)/cfg
 CFG_DIR := $(WLAN_ROOT)/$(CFG_REL_DIR)
 CFG_INC := \
 	-I $(srctree)/$(CFG_DIR)/inc \
-	-I $(srctree)/$(CFG_DIR)/dispatcher/inc \
 	-I $(srctree)/$(WLAN_ROOT)/components/cfg
 CFG_OBJS := \
 	$(CFG_REL_DIR)/src/cfg.o
@@ -485,11 +484,9 @@ DFS_CORE_SRC_DIR := $(DFS_DIR)/core/src
 DFS_DISP_INC_DIR := $(DFS_DIR)/dispatcher/inc
 DFS_DISP_SRC_DIR := $(DFS_DIR)/dispatcher/src
 DFS_TARGET_INC_DIR := $(WLAN_COMMON_ROOT)/target_if/dfs/inc
-DFS_CMN_SERVICES_INC_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/dfs/inc
 
 DFS_INC :=	-I $(srctree)/$(WLAN_ROOT)/$(DFS_DISP_INC_DIR) \
-		-I $(srctree)/$(WLAN_ROOT)/$(DFS_TARGET_INC_DIR) \
-		-I $(srctree)/$(WLAN_ROOT)/$(DFS_CMN_SERVICES_INC_DIR)
+		-I $(srctree)/$(WLAN_ROOT)/$(DFS_TARGET_INC_DIR)
 
 DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/misc/dfs.o \
 		$(DFS_CORE_SRC_DIR)/misc/dfs_cac.o \
@@ -830,7 +827,7 @@ UMAC_TARGET_GPIO_INC := -I $(srctree)/$(WLAN_COMMON_INC)/target_if/gpio
 
 UMAC_GPIO_INC := -I $(srctree)/$(WLAN_COMMON_INC)/$(UMAC_GPIO_DISP_INC_DIR) \
 			-I $(srctree)/$(WLAN_COMMON_INC)/$(UMAC_GPIO_CORE_INC_DIR) \
-			-I $(srctree)/$(WLAN_COMMON_INC)/$(UMAC_TARGET_GPIO_INC)
+			$(UMAC_TARGET_GPIO_INC)
 ifeq ($(CONFIG_FEATURE_GPIO_CFG),y)
 UMAC_GPIO_OBJS := $(UMAC_GPIO_DISP_DIR)/wlan_gpio_tgt_api.o \
 		$(UMAC_GPIO_DISP_DIR)/wlan_gpio_ucfg_api.o \
@@ -1594,14 +1591,12 @@ INIT_DEINIT_OBJS := $(INIT_DEINIT_OBJ_DIR)/dispatcher_init_deinit.o
 
 ############## REGULATORY ###########
 REGULATORY_DIR := umac/regulatory
-REGULATORY_CORE_INC_DIR := $(REGULATORY_DIR)/core/inc
 REGULATORY_CORE_SRC_DIR := $(REGULATORY_DIR)/core/src
 REG_DISPATCHER_INC_DIR := $(REGULATORY_DIR)/dispatcher/inc
 REG_DISPATCHER_SRC_DIR := $(REGULATORY_DIR)/dispatcher/src
 REG_CORE_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REGULATORY_CORE_SRC_DIR)
 REG_DISPATCHER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REG_DISPATCHER_SRC_DIR)
-REGULATORY_INC := -I $(srctree)/$(WLAN_COMMON_INC)/$(REGULATORY_CORE_INC_DIR)
-REGULATORY_INC += -I $(srctree)/$(WLAN_COMMON_INC)/$(REG_DISPATCHER_INC_DIR)
+REGULATORY_INC := -I $(srctree)/$(WLAN_COMMON_INC)/$(REG_DISPATCHER_INC_DIR)
 REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_build_chan_list.o \
 		    $(REG_CORE_OBJ_DIR)/reg_callbacks.o \
 		    $(REG_CORE_OBJ_DIR)/reg_db.o \
@@ -1913,8 +1908,7 @@ endif
 ifeq ($(CONFIG_LITHIUM), y)
 ############ HAL ############
 HAL_DIR :=	hal
-HAL_INC :=	-I $(srctree)/$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
-		-I $(srctree)/$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0
+HAL_INC :=	-I $(srctree)/$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0
 
 HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_reo.o
@@ -1968,7 +1962,7 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 #######DIRECT_BUFFER_RX#########
 ifeq ($(CONFIG_DIRECT_BUF_RX_ENABLE), y)
 DBR_DIR = $(WLAN_COMMON_ROOT)/target_if/direct_buf_rx
-UMAC_DBR_INC := -I $(srctree)/$(WLAN_COMMON_INC)/target_if/direct_buf_tx/inc
+UMAC_DBR_INC := -I $(srctree)/$(WLAN_COMMON_INC)/target_if/direct_buf_rx/inc
 UMAC_DBR_OBJS := $(DBR_DIR)/src/target_if_direct_buf_rx_api.o \
 		 $(DBR_DIR)/src/target_if_direct_buf_rx_main.o \
 		 $(WLAN_COMMON_ROOT)/wmi/src/wmi_unified_dbr_api.o \
