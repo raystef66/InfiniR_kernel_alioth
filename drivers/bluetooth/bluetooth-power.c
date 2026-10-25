@@ -87,7 +87,7 @@ static struct bluetooth_power_platform_data *bt_power_pdata;
 static struct platform_device *btpdev;
 static bool previous;
 static int pwr_state;
-struct class *bt_class;
+static struct class *bt_class;
 static int bt_major;
 static int soc_id;
 
@@ -1069,7 +1069,7 @@ int get_chipset_version(void)
 	return soc_id;
 }
 
-int bt_disable_asd(void)
+static int bt_disable_asd(void)
 {
 	int rc = 0;
 	if (bt_power_pdata->bt_vdd_asd) {
@@ -1090,7 +1090,7 @@ static void  set_pwr_srcs_status(int ldo_index,
 			bt_power_src_status[ldo_index] =
 				(int)regulator_get_voltage(handle->reg);
 			BT_PWR_ERR("%s(%d) value(%d)", handle->name,
-				handle, bt_power_src_status[ldo_index]);
+				ldo_index, bt_power_src_status[ldo_index]);
 		} else {
 			BT_PWR_ERR("%s: %s is_enabled %d", __func__,
 				handle->name, handle->is_enabled);

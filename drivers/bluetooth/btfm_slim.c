@@ -23,7 +23,7 @@
 
 #define DELAY_FOR_PORT_OPEN_MS (200)
 
-bool btfm_is_port_opening_delayed = true;
+static bool btfm_is_port_opening_delayed = true;
 
 int btfm_slim_write(struct btfmslim *btfmslim,
 		uint16_t reg, int bytes, void *src, uint8_t pgd)
@@ -58,18 +58,6 @@ int btfm_slim_write(struct btfmslim *btfmslim,
 	return 0;
 }
 
-int btfm_slim_write_pgd(struct btfmslim *btfmslim,
-		uint16_t reg, int bytes, void *src)
-{
-	return btfm_slim_write(btfmslim, reg, bytes, src, PGD);
-}
-
-int btfm_slim_write_inf(struct btfmslim *btfmslim,
-		uint16_t reg, int bytes, void *src)
-{
-	return btfm_slim_write(btfmslim, reg, bytes, src, IFD);
-}
-
 int btfm_slim_read(struct btfmslim *btfmslim, unsigned short reg,
 				int bytes, void *dest, uint8_t pgd)
 {
@@ -92,8 +80,10 @@ int btfm_slim_read(struct btfmslim *btfmslim, unsigned short reg,
 		usleep_range(5000, 5100);
 	}
 
-	if (ret)
+	if (ret) {
 		BTFMSLIM_ERR("failed (%d)", ret);
+		return ret;
+	}
 
 	for (i = 0; i < bytes; i++)
 		BTFMSLIM_DBG("Read 0x%02x from reg 0x%x", ((uint8_t *)dest)[i],
@@ -102,19 +92,7 @@ int btfm_slim_read(struct btfmslim *btfmslim, unsigned short reg,
 	return 0;
 }
 
-int btfm_slim_read_pgd(struct btfmslim *btfmslim,
-		uint16_t reg, int bytes, void *dest)
-{
-	return btfm_slim_read(btfmslim, reg, bytes, dest, PGD);
-}
-
-int btfm_slim_read_inf(struct btfmslim *btfmslim,
-		uint16_t reg, int bytes, void *dest)
-{
-	return btfm_slim_read(btfmslim, reg, bytes, dest, IFD);
-}
-
-bool btfm_slim_is_sb_reset_needed(int chip_ver)
+static bool btfm_slim_is_sb_reset_needed(int chip_ver)
 {
 	switch (chip_ver) {
 	case QCA_APACHE_SOC_ID_0100:
