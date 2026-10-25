@@ -128,6 +128,7 @@ task_function_call(struct task_struct *p, remote_function_f func, void *info)
 
 /**
  * cpu_function_call - call a function on the cpu
+ * @cpu:		target CPU
  * @func:	the function to be called
  * @info:	the function call argument
  *
@@ -157,17 +158,23 @@ __get_cpu_context(struct perf_event_context *ctx)
 
 static void perf_ctx_lock(struct perf_cpu_context *cpuctx,
 			  struct perf_event_context *ctx)
+	__acquires(&cpuctx->ctx.lock) __acquires(&ctx->lock)
 {
 	raw_spin_lock(&cpuctx->ctx.lock);
 	if (ctx)
 		raw_spin_lock(&ctx->lock);
+	else
+		__acquire(&ctx->lock); /* Model the absent optional lock. */
 }
 
 static void perf_ctx_unlock(struct perf_cpu_context *cpuctx,
 			    struct perf_event_context *ctx)
+	__releases(&cpuctx->ctx.lock) __releases(&ctx->lock)
 {
 	if (ctx)
 		raw_spin_unlock(&ctx->lock);
+	else
+		__release(&ctx->lock);
 	raw_spin_unlock(&cpuctx->ctx.lock);
 }
 
@@ -601,7 +608,7 @@ static u64 perf_event_time(struct perf_event *event);
 
 void __weak perf_event_print_debug(void)	{ }
 
-extern __weak const char *perf_pmu_name(void)
+__weak const char *perf_pmu_name(void)
 {
 	return "pmu";
 }
@@ -1228,7 +1235,7 @@ static void put_ctx(struct perf_event_context *ctx)
 {
 	if (atomic_dec_and_test(&ctx->refcount)) {
 		if (ctx->parent_ctx)
-			put_ctx(ctx->parent_ctx);
+			put_ctx(rcu_dereference_protected(ctx->parent_ctx, 1));
 		if (ctx->task && ctx->task != TASK_TOMBSTONE)
 			put_task_struct(ctx->task);
 		call_rcu(&ctx->rcu_head, free_ctx);
@@ -1346,12 +1353,14 @@ static void perf_event_ctx_unlock(struct perf_event *event,
 static __must_check struct perf_event_context *
 unclone_ctx(struct perf_event_context *ctx)
 {
-	struct perf_event_context *parent_ctx = ctx->parent_ctx;
+	struct perf_event_context *parent_ctx =
+		rcu_dereference_protected(ctx->parent_ctx,
+					  lockdep_is_held(&ctx->lock));
 
 	lockdep_assert_held(&ctx->lock);
 
 	if (parent_ctx)
-		ctx->parent_ctx = NULL;
+		RCU_INIT_POINTER(ctx->parent_ctx, NULL);
 	ctx->generation++;
 
 	return parent_ctx;
@@ -1447,6 +1456,8 @@ retry:
 			ctx = NULL;
 		} else {
 			WARN_ON_ONCE(ctx->task != task);
+			/* Transfer the held lock with the non-NULL return. */
+			__release(&ctx->lock);
 		}
 	}
 	rcu_read_unlock();
@@ -1468,6 +1479,7 @@ perf_pin_task_context(struct task_struct *task, int ctxn)
 
 	ctx = perf_lock_task_context(task, ctxn, &flags);
 	if (ctx) {
+		__acquire(&ctx->lock);
 		++ctx->pin_count;
 		raw_spin_unlock_irqrestore(&ctx->lock, flags);
 	}
@@ -2593,6 +2605,8 @@ static int  __perf_install_in_context(void *info)
 		WARN_ON_ONCE(reprogram && cpuctx->task_ctx && cpuctx->task_ctx != ctx);
 	} else if (task_ctx) {
 		raw_spin_lock(&task_ctx->lock);
+	} else {
+		__acquire(&task_ctx->lock);
 	}
 
 #ifdef CONFIG_CGROUP_PERF
@@ -3091,11 +3105,11 @@ static int context_equiv(struct perf_event_context *ctx1,
 		return 0;
 
 	/* If ctx1 is the parent of ctx2 */
-	if (ctx1 == ctx2->parent_ctx && ctx1->generation == ctx2->parent_gen)
+	if (ctx1 == rcu_access_pointer(ctx2->parent_ctx) && ctx1->generation == ctx2->parent_gen)
 		return 1;
 
 	/* If ctx2 is the parent of ctx1 */
-	if (ctx1->parent_ctx == ctx2 && ctx1->parent_gen == ctx2->generation)
+	if (rcu_access_pointer(ctx1->parent_ctx) == ctx2 && ctx1->parent_gen == ctx2->generation)
 		return 1;
 
 	/*
@@ -3177,7 +3191,8 @@ static void perf_event_sync_stat(struct perf_event_context *ctx,
 static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 					 struct task_struct *next)
 {
-	struct perf_event_context *ctx = task->perf_event_ctxp[ctxn];
+	struct perf_event_context *ctx =
+		rcu_dereference_sched(task->perf_event_ctxp[ctxn]);
 	struct perf_event_context *next_ctx;
 	struct perf_event_context *parent, *next_parent;
 	struct perf_cpu_context *cpuctx;
@@ -3191,7 +3206,7 @@ static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 		return;
 
 	rcu_read_lock();
-	next_ctx = next->perf_event_ctxp[ctxn];
+	next_ctx = rcu_dereference_sched(next->perf_event_ctxp[ctxn]);
 	if (!next_ctx)
 		goto unlock;
 
@@ -3580,7 +3595,7 @@ void __perf_event_task_sched_in(struct task_struct *prev,
 		perf_cgroup_sched_in(prev, task);
 
 	for_each_task_context_nr(ctxn) {
-		ctx = task->perf_event_ctxp[ctxn];
+		ctx = rcu_dereference_sched(task->perf_event_ctxp[ctxn]);
 		if (likely(!ctx))
 			continue;
 
@@ -3898,7 +3913,7 @@ static void perf_event_enable_on_exec(int ctxn)
 	int enabled = 0;
 
 	local_irq_save(flags);
-	ctx = current->perf_event_ctxp[ctxn];
+	ctx = rcu_dereference_sched(current->perf_event_ctxp[ctxn]);
 	if (!ctx || !ctx->nr_events)
 		goto out;
 
@@ -4281,6 +4296,7 @@ find_get_context(struct pmu *pmu, struct task_struct *task,
 retry:
 	ctx = perf_lock_task_context(task, ctxn, &flags);
 	if (ctx) {
+		__acquire(&ctx->lock);
 		clone_ctx = unclone_ctx(ctx);
 		++ctx->pin_count;
 
@@ -5152,9 +5168,10 @@ static __poll_t perf_poll(struct file *file, poll_table *wait)
 	 * perf_event_set_output() can swizzle our rb and make us miss wakeups.
 	 */
 	mutex_lock(&event->mmap_mutex);
-	rb = event->rb;
+	rb = rcu_dereference_protected(event->rb,
+				       lockdep_is_held(&event->mmap_mutex));
 	if (rb)
-		events = atomic_xchg(&rb->poll, 0);
+		events = (__force __poll_t)atomic_xchg(&rb->poll, 0);
 	mutex_unlock(&event->mmap_mutex);
 	return events;
 }
@@ -5614,7 +5631,8 @@ static void ring_buffer_attach(struct perf_event *event,
 		 */
 		WARN_ON_ONCE(event->rcu_pending);
 
-		old_rb = event->rb;
+		old_rb = rcu_dereference_protected(event->rb,
+						   lockdep_is_held(&event->mmap_mutex));
 		spin_lock_irqsave(&old_rb->event_lock, flags);
 		list_del_rcu(&event->rb_entry);
 		spin_unlock_irqrestore(&old_rb->event_lock, flags);
@@ -5702,11 +5720,15 @@ static void perf_mmap_open(struct vm_area_struct *vma)
 {
 	struct perf_event *event = vma->vm_file->private_data;
 
+	struct ring_buffer *rb;
+
 	atomic_inc(&event->mmap_count);
-	atomic_inc(&event->rb->mmap_count);
+	rb = rcu_dereference_protected(event->rb,
+				       atomic_read(&event->mmap_count));
+	atomic_inc(&rb->mmap_count);
 
 	if (vma->vm_pgoff)
-		atomic_inc(&event->rb->aux_mmap_count);
+		atomic_inc(&rb->aux_mmap_count);
 
 	if (event->pmu->event_mapped)
 		event->pmu->event_mapped(event, vma->vm_mm);
@@ -5801,7 +5823,7 @@ again:
 		 * still restart the iteration to make sure we're not now
 		 * iterating the wrong list.
 		 */
-		if (event->rb == rb)
+		if (rcu_access_pointer(event->rb) == rb)
 			ring_buffer_attach(event, NULL);
 
 		mutex_unlock(&event->mmap_mutex);
@@ -5898,7 +5920,8 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 		mutex_lock(&event->mmap_mutex);
 		ret = -EINVAL;
 
-		rb = event->rb;
+		rb = rcu_dereference_protected(event->rb,
+					       lockdep_is_held(&event->mmap_mutex));
 		if (!rb)
 			goto aux_unlock;
 
@@ -5951,13 +5974,15 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 	WARN_ON_ONCE(event->ctx->parent_ctx);
 again:
 	mutex_lock(&event->mmap_mutex);
-	if (event->rb) {
-		if (event->rb->nr_pages != nr_pages) {
+	rb = rcu_dereference_protected(event->rb,
+				       lockdep_is_held(&event->mmap_mutex));
+	if (rb) {
+		if (rb->nr_pages != nr_pages) {
 			ret = -EINVAL;
 			goto unlock;
 		}
 
-		if (!atomic_inc_not_zero(&event->rb->mmap_count)) {
+		if (!atomic_inc_not_zero(&rb->mmap_count)) {
 			/*
 			 * Raced against perf_mmap_close(); remove the
 			 * event and try again.
@@ -7076,7 +7101,7 @@ void perf_event_exec(void)
 
 	rcu_read_lock();
 	for_each_task_context_nr(ctxn) {
-		ctx = current->perf_event_ctxp[ctxn];
+		ctx = rcu_dereference(current->perf_event_ctxp[ctxn]);
 		if (!ctx)
 			continue;
 
@@ -7127,11 +7152,10 @@ static int __perf_pmu_output_stop(void *info)
 	struct perf_event *event = info;
 	struct pmu *pmu = event->ctx->pmu;
 	struct perf_cpu_context *cpuctx = this_cpu_ptr(pmu->pmu_cpu_context);
-	struct remote_output ro = {
-		.rb	= event->rb,
-	};
+	struct remote_output ro = { };
 
 	rcu_read_lock();
+	ro.rb = rcu_dereference(event->rb);
 	perf_iterate_ctx(&cpuctx->ctx, __perf_event_output_stop, &ro, false);
 	if (cpuctx->task_ctx)
 		perf_iterate_ctx(cpuctx->task_ctx, __perf_event_output_stop,
@@ -7144,11 +7168,13 @@ static int __perf_pmu_output_stop(void *info)
 static void perf_pmu_output_stop(struct perf_event *event)
 {
 	struct perf_event *iter;
+	struct ring_buffer *rb;
 	int err, cpu;
 
 restart:
 	rcu_read_lock();
-	list_for_each_entry_rcu(iter, &event->rb->event_list, rb_entry) {
+	rb = rcu_dereference(event->rb);
+	list_for_each_entry_rcu(iter, &rb->event_list, rb_entry) {
 		/*
 		 * For per-CPU events, we need to make sure that neither they
 		 * nor their children are running; for cpu==-1 events it's
@@ -7223,9 +7249,9 @@ static void perf_event_task_output(struct perf_event *event,
 
 	if (task_event->event_id.header.type == PERF_RECORD_EXIT) {
 		task_event->event_id.ppid = perf_event_pid(event,
-							task->real_parent);
+							rcu_dereference(task->real_parent));
 		task_event->event_id.ptid = perf_event_pid(event,
-							task->real_parent);
+							rcu_dereference(task->real_parent));
 	} else {  /* PERF_RECORD_FORK */
 		task_event->event_id.ppid = perf_event_pid(event, current);
 		task_event->event_id.ptid = perf_event_tid(event, current);
@@ -8391,7 +8417,7 @@ int perf_event_overflow(struct perf_event *event,
  */
 
 struct swevent_htable {
-	struct swevent_hlist		*swevent_hlist;
+	struct swevent_hlist __rcu	*swevent_hlist;
 	struct mutex			hlist_mutex;
 	int				hlist_refcount;
 
@@ -10077,7 +10103,7 @@ static ssize_t nr_addr_filters_show(struct device *dev,
 
 	return snprintf(page, PAGE_SIZE - 1, "%d\n", pmu->nr_addr_filters);
 }
-DEVICE_ATTR_RO(nr_addr_filters);
+static DEVICE_ATTR_RO(nr_addr_filters);
 
 static struct idr pmu_idr;
 
@@ -11177,6 +11203,7 @@ static void perf_group_shared_event(struct perf_event *event,
  * @pid:		target pid
  * @cpu:		target cpu
  * @group_fd:		group leader event fd
+ * @flags:		event creation flags
  */
 SYSCALL_DEFINE5(perf_event_open,
 		struct perf_event_attr __user *, attr_uptr,
@@ -11643,6 +11670,8 @@ err_fd:
  * @attr: attributes of the counter to create
  * @cpu: cpu in which the counter is bound
  * @task: task to profile (NULL for percpu)
+ * @overflow_handler: callback for overflow notifications
+ * @context: private data passed to the overflow handler
  */
 struct perf_event *
 perf_event_create_kernel_counter(struct perf_event_attr *attr, int cpu,
@@ -11990,7 +12019,7 @@ void perf_event_free_task(struct task_struct *task)
 	int ctxn;
 
 	for_each_task_context_nr(ctxn) {
-		ctx = task->perf_event_ctxp[ctxn];
+		ctx = rcu_dereference_protected(task->perf_event_ctxp[ctxn], 1);
 		if (!ctx)
 			continue;
 
@@ -12250,7 +12279,7 @@ inherit_task_group(struct perf_event *event, struct task_struct *parent,
 		return 0;
 	}
 
-	child_ctx = child->perf_event_ctxp[ctxn];
+	child_ctx = rcu_dereference_protected(child->perf_event_ctxp[ctxn], 1);
 	if (!child_ctx) {
 		/*
 		 * This is executed from the parent task context, so
@@ -12262,7 +12291,7 @@ inherit_task_group(struct perf_event *event, struct task_struct *parent,
 		if (!child_ctx)
 			return -ENOMEM;
 
-		child->perf_event_ctxp[ctxn] = child_ctx;
+		RCU_INIT_POINTER(child->perf_event_ctxp[ctxn], child_ctx);
 	}
 
 	ret = inherit_group(event, parent, parent_ctx,
@@ -12341,7 +12370,7 @@ static int perf_event_init_context(struct task_struct *child, int ctxn)
 	raw_spin_lock_irqsave(&parent_ctx->lock, flags);
 	parent_ctx->rotate_disable = 0;
 
-	child_ctx = child->perf_event_ctxp[ctxn];
+	child_ctx = rcu_dereference_protected(child->perf_event_ctxp[ctxn], 1);
 
 	if (child_ctx && inherited_all) {
 		/*
@@ -12351,15 +12380,16 @@ static int perf_event_init_context(struct task_struct *child, int ctxn)
 		 * Note that if the parent is a clone, the holding of
 		 * parent_ctx->lock avoids it from being uncloned.
 		 */
-		cloned_ctx = parent_ctx->parent_ctx;
+		cloned_ctx = rcu_dereference_protected(parent_ctx->parent_ctx,
+						       lockdep_is_held(&parent_ctx->lock));
 		if (cloned_ctx) {
-			child_ctx->parent_ctx = cloned_ctx;
+			RCU_INIT_POINTER(child_ctx->parent_ctx, cloned_ctx);
 			child_ctx->parent_gen = parent_ctx->parent_gen;
 		} else {
-			child_ctx->parent_ctx = parent_ctx;
+			RCU_INIT_POINTER(child_ctx->parent_ctx, parent_ctx);
 			child_ctx->parent_gen = parent_ctx->generation;
 		}
-		get_ctx(child_ctx->parent_ctx);
+		get_ctx(rcu_dereference_protected(child_ctx->parent_ctx, 1));
 	}
 
 	raw_spin_unlock_irqrestore(&parent_ctx->lock, flags);
@@ -12418,7 +12448,7 @@ static void __init perf_event_init_all_cpus(void)
 	}
 }
 
-void perf_swevent_init_cpu(unsigned int cpu)
+static void perf_swevent_init_cpu(unsigned int cpu)
 {
 	struct swevent_htable *swhash = &per_cpu(swevent_htable, cpu);
 

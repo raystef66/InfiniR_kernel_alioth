@@ -448,6 +448,7 @@ int register_perf_hw_breakpoint(struct perf_event *bp)
  * register_user_hw_breakpoint - register a hardware breakpoint for user space
  * @attr: breakpoint attributes
  * @triggered: callback to trigger when we hit the breakpoint
+ * @context: private data passed to the callback
  * @tsk: pointer to 'task_struct' of the process to which the address belongs
  */
 struct perf_event *
@@ -547,6 +548,7 @@ EXPORT_SYMBOL_GPL(unregister_hw_breakpoint);
  * register_wide_hw_breakpoint - register a wide breakpoint in the kernel
  * @attr: breakpoint attributes
  * @triggered: callback to trigger when we hit the breakpoint
+ * @context: private data passed to the callback
  *
  * @return a set of per_cpu pointers to perf events
  */

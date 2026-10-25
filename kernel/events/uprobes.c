@@ -145,9 +145,9 @@ static loff_t vaddr_to_offset(struct vm_area_struct *vma, unsigned long vaddr)
  * based on replace_page in mm/ksm.c
  *
  * @vma:      vma that holds the pte pointing to page
- * @addr:     address the old @page is mapped at
- * @page:     the cowed page we are replacing by kpage
- * @kpage:    the modified page we replace page by
+ * @addr:     address the old page is mapped at
+ * @old_page: the COW page being replaced
+ * @new_page: the replacement page
  *
  * Returns 0 on success, -EFAULT on failure.
  */
@@ -203,6 +203,8 @@ static int __replace_page(struct vm_area_struct *vma, unsigned long addr,
 	page_remove_rmap(old_page, false);
 	if (!page_mapped(old_page))
 		try_to_free_swap(old_page);
+	if (pvmw.ptl)
+		__acquire(pvmw.ptl);
 	page_vma_mapped_walk_done(&pvmw);
 
 	if (vma->vm_flags & VM_LOCKED)

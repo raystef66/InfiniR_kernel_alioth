@@ -191,8 +191,10 @@ arch_perf_out_copy_user(void *dst, const void *src, unsigned long n)
 {
 	unsigned long ret;
 
+	/* The output-copy interface carries both kernel and user addresses. */
 	pagefault_disable();
-	ret = __copy_from_user_inatomic(dst, src, n);
+	ret = __copy_from_user_inatomic(dst,
+					(__force const void __user *)src, n);
 	pagefault_enable();
 
 	return ret;

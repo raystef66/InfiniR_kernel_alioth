@@ -6,6 +6,8 @@
 #include <uapi/linux/hw_breakpoint.h>
 
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
+int hw_breakpoint_weight(struct perf_event *bp);
+void arch_unregister_hw_breakpoint(struct perf_event *bp);
 
 extern int __init init_hw_breakpoint(void);
 

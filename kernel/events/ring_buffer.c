@@ -20,7 +20,7 @@
 
 static void perf_output_wakeup(struct perf_output_handle *handle)
 {
-	atomic_set(&handle->rb->poll, EPOLLIN | EPOLLRDNORM);
+	atomic_set(&handle->rb->poll, (__force int)(EPOLLIN | EPOLLRDNORM));
 
 	handle->event->pending_wakeup = 1;
 	irq_work_queue(&handle->event->pending);
@@ -245,6 +245,8 @@ __perf_output_begin(struct perf_output_handle *handle,
 		perf_event__output_id_sample(event, handle, &sample_data);
 	}
 
+	/* Transfer the read-side section with the successfully opened handle. */
+	__release(RCU);
 	return 0;
 
 fail:
@@ -290,6 +292,8 @@ unsigned int perf_output_skip(struct perf_output_handle *handle,
 
 void perf_output_end(struct perf_output_handle *handle)
 {
+	/* Consume the read-side section owned by this output handle. */
+	__acquire(RCU);
 	perf_output_put_handle(handle);
 	rcu_read_unlock();
 }
