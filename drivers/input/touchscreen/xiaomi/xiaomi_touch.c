@@ -33,7 +33,7 @@ static ssize_t xiaomi_touch_dev_write(struct file *file, const char __user *buf,
 	return 0;
 }
 
-static unsigned int xiaomi_touch_dev_poll(struct file *file, poll_table *wait)
+static __poll_t xiaomi_touch_dev_poll(struct file *file, poll_table *wait)
 {
 	return 0;
 }
@@ -47,17 +47,31 @@ static long xiaomi_touch_dev_ioctl(struct file *file, unsigned int cmd,
 	};
 	struct xiaomi_touch_pdata *pdata = file->private_data;
 	void __user *argp = (void __user *)arg;
-	struct xiaomi_touch_interface *touch_data = pdata->touch_data;
-	struct xiaomi_touch *dev = pdata->device;
+	struct xiaomi_touch_interface *touch_data;
+	struct xiaomi_touch *dev;
 	int user_cmd = _IOC_NR(cmd);
 
-	if (!pdata || !touch_data || !dev) {
+	if (!pdata)
+		return -ENODEV;
+
+	touch_data = pdata->touch_data;
+	dev = pdata->device;
+	if (!touch_data || !dev) {
 		MI_TOUCH_LOGE(1, "%s %s: invalid memory\n", MI_TAG, __func__);
 		return -ENOMEM;
 	}
 
 	mutex_lock(&dev->mutex);
-	ret = copy_from_user(&buf, (int __user *)argp, sizeof(buf));
+	if (copy_from_user(buf, argp, sizeof(buf))) {
+		ret = -EFAULT;
+		goto out;
+	}
+
+	if (buf[0] < 0 || buf[0] >= Touch_Mode_NUM) {
+		ret = -EINVAL;
+		goto out;
+	}
+	ret = 0;
 
 	MI_TOUCH_LOGI(1, "%s %s: cmd:%d, mode:%d, value:%d\n", MI_TAG, __func__,
 		      user_cmd, buf[0], buf[1]);
@@ -88,11 +102,15 @@ static long xiaomi_touch_dev_ioctl(struct file *file, unsigned int cmd,
 			buf[0] = touch_data->resetMode(buf[0]);
 		break;
 	case GET_MODE_VALUE:
-		if (touch_data->getModeValue)
+		if (touch_data->getModeAll)
 			ret = touch_data->getModeAll(buf[0], buf);
 		break;
 	case SET_LONG_VALUE:
-		if (touch_data->setModeLongValue && buf[1] <= MAX_BUF_SIZE)
+		if (buf[1] < 0 || buf[1] > MAX_BUF_SIZE - 2) {
+			ret = -EINVAL;
+			break;
+		}
+		if (touch_data->setModeLongValue)
 			ret = touch_data->setModeLongValue(buf[0], buf[1],
 							   &buf[2]);
 		break;
@@ -104,11 +122,12 @@ static long xiaomi_touch_dev_ioctl(struct file *file, unsigned int cmd,
 	}
 
 	if (ret >= 0)
-		ret = copy_to_user((int __user *)argp, &buf, sizeof(buf));
+		ret = copy_to_user(argp, buf, sizeof(buf)) ? -EFAULT : 0;
 	else
 		MI_TOUCH_LOGE(1, "%s %s: can't get data from touch driver\n",
 			      MI_TAG, __func__);
 
+out:
 	mutex_unlock(&dev->mutex);
 
 	return ret;
@@ -203,16 +222,12 @@ int xiaomitouch_register_modedata(struct xiaomi_touch_interface *data)
 
 int update_palm_sensor_value(int value)
 {
-	struct xiaomi_touch *dev = NULL;
-
 	mutex_lock(&xiaomi_touch_dev.palm_mutex);
 
 	if (!touch_pdata) {
 		mutex_unlock(&xiaomi_touch_dev.palm_mutex);
 		return -ENODEV;
 	}
-
-	dev = touch_pdata->device;
 
 	if (value != touch_pdata->palm_value) {
 		MI_TOUCH_LOGI(1, "%s %s: value:%d\n", MI_TAG, __func__, value);
@@ -519,10 +534,13 @@ static ssize_t xiaomi_touch_log_debug_store(struct device *dev,
 					    struct device_attribute *attr,
 					    const char *buf, size_t count)
 {
-	u8 input = 0;
+	u8 input;
+	int ret;
 	struct xiaomi_touch_pdata *pdata = dev_get_drvdata(dev);
-	if (sscanf(buf, "%d", &input) < 0)
-		return -EINVAL;
+
+	ret = kstrtou8(buf, 10, &input);
+	if (ret)
+		return ret;
 	if (!pdata) {
 		MI_TOUCH_LOGE(1, "%s %s: xiaomi touch pdata is null\n", MI_TAG,
 			      __func__);
