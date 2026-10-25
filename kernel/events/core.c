@@ -1106,6 +1106,8 @@ static enum hrtimer_restart perf_mux_hrtimer_handler(struct hrtimer *hr)
 	rotations = perf_rotate_context(cpuctx);
 
 	raw_spin_lock(&cpuctx->hrtimer_lock);
+	if (cpuctx->hrtimer_stop)
+		rotations = false;
 	if (rotations)
 		hrtimer_forward_now(hr, cpuctx->hrtimer_interval);
 	else
@@ -1151,7 +1153,7 @@ static int perf_mux_hrtimer_restart(struct perf_cpu_context *cpuctx)
 		return 0;
 
 	raw_spin_lock_irqsave(&cpuctx->hrtimer_lock, flags);
-	if (!cpuctx->hrtimer_active) {
+	if (!cpuctx->hrtimer_active && !cpuctx->hrtimer_stop) {
 		cpuctx->hrtimer_active = 1;
 		hrtimer_forward_now(timer, cpuctx->hrtimer_interval);
 		hrtimer_start_expires(timer, HRTIMER_MODE_ABS_PINNED);
@@ -12434,7 +12436,20 @@ void perf_swevent_init_cpu(unsigned int cpu)
 #if defined CONFIG_HOTPLUG_CPU || defined CONFIG_KEXEC_CORE
 int perf_event_restart_events(unsigned int cpu)
 {
+	struct perf_cpu_context *cpuctx;
+	unsigned long flags;
+	struct pmu *pmu;
+
 	mutex_lock(&pmus_lock);
+	/* Also runs when a failed CPU-down operation is rolled back. */
+	list_for_each_entry(pmu, &pmus, entry) {
+		if (pmu->task_ctx_nr == perf_sw_context)
+			continue;
+		cpuctx = per_cpu_ptr(pmu->pmu_cpu_context, cpu);
+		raw_spin_lock_irqsave(&cpuctx->hrtimer_lock, flags);
+		cpuctx->hrtimer_stop = false;
+		raw_spin_unlock_irqrestore(&cpuctx->hrtimer_lock, flags);
+	}
 	per_cpu(is_hotplugging, cpu) = false;
 	perf_deferred_install_in_context(cpu);
 	mutex_unlock(&pmus_lock);
@@ -12459,10 +12474,13 @@ static void perf_event_exit_cpu_context(int cpu)
 		/* Cancel the mux hrtimer to avoid CPU migration */
 		if (pmu->task_ctx_nr != perf_sw_context) {
 			raw_spin_lock_irqsave(&cpuctx->hrtimer_lock, flags);
+			cpuctx->hrtimer_stop = true;
+			raw_spin_unlock_irqrestore(&cpuctx->hrtimer_lock, flags);
+			/* The callback also takes hrtimer_lock. */
 			hrtimer_cancel(&cpuctx->hrtimer);
+			raw_spin_lock_irqsave(&cpuctx->hrtimer_lock, flags);
 			cpuctx->hrtimer_active = 0;
-			raw_spin_unlock_irqrestore(&cpuctx->hrtimer_lock,
-							flags);
+			raw_spin_unlock_irqrestore(&cpuctx->hrtimer_lock, flags);
 		}
 
 		mutex_lock(&ctx->mutex);
