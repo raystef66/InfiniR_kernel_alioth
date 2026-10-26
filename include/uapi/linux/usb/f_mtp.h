@@ -42,7 +42,7 @@ struct mtp_event {
 	/* size of the event */
 	size_t		length;
 	/* event data to send */
-	void		*data;
+	void __user	*data;
 };
 
 /* Sends the specified file range to the host */

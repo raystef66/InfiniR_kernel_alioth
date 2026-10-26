@@ -1053,11 +1053,11 @@ static int mtp_send_event(struct mtp_dev *dev, struct mtp_event *event)
 {
 	struct usb_request *req = NULL;
 	int ret;
-	int length = event->length;
+	size_t length = event->length;
 
 	mtp_log("(%zu)\n", event->length);
 
-	if (length < 0 || length > INTR_BUFFER_SIZE)
+	if (length > INTR_BUFFER_SIZE)
 		return -EINVAL;
 	if (dev->state == STATE_OFFLINE)
 		return -ENODEV;
@@ -1068,7 +1068,7 @@ static int mtp_send_event(struct mtp_dev *dev, struct mtp_event *event)
 	if (!req)
 		return -ETIME;
 
-	if (copy_from_user(req->buf, (void __user *)event->data, length)) {
+	if (copy_from_user(req->buf, event->data, length)) {
 		mtp_req_put(dev, &dev->intr_idle, req);
 		return -EFAULT;
 	}
