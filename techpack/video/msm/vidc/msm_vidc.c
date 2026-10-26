@@ -193,7 +193,7 @@ int msm_vidc_query_menu(void *instance, struct v4l2_querymenu *qmenu)
 		rc = -EINVAL;
 
 	s_vpr_h(inst->sid,
-		"%s: ctrl: %s: min %d, max %d, menu_skip_mask %#x, qmenu: id %d, index %d, %s\n",
+		"%s: ctrl: %s: min %lld, max %lld, menu_skip_mask %#llx, qmenu: id %d, index %d, %s\n",
 		__func__, ctrl->name, ctrl->minimum, ctrl->maximum,
 		ctrl->menu_skip_mask, qmenu->id, qmenu->index,
 		rc ? "not supported" : "supported");
@@ -929,7 +929,6 @@ static int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 {
 	struct msm_vidc_inst *inst;
 	int rc = 0;
-	struct hfi_device *hdev;
 
 	if (!q || !q->drv_priv) {
 		d_vpr_e("Invalid input, q = %pK\n", q);
@@ -940,7 +939,6 @@ static int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		d_vpr_e("%s: invalid parameters\n", __func__);
 		return -EINVAL;
 	}
-	hdev = inst->core->device;
 	s_vpr_h(inst->sid, "Streamon called on: %d capability for inst: %pK\n",
 		q->type, inst);
 	switch (q->type) {

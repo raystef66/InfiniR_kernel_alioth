@@ -387,7 +387,7 @@ static struct msm_vidc_enc_buff_size_calculators vp8e_calculators = {
 	.calculate_persist_size = calculate_enc_persist_size,
 };
 
-int msm_vidc_get_decoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
+static int msm_vidc_get_decoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_dec_buff_size_calculators *dec_calculators;
 	u32 width, height, i, out_min_count, num_vpp_pipes;
@@ -468,7 +468,7 @@ int msm_vidc_get_decoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vidc_get_num_ref_frames(struct msm_vidc_inst *inst)
+static int msm_vidc_get_num_ref_frames(struct msm_vidc_inst *inst)
 {
 	int num_ref = 1;
 	int num_bframes = -1, ltr_count = -1, num_hp_layers;
@@ -509,7 +509,7 @@ int msm_vidc_get_num_ref_frames(struct msm_vidc_inst *inst)
 	return num_ref;
 }
 
-int msm_vidc_get_encoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
+static int msm_vidc_get_encoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_enc_buff_size_calculators *enc_calculators;
 	u32 width, height, i, num_ref, num_vpp_pipes;
@@ -611,7 +611,7 @@ int msm_vidc_get_encoder_internal_buffer_sizes(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vidc_calculate_internal_buffer_sizes(struct msm_vidc_inst *inst)
+static int msm_vidc_calculate_internal_buffer_sizes(struct msm_vidc_inst *inst)
 {
 	if (!inst) {
 		d_vpr_e("%s: Instance is null!", __func__);

@@ -1340,7 +1340,6 @@ static int wait_for_sess_signal_receipt(struct msm_vidc_inst *inst,
 	enum hal_command_response cmd)
 {
 	int rc = 0;
-	struct hfi_device *hdev;
 
 	if (!inst) {
 		d_vpr_e("Invalid(%pK) instance id\n", inst);
@@ -1350,7 +1349,6 @@ static int wait_for_sess_signal_receipt(struct msm_vidc_inst *inst,
 		s_vpr_e(inst->sid, "Invalid inst cmd response: %d\n", cmd);
 		return -EINVAL;
 	}
-	hdev = (struct hfi_device *)(inst->core->device);
 	rc = wait_for_completion_timeout(
 		&inst->completions[SESSION_MSG_INDEX(cmd)],
 		msecs_to_jiffies(
@@ -1445,7 +1443,7 @@ static int msm_vidc_comm_update_ctrl(struct msm_vidc_inst *inst,
 			cap->default_value);
 	if (rc) {
 		s_vpr_e(inst->sid,
-			"%s: failed: control name %s, min %d, max %d, %s %x, default_value %d\n",
+			"%s: failed: control name %s, min %d, max %d, %s %llx, default_value %d\n",
 			__func__, ctrl->name, cap->min, cap->max,
 			is_menu ? "menu_skip_mask" : "step",
 			is_menu ? ctrl->menu_skip_mask : cap->step_size,
@@ -1454,7 +1452,7 @@ static int msm_vidc_comm_update_ctrl(struct msm_vidc_inst *inst,
 	}
 
 	s_vpr_h(inst->sid,
-		"Updated control: %s: min %lld, max %lld, %s %x, default value = %lld\n",
+		"Updated control: %s: min %lld, max %lld, %s %llx, default value = %lld\n",
 		ctrl->name, ctrl->minimum, ctrl->maximum,
 		is_menu ? "menu_skip_mask" : "step",
 		is_menu ? ctrl->menu_skip_mask : ctrl->step,
@@ -2168,7 +2166,6 @@ exit:
 static void handle_session_error(enum hal_command_response cmd, void *data)
 {
 	struct msm_vidc_cb_cmd_done *response = data;
-	struct hfi_device *hdev = NULL;
 	struct msm_vidc_inst *inst = NULL;
 	int event = V4L2_EVENT_MSM_VIDC_SYS_ERROR;
 
@@ -2184,7 +2181,6 @@ static void handle_session_error(enum hal_command_response cmd, void *data)
 		return;
 	}
 
-	hdev = inst->core->device;
 	s_vpr_e(inst->sid, "Session error received for inst %pK\n", inst);
 
 	if (response->status == VIDC_ERR_MAX_CLIENTS) {
@@ -3131,7 +3127,6 @@ fail_core_init:
 static int msm_vidc_deinit_core(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
-	struct hfi_device *hdev;
 
 	if (!inst || !inst->core || !inst->core->device) {
 		d_vpr_e("%s: invalid parameters\n", __func__);
@@ -3139,7 +3134,6 @@ static int msm_vidc_deinit_core(struct msm_vidc_inst *inst)
 	}
 
 	core = inst->core;
-	hdev = core->device;
 
 	mutex_lock(&core->lock);
 	if (core->state == VIDC_CORE_UNINIT) {
@@ -4303,7 +4297,6 @@ int msm_vidc_comm_cmd(void *instance, union msm_v4l2_cmd *cmd)
 	struct msm_vidc_inst *inst = instance;
 	struct v4l2_decoder_cmd *dec = NULL;
 	struct v4l2_encoder_cmd *enc = NULL;
-	struct msm_vidc_core *core;
 	int which_cmd = 0, flags = 0, rc = 0;
 
 	if (!inst || !inst->core || !cmd) {
@@ -4311,7 +4304,6 @@ int msm_vidc_comm_cmd(void *instance, union msm_v4l2_cmd *cmd)
 			__func__, inst, cmd);
 		return -EINVAL;
 	}
-	core = inst->core;
 	if (inst->session_type == MSM_VIDC_ENCODER) {
 		enc = (struct v4l2_encoder_cmd *)cmd;
 		which_cmd = enc->cmd;
@@ -5913,7 +5905,7 @@ int msm_comm_check_memory_supported(struct msm_vidc_inst *vidc_inst)
 
 	if ((total_mem_size >> 20) > memory_limit_mbytes) {
 		s_vpr_e(vidc_inst->sid,
-			"%s: video mem overshoot - reached %llu MB, max_limit %llu MB\n",
+			"%s: video mem overshoot - reached %llu MB, max_limit %u MB\n",
 			__func__, total_mem_size >> 20, memory_limit_mbytes);
 		msm_comm_print_insts_info(core);
 		return -ENOMEM;
@@ -5928,7 +5920,7 @@ int msm_comm_check_memory_supported(struct msm_vidc_inst *vidc_inst)
 
 		if (non_sec_mem_size > non_sec_cb_size) {
 			s_vpr_e(vidc_inst->sid,
-				"%s: insufficient device addr space, required %llu, available %llu\n",
+				"%s: insufficient device addr space, required %llu, available %u\n",
 				__func__, non_sec_mem_size, non_sec_cb_size);
 			msm_comm_print_insts_info(core);
 			return -ENOMEM;
@@ -6067,7 +6059,6 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_capability *capability;
 	int rc = 0;
-	struct hfi_device *hdev;
 	struct msm_vidc_core *core;
 	u32 output_height, output_width, input_height, input_width;
 	u32 width_min, width_max, height_min, height_max;
@@ -6080,7 +6071,6 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	capability = &inst->capability;
-	hdev = inst->core->device;
 	core = inst->core;
 	sid = inst->sid;
 	rc = msm_vidc_check_mbps_supported(inst);

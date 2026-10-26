@@ -516,7 +516,7 @@ static bool msm_vidc_check_for_vp9d_overload(struct msm_vidc_core *core)
 	return false;
 }
 
-int msm_vdec_update_stream_output_mode(struct msm_vidc_inst *inst)
+static int msm_vdec_update_stream_output_mode(struct msm_vidc_inst *inst)
 {
 	struct v4l2_format *f;
 	u32 format;
@@ -956,7 +956,7 @@ int msm_vdec_s_ctrl(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
-int msm_vdec_set_frame_size(struct msm_vidc_inst *inst)
+static int msm_vdec_set_frame_size(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -983,17 +983,15 @@ int msm_vdec_set_frame_size(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_color_format(struct msm_vidc_inst *inst)
+static int msm_vdec_set_color_format(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct hfi_device *hdev;
 	struct msm_vidc_format_constraint *fmt_constraint;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
-	hdev = inst->core->device;
 
 	rc = msm_comm_set_color_format(inst,
 			msm_comm_get_hal_output_buffer(inst),
@@ -1022,10 +1020,9 @@ int msm_vdec_set_color_format(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_input_buffer_counts(struct msm_vidc_inst *inst)
+static int msm_vdec_set_input_buffer_counts(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct hfi_device *hdev;
 	struct msm_vidc_format *fmt;
 	enum hal_buffer buffer_type;
 
@@ -1033,7 +1030,6 @@ int msm_vdec_set_input_buffer_counts(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
-	hdev = inst->core->device;
 
 	buffer_type = HAL_BUFFER_INPUT;
 	fmt = &inst->fmts[INPUT_PORT];
@@ -1050,10 +1046,9 @@ int msm_vdec_set_input_buffer_counts(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_output_buffer_counts(struct msm_vidc_inst *inst)
+static int msm_vdec_set_output_buffer_counts(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct hfi_device *hdev;
 	struct msm_vidc_format *fmt;
 	enum hal_buffer buffer_type;
 
@@ -1061,7 +1056,6 @@ int msm_vdec_set_output_buffer_counts(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
-	hdev = inst->core->device;
 
 	buffer_type = msm_comm_get_hal_output_buffer(inst);
 	/* Correct buffer counts is always stored in HAL_BUFFER_OUTPUT */
@@ -1095,7 +1089,7 @@ int msm_vdec_set_output_buffer_counts(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_profile_level(struct msm_vidc_inst *inst)
+static int msm_vdec_set_profile_level(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1121,7 +1115,7 @@ int msm_vdec_set_profile_level(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_output_order(struct msm_vidc_inst *inst)
+static int msm_vdec_set_output_order(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1150,7 +1144,7 @@ int msm_vdec_set_output_order(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_sync_frame_mode(struct msm_vidc_inst *inst)
+static int msm_vdec_set_sync_frame_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1176,7 +1170,7 @@ int msm_vdec_set_sync_frame_mode(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst)
+static int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1213,7 +1207,7 @@ int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_output_stream_mode(struct msm_vidc_inst *inst)
+static int msm_vdec_set_output_stream_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1300,7 +1294,7 @@ int msm_vdec_set_output_stream_mode(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_priority(struct msm_vidc_inst *inst)
+static int msm_vdec_set_priority(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1324,7 +1318,7 @@ int msm_vdec_set_priority(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_seqchng_at_syncframe(struct msm_vidc_inst *inst)
+static int msm_vdec_set_seqchng_at_syncframe(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1350,7 +1344,7 @@ int msm_vdec_set_seqchng_at_syncframe(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int msm_vdec_set_conceal_color(struct msm_vidc_inst *inst)
+static int msm_vdec_set_conceal_color(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct hfi_device *hdev;
@@ -1382,7 +1376,7 @@ int msm_vdec_set_conceal_color(struct msm_vidc_inst *inst)
 }
 
 
-int msm_vdec_set_extradata(struct msm_vidc_inst *inst)
+static int msm_vdec_set_extradata(struct msm_vidc_inst *inst)
 {
 	uint32_t display_info = HFI_PROPERTY_PARAM_VUI_DISPLAY_INFO_EXTRADATA;
 	u32 value = 0x0;

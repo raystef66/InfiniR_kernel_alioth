@@ -14,7 +14,6 @@ static unsigned long __calculate_encoder(struct vidc_bus_vote_data *d)
 	/* Derived Parameter */
 	int search_range, lcu_per_frame;
 	fp_t y_bw;
-	bool is_h264_category = true;
 	fp_t orig_read_factor, recon_write_factor,
 		ref_y_read_factor, ref_c_read_factor, lb_factor,
 		rest_factor, total_read_factor, total_write_factor,
@@ -47,13 +46,6 @@ static unsigned long __calculate_encoder(struct vidc_bus_vote_data *d)
 	/* Derived Parameters Setup*/
 	lcu_per_frame = DIV_ROUND_UP(width, lcu_size) *
 		DIV_ROUND_UP(height, lcu_size);
-
-	if (d->codec == HAL_VIDEO_CODEC_HEVC ||
-		d->codec == HAL_VIDEO_CODEC_VP9) {
-		/* H264, VP8, MPEG2 use the same settings */
-		/* HEVC, VP9 use the same setting */
-		is_h264_category = false;
-	}
 
 	search_range = 48;
 
@@ -133,7 +125,6 @@ static unsigned long __calculate_encoder(struct vidc_bus_vote_data *d)
 		__dump(dump, ARRAY_SIZE(dump), d->sid);
 	}
 
-
 	d->calc_bw_ddr = kbps(fp_round(total));
 
 	return ret;
@@ -147,7 +138,6 @@ static unsigned long __calculate_decoder(struct vidc_bus_vote_data *d)
 	/* Derived parameters */
 	int lcu_per_frame, motion_complexity;
 	fp_t y_bw;
-	bool is_h264_category = true;
 	fp_t recon_write_factor, ref_read_factor, lb_factor,
 		rest_factor, opb_factor,
 		total_read_factor, total_write_factor,
@@ -180,13 +170,6 @@ static unsigned long __calculate_decoder(struct vidc_bus_vote_data *d)
 	/* Derived Parameters Setup*/
 	lcu_per_frame = DIV_ROUND_UP(width, lcu_size) *
 		DIV_ROUND_UP(height, lcu_size);
-
-	if (d->codec == HAL_VIDEO_CODEC_HEVC ||
-		d->codec == HAL_VIDEO_CODEC_VP9) {
-		/* H264, VP8, MPEG2 use the same settings */
-		/* HEVC, VP9 use the same setting */
-		is_h264_category = false;
-	}
 
 	y_bw = fp_mult(fp_mult(FP_INT(width), FP_INT(height)), FP_INT(fps));
 	y_bw = fp_div(y_bw, FP_INT(1000000));

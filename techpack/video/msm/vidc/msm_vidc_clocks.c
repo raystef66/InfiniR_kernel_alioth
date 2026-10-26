@@ -274,7 +274,7 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	return 0;
 }
 
-int msm_comm_set_buses(struct msm_vidc_core *core, u32 sid, bool force_reset)
+static int msm_comm_set_buses(struct msm_vidc_core *core, u32 sid, bool force_reset)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = NULL;
@@ -475,7 +475,6 @@ static int msm_dcvs_scale_clocks(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	int bufs_with_fw = 0;
-	struct msm_vidc_format *fmt;
 	struct clock_data *dcvs;
 
 	if (!inst || !inst->core || !inst->core->device) {
@@ -494,10 +493,8 @@ static int msm_dcvs_scale_clocks(struct msm_vidc_inst *inst,
 
 	if (is_decode_session(inst)) {
 		bufs_with_fw = msm_comm_num_queued_bufs(inst, OUTPUT_MPLANE);
-		fmt = &inst->fmts[OUTPUT_PORT];
 	} else {
 		bufs_with_fw = msm_comm_num_queued_bufs(inst, INPUT_MPLANE);
-		fmt = &inst->fmts[INPUT_PORT];
 	}
 
 	/* +1 as one buffer is going to be queued after the function */
@@ -603,10 +600,8 @@ static unsigned long msm_vidc_calc_freq_ar50(struct msm_vidc_inst *inst,
 	int i = 0;
 	struct allowed_clock_rates_table *allowed_clks_tbl = NULL;
 	u64 rate = 0, fps;
-	struct clock_data *dcvs = NULL;
 
 	core = inst->core;
-	dcvs = &inst->clk_data;
 
 	mbs_per_second = msm_comm_get_inst_load_per_core(inst,
 							 LOAD_POWER);
@@ -680,11 +675,9 @@ static unsigned long msm_vidc_calc_freq_iris1(struct msm_vidc_inst *inst,
 	int i = 0;
 	struct allowed_clock_rates_table *allowed_clks_tbl = NULL;
 	u64 rate = 0, fps;
-	struct clock_data *dcvs = NULL;
 	u32 operating_rate, vsp_factor_num = 10, vsp_factor_den = 5;
 
 	core = inst->core;
-	dcvs = &inst->clk_data;
 
 	mbs_per_second = msm_comm_get_inst_load_per_core(inst,
 							 LOAD_POWER);
@@ -764,15 +757,11 @@ static unsigned long msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst,
 	u64 fw_vpp_cycles = 0;
 	u32 vpp_cycles_per_mb;
 	u32 mbs_per_second;
-	struct msm_vidc_core *core = NULL;
 	u32 fps;
-	struct clock_data *dcvs = NULL;
 	u32 operating_rate, vsp_factor_num = 1, vsp_factor_den = 1;
 	u32 base_cycles = 0;
 	u32 codec = 0;
 
-	core = inst->core;
-	dcvs = &inst->clk_data;
 
 	mbs_per_second = msm_comm_get_inst_load_per_core(inst,
 							 LOAD_POWER);
@@ -1004,7 +993,7 @@ int msm_vidc_set_clocks(struct msm_vidc_core *core, u32 sid, bool force_reset)
 	return rc;
 }
 
-int msm_comm_scale_clocks(struct msm_vidc_inst *inst, bool force_reset)
+static int msm_comm_scale_clocks(struct msm_vidc_inst *inst, bool force_reset)
 {
 	struct msm_vidc_buffer *temp, *next;
 	unsigned long freq = 0;
@@ -1055,15 +1044,11 @@ int msm_comm_scale_clocks(struct msm_vidc_inst *inst, bool force_reset)
 
 int msm_comm_scale_clocks_and_bus(struct msm_vidc_inst *inst, bool do_bw_calc)
 {
-	struct msm_vidc_core *core;
-	struct hfi_device *hdev;
 
 	if (!inst || !inst->core || !inst->core->device) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
-	core = inst->core;
-	hdev = core->device;
 
 	if (!inst->active) {
 		/* do not skip bw voting for inactive -> active session */
@@ -1361,14 +1346,10 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst *inst)
 			inst->pic_struct != MSM_VIDC_PIC_STRUCT_PROGRESSIVE)
 			pdata.video_work_route = 1;
 	} else if (inst->session_type == MSM_VIDC_ENCODER) {
-		u32 slice_mode, width, height;
-		struct v4l2_format *f;
+		u32 slice_mode;
 
 		slice_mode =  msm_comm_g_ctrl_for_id(inst,
 				V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MODE);
-		f = &inst->fmts[INPUT_PORT].v4l2_fmt;
-		height = f->fmt.pix_mp.height;
-		width = f->fmt.pix_mp.width;
 
 		if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_BYTES ||
 			codec == V4L2_PIX_FMT_VP8 || is_legacy_cbr) {
@@ -1645,7 +1626,7 @@ static inline int msm_vidc_power_save_mode_enable(struct msm_vidc_inst *inst,
 			(void *)inst->session, prop_id, pdata,
 			sizeof(hfi_perf_mode));
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: Failed to set power save mode\n",
+		s_vpr_e(inst->sid, "%s: Failed to set power save mode for %pK\n",
 			__func__, inst);
 		return rc;
 	}
