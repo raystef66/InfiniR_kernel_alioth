@@ -22,7 +22,7 @@ void dss_reg_w(struct dss_io_data *io, u32 offset, u32 value, u32 debug)
 		return;
 	}
 
-	if (offset > io->len) {
+	if (io->len < sizeof(u32) || offset > io->len - sizeof(u32)) {
 		DEV_ERR("%pS->%s: offset out of range\n",
 			__builtin_return_address(0), __func__);
 		return;
@@ -50,7 +50,7 @@ u32 dss_reg_r(struct dss_io_data *io, u32 offset, u32 debug)
 		return -EINVAL;
 	}
 
-	if (offset > io->len) {
+	if (io->len < sizeof(u32) || offset > io->len - sizeof(u32)) {
 		DEV_ERR("%pS->%s: offset out of range\n",
 			__builtin_return_address(0), __func__);
 		return -EINVAL;
@@ -68,9 +68,28 @@ EXPORT_SYMBOL(dss_reg_r);
 void dss_reg_dump(void __iomem *base, u32 length, const char *prefix,
 	u32 debug)
 {
-	if (debug)
-		print_hex_dump(KERN_INFO, prefix, DUMP_PREFIX_OFFSET, 32, 4,
-			(void *)base, length, false);
+	u8 data[32];
+	char line[3 * sizeof(data) + 1];
+	u32 offset = 0, value;
+	size_t count, i;
+
+	if (!debug || !base)
+		return;
+
+	while (offset < length) {
+		count = min_t(size_t, sizeof(data), length - offset);
+		/* Keep register accesses 32-bit wide, with bytes for the tail. */
+		for (i = 0; i + sizeof(value) <= count; i += sizeof(value)) {
+			value = readl_relaxed(base + offset + i);
+			memcpy(data + i, &value, sizeof(value));
+		}
+		for (; i < count; i++)
+			data[i] = readb_relaxed(base + offset + i);
+		hex_dump_to_buffer(data, count, sizeof(data), 4, line,
+				sizeof(line), false);
+		pr_info("%s%.8x: %s\n", prefix, offset, line);
+		offset += count;
+	}
 } /* dss_reg_dump */
 EXPORT_SYMBOL(dss_reg_dump);
 
