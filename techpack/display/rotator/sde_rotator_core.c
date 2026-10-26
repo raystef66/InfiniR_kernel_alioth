@@ -483,6 +483,10 @@ static int sde_rotator_resource_ctrl(struct sde_rot_mgr *mgr, int enable)
 	if (enable) {
 		mgr->res_ref_cnt++;
 		ret = pm_runtime_get_sync(&mgr->pdev->dev);
+		if (ret < 0) {
+			pm_runtime_put_noidle(&mgr->pdev->dev);
+			mgr->res_ref_cnt--;
+		}
 	} else {
 		mgr->res_ref_cnt--;
 		ret = pm_runtime_put_sync(&mgr->pdev->dev);
@@ -3191,7 +3195,9 @@ int sde_rotator_core_init(struct sde_rot_mgr **pmgr,
 
 	/* enable power and clock before h/w initialization/query */
 	sde_rotator_update_clk(mgr);
-	sde_rotator_resource_ctrl(mgr, true);
+	ret = sde_rotator_resource_ctrl(mgr, true);
+	if (ret < 0)
+		goto error_resource_enable;
 	sde_rotator_clk_ctrl(mgr, true);
 
 	mdata->mdss_version = SDE_REG_READ(mdata, SDE_REG_HW_VERSION);
@@ -3266,6 +3272,7 @@ error_hw_init:
 error_map_hw_ops:
 	sde_rotator_clk_ctrl(mgr, false);
 	sde_rotator_resource_ctrl(mgr, false);
+error_resource_enable:
 	sde_rotator_footswitch_ctrl(mgr, false);
 error_fs_en_fail:
 	sde_rotator_res_destroy(mgr);

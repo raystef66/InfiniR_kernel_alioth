@@ -1791,7 +1791,10 @@ static int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
 	if (vote_req) {
 		if (power_ctrl->enable) {
 			rc = pm_runtime_get_sync(dev->dev);
-			priv->phandle.is_ext_vote_en = true;
+			if (rc < 0)
+				pm_runtime_put_noidle(dev->dev);
+			else
+				priv->phandle.is_ext_vote_en = true;
 		} else {
 			pm_runtime_put_sync(dev->dev);
 			 priv->phandle.is_ext_vote_en = false;

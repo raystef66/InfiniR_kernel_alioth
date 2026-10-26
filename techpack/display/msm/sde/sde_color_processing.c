@@ -2883,6 +2883,7 @@ static void sde_cp_notify_ad_event(struct drm_crtc *crtc_drm, void *arg)
 
 	ret = pm_runtime_get_sync(kms->dev->dev);
 	if (ret < 0) {
+		pm_runtime_put_noidle(kms->dev->dev);
 		SDE_ERROR("failed to enable power resource %d\n", ret);
 		SDE_EVT32(ret, SDE_EVTLOG_ERROR);
 		return;
@@ -3121,6 +3122,7 @@ static void sde_cp_notify_hist_event(struct drm_crtc *crtc_drm, void *arg)
 		/* unlock histogram */
 		ret = pm_runtime_get_sync(kms->dev->dev);
 		if (ret < 0) {
+			pm_runtime_put_noidle(kms->dev->dev);
 			SDE_ERROR("failed to enable power resource %d\n", ret);
 			SDE_EVT32(ret, SDE_EVTLOG_ERROR);
 			return;
@@ -3146,6 +3148,7 @@ static void sde_cp_notify_hist_event(struct drm_crtc *crtc_drm, void *arg)
 			spin_unlock_irqrestore(&crtc->spin_lock, flags);
 			ret = pm_runtime_get_sync(kms->dev->dev);
 			if (ret < 0) {
+				pm_runtime_put_noidle(kms->dev->dev);
 				SDE_ERROR("failed to enable power %d\n", ret);
 				SDE_EVT32(ret, SDE_EVTLOG_ERROR);
 				return;
@@ -3171,6 +3174,7 @@ static void sde_cp_notify_hist_event(struct drm_crtc *crtc_drm, void *arg)
 
 	ret = pm_runtime_get_sync(kms->dev->dev);
 	if (ret < 0) {
+		pm_runtime_put_noidle(kms->dev->dev);
 		SDE_ERROR("failed to enable power resource %d\n", ret);
 		SDE_EVT32(ret, SDE_EVTLOG_ERROR);
 		return;

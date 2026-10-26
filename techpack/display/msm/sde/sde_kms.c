@@ -1171,8 +1171,10 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		return;
 	priv = sde_kms->dev->dev_private;
 
-	if (sde_kms_power_resource_is_enabled(sde_kms->dev) < 0) {
+	if (!sde_kms_power_resource_is_enabled(sde_kms->dev)) {
 		SDE_ERROR("power resource is not enabled\n");
+		/* prepare_commit retains its PM reference until completion. */
+		pm_runtime_put_noidle(sde_kms->dev->dev);
 		return;
 	}
 
@@ -3363,7 +3365,9 @@ static int sde_kms_pd_enable(struct generic_pm_domain *genpd)
 	SDE_DEBUG("\n");
 
 	rc = pm_runtime_get_sync(sde_kms->dev->dev);
-	if (rc > 0)
+	if (rc < 0)
+		pm_runtime_put_noidle(sde_kms->dev->dev);
+	else if (rc > 0)
 		rc = 0;
 
 	SDE_EVT32(rc, genpd->device_count);
@@ -3852,6 +3856,7 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 
 	rc = pm_runtime_get_sync(sde_kms->dev->dev);
 	if (rc < 0) {
+		pm_runtime_put_noidle(sde_kms->dev->dev);
 		SDE_ERROR("resource enable failed: %d\n", rc);
 		goto error;
 	}

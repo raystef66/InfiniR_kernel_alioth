@@ -600,6 +600,7 @@ static int dp_power_init(struct dp_power *dp_power, bool flip)
 
 	rc = pm_runtime_get_sync(dp_power->drm_dev->dev);
 	if (rc < 0) {
+		pm_runtime_put_noidle(dp_power->drm_dev->dev);
 		DP_ERR("Power resource enable failed\n");
 		goto err_sde_power;
 	}
