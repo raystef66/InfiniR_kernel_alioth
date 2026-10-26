@@ -66,13 +66,13 @@ uint32_t cam_io_r_mb(void __iomem *addr);
  * @brief:              Camera IO util for memory to register copy
  *
  * @dest_addr:          Destination register address
- * @src_addr:           Source regiser address
+ * @src_addr:           Source memory address
  * @len:                Range to be copied
  *
  * @return:             Success or Failure
  */
 int cam_io_memcpy(void __iomem *dest_addr,
-		void __iomem *src_addr, uint32_t len);
+		const void *src_addr, uint32_t len);
 
 /**
  * cam_io_memcpy_mb()
@@ -84,13 +84,13 @@ int cam_io_memcpy(void __iomem *dest_addr,
  *                      call wmb() independently in the caller.
  *
  * @dest_addr:          Destination register address
- * @src_addr:           Source regiser address
+ * @src_addr:           Source memory address
  * @len:                Range to be copied
  *
  * @return:             Success or Failure
  */
 int cam_io_memcpy_mb(void __iomem *dest_addr,
-	void __iomem *src_addr, uint32_t len);
+	const void *src_addr, uint32_t len);
 
 /**
  * cam_io_poll_value_wmask()

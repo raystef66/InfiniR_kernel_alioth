@@ -71,11 +71,11 @@ uint32_t cam_io_r_mb(void __iomem *addr)
 }
 
 int cam_io_memcpy(void __iomem *dest_addr,
-	void __iomem *src_addr, uint32_t len)
+	const void *src_addr, uint32_t len)
 {
-	int i;
-	uint32_t *d = (uint32_t *) dest_addr;
-	uint32_t *s = (uint32_t *) src_addr;
+	u32 i;
+	u32 __iomem *d = dest_addr;
+	const u32 *s = src_addr;
 
 	if (!dest_addr || !src_addr)
 		return -EINVAL;
@@ -91,11 +91,11 @@ int cam_io_memcpy(void __iomem *dest_addr,
 }
 
 int  cam_io_memcpy_mb(void __iomem *dest_addr,
-	void __iomem *src_addr, uint32_t len)
+	const void *src_addr, uint32_t len)
 {
-	int i;
-	uint32_t *d = (uint32_t *) dest_addr;
-	uint32_t *s = (uint32_t *) src_addr;
+	u32 i;
+	u32 __iomem *d = dest_addr;
+	const u32 *s = src_addr;
 
 	if (!dest_addr || !src_addr)
 		return -EINVAL;
