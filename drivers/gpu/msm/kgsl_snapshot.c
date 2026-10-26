@@ -410,10 +410,10 @@ EXPORT_SYMBOL(kgsl_snapshot_get_object);
 
 /**
  * kgsl_snapshot_dump_registers - helper function to dump device registers
- * @device - the device to dump registers from
- * @snapshot - pointer to the start of the region of memory for the snapshot
- * @remain - a pointer to the number of bytes remaining in the snapshot
- * @priv - A pointer to the kgsl_snapshot_registers data
+ * @device: The device to dump registers from
+ * @buf: Start of the snapshot register section
+ * @remain: Number of bytes remaining in the snapshot
+ * @priv: A pointer to the kgsl_snapshot_registers data
  *
  * Given an array of register ranges pairs (start,end [inclusive]), dump the
  * registers into a snapshot register section.  The snapshot region stores a
@@ -783,7 +783,7 @@ struct kgsl_snapshot_attribute {
  * kgsl_snapshot_process_ib_obj_list() - Go through the list of IB's which need
  * to be dumped for snapshot and move them to the global snapshot list so
  * they will get dumped when the global list is dumped
- * @device: device being snapshotted
+ * @snapshot: Snapshot receiving the IB objects
  */
 static void kgsl_snapshot_process_ib_obj_list(struct kgsl_snapshot *snapshot)
 {
@@ -1206,10 +1206,8 @@ EXPORT_SYMBOL(kgsl_device_snapshot_close);
 /**
  * kgsl_snapshot_add_ib_obj_list() - Add a IB object list to the snapshot
  * object list
- * @device: the device that is being snapshotted
+ * @snapshot: Snapshot receiving the IB object list
  * @ib_obj_list: The IB list that has objects required to execute an IB
- * @num_objs: Number of IB objects
- * @ptbase: The pagetable base in which the IB is mapped
  *
  * Adds a new IB to the list of IB objects maintained when getting snapshot
  * Returns 0 on success else -ENOMEM on error
@@ -1333,7 +1331,7 @@ done:
 				snapshot->ib2base);
 
 gmu_only:
-	BUG_ON(!snapshot->device->skip_ib_capture &
-				snapshot->device->force_panic);
+	BUG_ON(!snapshot->device->skip_ib_capture &&
+	       snapshot->device->force_panic);
 	complete_all(&snapshot->dump_gate);
 }

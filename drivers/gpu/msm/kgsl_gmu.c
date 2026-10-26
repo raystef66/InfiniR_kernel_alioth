@@ -59,7 +59,7 @@ static const struct gmu_vma_entry gmu_vma[] = {
 	[GMU_MEM_TYPE_MAX] = { .start = 0x0, .size = 0x0 },
 };
 
-struct gmu_iommu_context gmu_ctx[] = {
+static struct gmu_iommu_context gmu_ctx[] = {
 	[GMU_CONTEXT_USER] = { .name = "gmu_user" },
 	[GMU_CONTEXT_KERNEL] = { .name = "gmu_kernel" }
 };

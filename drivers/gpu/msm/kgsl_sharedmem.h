@@ -414,7 +414,7 @@ static inline int kgsl_get_page_size(size_t size, unsigned int align)
  *
  * Return appropriate gfp_mask
  */
-unsigned int kgsl_gfp_mask(unsigned int page_order);
+gfp_t kgsl_gfp_mask(unsigned int page_order);
 
 /**
  * kgsl_zero_page() - zero out a page

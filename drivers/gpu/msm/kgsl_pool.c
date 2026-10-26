@@ -217,6 +217,7 @@ kgsl_pool_reduce(unsigned int target_pages, bool exit)
 /**
  * kgsl_pool_free_pages() - Free pages in the pages array
  * @pages: pointer of the pages array
+ * @pcount: Number of entries in the pages array
  *
  * Free the pages by collapsing any physical adjacent pages.
  * Pages are added back to the pool, if pool has sufficient space
@@ -274,7 +275,9 @@ static int kgsl_pool_get_retry_order(unsigned int order)
  * @page_size: Size of the page to be allocated
  * @pages: pointer to hold list of pages, should be big enough to hold
  * requested page
- * @len: Length of array pages.
+ * @pages_len: Length of array pages
+ * @align: Alignment exponent updated if a smaller allocation is used
+ * @memdesc: Memory descriptor supplying allocation flags
  *
  * Return total page count on success and negative value on failure
  */

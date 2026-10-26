@@ -220,7 +220,10 @@ static struct kgsl_mem_entry_attribute debug_memstats[] = {
 };
 
 /**
- * Show the current amount of memory allocated for the given memtype
+ * mem_entry_show() - Show current allocation for a memory type
+ * @priv: Process memory accounting
+ * @type: Memory accounting type
+ * @buf: Output buffer
  */
 
 static ssize_t
@@ -231,8 +234,10 @@ mem_entry_show(struct kgsl_process_private *priv, int type, char *buf)
 }
 
 /**
- * Show the maximum memory allocated for the given memtype through the life of
- * the process
+ * mem_entry_max_show() - Show peak allocation for a memory type
+ * @priv: Process memory accounting
+ * @type: Memory accounting type
+ * @buf: Output buffer
  */
 
 static ssize_t
@@ -467,9 +472,9 @@ int kgsl_allocate_user(struct kgsl_device *device,
 	return ret;
 }
 
-static int kgsl_page_alloc_vmfault(struct kgsl_memdesc *memdesc,
-				struct vm_area_struct *vma,
-				struct vm_fault *vmf)
+static vm_fault_t kgsl_page_alloc_vmfault(struct kgsl_memdesc *memdesc,
+					  struct vm_area_struct *vma,
+					  struct vm_fault *vmf)
 {
 	int pgoff;
 	unsigned int offset;
@@ -673,9 +678,9 @@ static int kgsl_page_alloc_map_kernel(struct kgsl_memdesc *memdesc)
 	return ret;
 }
 
-static int kgsl_contiguous_vmfault(struct kgsl_memdesc *memdesc,
-				struct vm_area_struct *vma,
-				struct vm_fault *vmf)
+static vm_fault_t kgsl_contiguous_vmfault(struct kgsl_memdesc *memdesc,
+					  struct vm_area_struct *vma,
+					  struct vm_fault *vmf)
 {
 	unsigned long offset, pfn;
 	int ret;
@@ -1707,9 +1712,9 @@ void kgsl_flush_page(struct page *page)
 	kunmap_atomic(addr);
 }
 
-unsigned int kgsl_gfp_mask(unsigned int page_order)
+gfp_t kgsl_gfp_mask(unsigned int page_order)
 {
-	unsigned int gfp_mask = __GFP_HIGHMEM;
+	gfp_t gfp_mask = __GFP_HIGHMEM;
 
 	if (page_order > 0) {
 		gfp_mask |= __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN;
