@@ -104,8 +104,8 @@ static char dsi_dsc_rc_range_max_qp_1_1_scr1[][15] = {
 static char dsi_dsc_rc_range_bpg_offset[] = {2, 0, 0, -2, -4, -6, -8, -8,
 		-8, -10, -10, -12, -12, -12, -12};
 
-int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
-				int pps_id)
+static int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
+				      int pps_id)
 {
 	char *bp;
 	char data;
@@ -857,7 +857,7 @@ error:
 	return rc;
 }
 
-bool dc_skip_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
+static bool dc_skip_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 {
 	struct dsi_panel_mi_cfg *mi_cfg = &panel->mi_cfg;
 /* 1. dc enable is 1;
@@ -2091,7 +2091,8 @@ static int dsi_panel_parse_phy_props(struct dsi_panel *panel)
 error:
 	return rc;
 }
-const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
+
+static const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command",
 	"qcom,mdss-dsi-on-command",
 	"qcom,mdss-dsi-post-panel-on-command",
@@ -2219,7 +2220,7 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	/* xiaomi add end */
 };
 
-const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
+static const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command-state",
 	"qcom,mdss-dsi-on-command-state",
 	"qcom,mdss-dsi-post-on-command-state",
@@ -3062,7 +3063,7 @@ void dsi_dsc_pclk_param_calc(struct msm_display_dsc_info *dsc, int intf_width)
 }
 
 
-int dsi_dsc_populate_static_param(struct msm_display_dsc_info *dsc)
+static int dsi_dsc_populate_static_param(struct msm_display_dsc_info *dsc)
 {
 	int bpp, bpc;
 	int mux_words_size;
@@ -4871,7 +4872,7 @@ static int dsi_panel_roi_prepare_dcs_cmds(struct dsi_panel_cmd_set *set,
 	set->cmds[0].msg.tx_len = ROI_CMD_LEN;
 	set->cmds[0].msg.tx_buf = caset;
 	set->cmds[0].msg.rx_len = 0;
-	set->cmds[0].msg.rx_buf = 0;
+	set->cmds[0].msg.rx_buf = NULL;
 	set->cmds[0].msg.wait_ms = 0;
 	set->cmds[0].last_command = 0;
 	set->cmds[0].post_wait_ms = 0;
@@ -4883,7 +4884,7 @@ static int dsi_panel_roi_prepare_dcs_cmds(struct dsi_panel_cmd_set *set,
 	set->cmds[1].msg.tx_len = ROI_CMD_LEN;
 	set->cmds[1].msg.tx_buf = paset;
 	set->cmds[1].msg.rx_len = 0;
-	set->cmds[1].msg.rx_buf = 0;
+	set->cmds[1].msg.rx_buf = NULL;
 	set->cmds[1].msg.wait_ms = 0;
 	set->cmds[1].last_command = 1;
 	set->cmds[1].post_wait_ms = 0;
