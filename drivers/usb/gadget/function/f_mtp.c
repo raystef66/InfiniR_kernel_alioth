@@ -461,7 +461,7 @@ static struct usb_request
 
 	spin_lock_irqsave(&dev->lock, flags);
 	if (list_empty(head)) {
-		req = 0;
+		req = NULL;
 	} else {
 		req = list_first_entry(head, struct usb_request, list);
 		list_del(&req->list);
@@ -716,7 +716,7 @@ static ssize_t mtp_write(struct file *fp, const char __user *buf,
 	size_t count, loff_t *pos)
 {
 	struct mtp_dev *dev = fp->private_data;
-	struct usb_request *req = 0;
+	struct usb_request *req = NULL;
 	ssize_t r = count;
 	unsigned xfer;
 	int sendZLP = 0;
@@ -756,7 +756,7 @@ static ssize_t mtp_write(struct file *fp, const char __user *buf,
 		}
 
 		/* get an idle tx request to use */
-		req = 0;
+		req = NULL;
 		ret = wait_event_interruptible(dev->write_wq,
 			((req = mtp_req_get(dev, &dev->tx_idle))
 				|| dev->state != STATE_BUSY));
@@ -788,7 +788,7 @@ static ssize_t mtp_write(struct file *fp, const char __user *buf,
 		count -= xfer;
 
 		/* zero this so we don't try to free it on error exit */
-		req = 0;
+		req = NULL;
 	}
 
 	if (req)
@@ -810,7 +810,7 @@ static void send_file_work(struct work_struct *data)
 {
 	struct mtp_dev *dev = container_of(data, struct mtp_dev,
 						send_file_work);
-	struct usb_request *req = 0;
+	struct usb_request *req = NULL;
 	struct mtp_data_header *header;
 	struct file *filp;
 	loff_t offset;
@@ -852,7 +852,7 @@ static void send_file_work(struct work_struct *data)
 			sendZLP = 0;
 
 		/* get an idle tx request to use */
-		req = 0;
+		req = NULL;
 		ret = wait_event_interruptible(dev->write_wq,
 			(req = mtp_req_get(dev, &dev->tx_idle))
 			|| dev->state != STATE_BUSY);
@@ -914,7 +914,7 @@ static void send_file_work(struct work_struct *data)
 		count -= xfer;
 
 		/* zero this so we don't try to free it on error exit */
-		req = 0;
+		req = NULL;
 	}
 
 	if (req)
@@ -1671,12 +1671,12 @@ static void mtp_debugfs_init(void)
 {
 	struct dentry *dent_mtp_status;
 
-	dent_mtp = debugfs_create_dir("usb_mtp", 0);
+	dent_mtp = debugfs_create_dir("usb_mtp", NULL);
 	if (!dent_mtp || IS_ERR(dent_mtp))
 		return;
 
 	dent_mtp_status = debugfs_create_file("status", 0644,
-					dent_mtp, 0, &debug_mtp_ops);
+					dent_mtp, NULL, &debug_mtp_ops);
 	if (!dent_mtp_status || IS_ERR(dent_mtp_status)) {
 		debugfs_remove(dent_mtp);
 		dent_mtp = NULL;
