@@ -471,6 +471,7 @@ static int _sde_kms_sui_misr_ctrl(struct sde_kms *sde_kms,
 		ret = pm_runtime_get_sync(sde_kms->dev->dev);
 		if (ret < 0) {
 			SDE_ERROR("failed to enable resource, ret:%d\n", ret);
+			pm_runtime_put_noidle(sde_kms->dev->dev);
 			return ret;
 		}
 
@@ -495,8 +496,8 @@ static int _sde_kms_sui_misr_ctrl(struct sde_kms *sde_kms,
 static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 		bool post_commit)
 {
-	struct sde_kms_smmu_state_data *smmu_state = &sde_kms->smmu_state;
-	int old_smmu_state = smmu_state->state;
+	struct sde_kms_smmu_state_data *smmu_state;
+	int old_smmu_state;
 	int ret = 0;
 	u32 vmid;
 
@@ -504,6 +505,9 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 		SDE_ERROR("invalid argument(s)\n");
 		return -EINVAL;
 	}
+
+	smmu_state = &sde_kms->smmu_state;
+	old_smmu_state = smmu_state->state;
 
 	SDE_EVT32(DRMID(crtc), smmu_state->state, smmu_state->transition_type,
 			post_commit, smmu_state->sui_misr_state,
@@ -518,7 +522,7 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ) {
 		ret = _sde_kms_sui_misr_ctrl(sde_kms, crtc, true);
 		if (ret) {
-			smmu_state->sui_misr_state == NONE;
+			smmu_state->sui_misr_state = NONE;
 			goto end;
 		}
 	}
