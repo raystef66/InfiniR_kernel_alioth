@@ -32,6 +32,7 @@
 #include <sound/initval.h>
 #include <sound/tlv.h>
 #include <linux/printk.h>
+#include <asm/unaligned.h>
 
 #include "wm_adsp.h"
 
@@ -2108,7 +2109,7 @@ static int wm_adsp_parse_coeff(struct wm_adsp *dsp,
 		wm_coeff_parse_coeff(dsp, &data, &coeff_blk);
 
 		switch (coeff_blk.ctl_type) {
-		case SNDRV_CTL_ELEM_TYPE_BYTES:
+		case WMFW_CTL_TYPE_BYTES:
 			break;
 		case WMFW_CTL_TYPE_ACKED:
 			if (coeff_blk.flags & WMFW_CTL_FLAG_SYS)
@@ -2772,7 +2773,7 @@ static int wm_adsp1_setup_algs(struct wm_adsp *dsp)
 				len *= 4;
 				wm_adsp_create_control(
 					dsp, alg_region, 0, len, NULL, 0, 0,
-					SNDRV_CTL_ELEM_TYPE_BYTES);
+					WMFW_CTL_TYPE_BYTES);
 			} else {
 				adsp_warn(
 					dsp,
@@ -2795,7 +2796,7 @@ static int wm_adsp1_setup_algs(struct wm_adsp *dsp)
 				len *= 4;
 				wm_adsp_create_control(
 					dsp, alg_region, 0, len, NULL, 0, 0,
-					SNDRV_CTL_ELEM_TYPE_BYTES);
+					WMFW_CTL_TYPE_BYTES);
 			} else {
 				adsp_warn(
 					dsp,
@@ -2893,7 +2894,7 @@ static int wm_adsp2_setup_algs(struct wm_adsp *dsp)
 				len *= 4;
 				wm_adsp_create_control(
 					dsp, alg_region, 0, len, NULL, 0, 0,
-					SNDRV_CTL_ELEM_TYPE_BYTES);
+					WMFW_CTL_TYPE_BYTES);
 			} else {
 				adsp_warn(
 					dsp,
@@ -2916,7 +2917,7 @@ static int wm_adsp2_setup_algs(struct wm_adsp *dsp)
 				len *= 4;
 				wm_adsp_create_control(
 					dsp, alg_region, 0, len, NULL, 0, 0,
-					SNDRV_CTL_ELEM_TYPE_BYTES);
+					WMFW_CTL_TYPE_BYTES);
 			} else {
 				adsp_warn(
 					dsp,
@@ -2943,7 +2944,7 @@ static int wm_adsp2_setup_algs(struct wm_adsp *dsp)
 				len *= 4;
 				wm_adsp_create_control(
 					dsp, alg_region, 0, len, NULL, 0, 0,
-					SNDRV_CTL_ELEM_TYPE_BYTES);
+					WMFW_CTL_TYPE_BYTES);
 			} else {
 				adsp_warn(
 					dsp,
@@ -5019,7 +5020,7 @@ static int wm_adsp_read_data_block(struct wm_adsp *dsp, int mem_type,
 		return ret;
 
 	for (i = 0; i < num_words; ++i)
-		data[i] = be32_to_cpu(data[i]) & 0x00ffffffu;
+		data[i] = get_unaligned_be32(&data[i]) & 0x00ffffffu;
 
 	return 0;
 }
@@ -5035,15 +5036,16 @@ static int wm_adsp_write_data_word(struct wm_adsp *dsp, int mem_type,
 {
 	struct wm_adsp_region const *mem = wm_adsp_find_region(dsp, mem_type);
 	unsigned int reg;
+	__be32 val;
 
 	if (!mem)
 		return -EINVAL;
 
 	reg = wm_adsp_region_to_reg(dsp, mem, mem_addr);
 
-	data = cpu_to_be32(data & 0x00ffffffu);
+	val = cpu_to_be32(data & 0x00ffffffu);
 
-	return regmap_raw_write(dsp->regmap, reg, &data, sizeof(data));
+	return regmap_raw_write(dsp->regmap, reg, &val, sizeof(val));
 }
 
 static inline int wm_adsp_buffer_read(struct wm_adsp_compr_buf *buf,
@@ -5135,7 +5137,7 @@ static int wm_adsp_buffer_locate(struct wm_adsp_compr_buf *buf)
 	struct wm_adsp *dsp = buf->dsp;
 	struct wm_coeff_ctl *ctl;
 	unsigned int reg;
-	u32 val;
+	__be32 val;
 	int i, ret;
 
 	ctl = wm_adsp_find_host_buffer_ctrl(buf);

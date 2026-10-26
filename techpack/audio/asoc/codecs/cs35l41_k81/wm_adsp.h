@@ -19,6 +19,8 @@
 
 #include "wmfw.h"
 
+extern const struct snd_kcontrol_new wm_adsp_cal_controls[];
+
 /* Return values for wm_adsp_compr_handle_irq */
 #define WM_ADSP_COMPR_OK 0
 #define WM_ADSP_COMPR_VOICE_TRIGGER 1
