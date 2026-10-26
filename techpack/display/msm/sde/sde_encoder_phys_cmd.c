@@ -230,7 +230,6 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
 	struct sde_encoder_phys_cmd *cmd_enc;
-	u32 scheduler_status = INVALID_CTL_STATUS;
 	struct sde_hw_ctl *ctl;
 	struct sde_encoder_phys_cmd_te_timestamp *te_timestamp;
 	unsigned long lock_flags;
@@ -243,7 +242,7 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	ctl = phys_enc->hw_ctl;
 
 	if (ctl && ctl->ops.get_scheduler_status)
-		scheduler_status = ctl->ops.get_scheduler_status(ctl);
+		ctl->ops.get_scheduler_status(ctl);
 
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
 	te_timestamp = list_first_entry_or_null(&cmd_enc->te_timestamp_list,
@@ -267,14 +266,12 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
-	struct sde_hw_ctl *ctl;
 	u32 event = 0;
 
 	if (!phys_enc || !phys_enc->hw_ctl)
 		return;
 
 	SDE_ATRACE_BEGIN("wr_ptr_irq");
-	ctl = phys_enc->hw_ctl;
 
 	if (atomic_add_unless(&phys_enc->pending_retire_fence_cnt, -1, 0)) {
 		event = SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE;
@@ -861,10 +858,9 @@ end:
 	return ret;
 }
 
-void sde_encoder_phys_cmd_irq_control(struct sde_encoder_phys *phys_enc,
-		bool enable)
+static void sde_encoder_phys_cmd_irq_control(struct sde_encoder_phys *phys_enc,
+					     bool enable)
 {
-	struct sde_encoder_phys_cmd *cmd_enc;
 
 	if (!phys_enc)
 		return;
@@ -877,7 +873,6 @@ void sde_encoder_phys_cmd_irq_control(struct sde_encoder_phys *phys_enc,
 			_sde_encoder_phys_is_disabling_ppsplit_slave(phys_enc))
 		return;
 
-	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
 
 	SDE_EVT32(DRMID(phys_enc->parent), phys_enc->hw_pp->idx - PINGPONG_0,
 			enable, atomic_read(&phys_enc->vblank_refcount));
@@ -1457,14 +1452,12 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 	struct sde_encoder_wait_info wait_info = {0};
 	int ret;
 	bool frame_pending = true;
-	struct sde_hw_ctl *ctl;
 	unsigned long lock_flags;
 
 	if (!phys_enc || !phys_enc->hw_ctl) {
 		SDE_ERROR("invalid argument(s)\n");
 		return -EINVAL;
 	}
-	ctl = phys_enc->hw_ctl;
 
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_retire_fence_cnt;
@@ -1515,12 +1508,10 @@ static int sde_encoder_phys_cmd_wait_for_tx_complete(
 		struct sde_encoder_phys *phys_enc)
 {
 	int rc;
-	struct sde_encoder_phys_cmd *cmd_enc;
 
 	if (!phys_enc)
 		return -EINVAL;
 
-	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
 
 	if (!atomic_read(&phys_enc->pending_kickoff_cnt)) {
 		SDE_EVT32(DRMID(phys_enc->parent),
