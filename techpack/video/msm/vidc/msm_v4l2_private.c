@@ -9,7 +9,7 @@ static int convert_from_user(struct msm_vidc_arg *kp, unsigned long arg)
 {
 	int rc = 0;
 	int i;
-	struct msm_vidc_arg __user *up = (struct msm_vidc_arg *)arg;
+	struct msm_vidc_arg __user *up = (struct msm_vidc_arg __user *)arg;
 
 	if (!kp || !up) {
 		d_vpr_e("%s: invalid params%pK %pK\n", __func__, kp, up);
@@ -22,7 +22,8 @@ static int convert_from_user(struct msm_vidc_arg *kp, unsigned long arg)
 	switch (kp->type) {
 	case MSM_CVP_GET_SESSION_INFO:
 	{
-		struct msm_cvp_session_info *k, *u;
+		struct msm_cvp_session_info *k;
+		struct msm_cvp_session_info __user *u;
 
 		k = &kp->data.session;
 		u = &up->data.session;
@@ -35,7 +36,8 @@ static int convert_from_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_REQUEST_POWER:
 	{
-		struct msm_cvp_request_power *k, *u;
+		struct msm_cvp_request_power *k;
+		struct msm_cvp_request_power __user *u;
 
 		k = &kp->data.req_power;
 		u = &up->data.req_power;
@@ -51,7 +53,8 @@ static int convert_from_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_REGISTER_BUFFER:
 	{
-		struct msm_cvp_buffer *k, *u;
+		struct msm_cvp_buffer *k;
+		struct msm_cvp_buffer __user *u;
 
 		k = &kp->data.regbuf;
 		u = &up->data.regbuf;
@@ -70,7 +73,8 @@ static int convert_from_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_UNREGISTER_BUFFER:
 	{
-		struct msm_cvp_buffer *k, *u;
+		struct msm_cvp_buffer *k;
+		struct msm_cvp_buffer __user *u;
 
 		k = &kp->data.unregbuf;
 		u = &up->data.unregbuf;
@@ -101,7 +105,7 @@ static int convert_to_user(struct msm_vidc_arg *kp, unsigned long arg)
 {
 	int rc = 0;
 	int i;
-	struct msm_vidc_arg __user *up = (struct msm_vidc_arg *)arg;
+	struct msm_vidc_arg __user *up = (struct msm_vidc_arg __user *)arg;
 
 	if (!kp || !up) {
 		d_vpr_e("%s: invalid params %pK %pK\n",	__func__, kp, up);
@@ -114,7 +118,8 @@ static int convert_to_user(struct msm_vidc_arg *kp, unsigned long arg)
 	switch (kp->type) {
 	case MSM_CVP_GET_SESSION_INFO:
 	{
-		struct msm_cvp_session_info *k, *u;
+		struct msm_cvp_session_info *k;
+		struct msm_cvp_session_info __user *u;
 
 		k = &kp->data.session;
 		u = &up->data.session;
@@ -127,7 +132,8 @@ static int convert_to_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_REQUEST_POWER:
 	{
-		struct msm_cvp_request_power *k, *u;
+		struct msm_cvp_request_power *k;
+		struct msm_cvp_request_power __user *u;
 
 		k = &kp->data.req_power;
 		u = &up->data.req_power;
@@ -143,7 +149,8 @@ static int convert_to_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_REGISTER_BUFFER:
 	{
-		struct msm_cvp_buffer *k, *u;
+		struct msm_cvp_buffer *k;
+		struct msm_cvp_buffer __user *u;
 
 		k = &kp->data.regbuf;
 		u = &up->data.regbuf;
@@ -162,7 +169,8 @@ static int convert_to_user(struct msm_vidc_arg *kp, unsigned long arg)
 	}
 	case MSM_CVP_UNREGISTER_BUFFER:
 	{
-		struct msm_cvp_buffer *k, *u;
+		struct msm_cvp_buffer *k;
+		struct msm_cvp_buffer __user *u;
 
 		k = &kp->data.unregbuf;
 		u = &up->data.unregbuf;
