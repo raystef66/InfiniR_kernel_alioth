@@ -1655,80 +1655,14 @@ fail:
 }
 EXPORT_SYMBOL(q6asm_audio_client_buf_alloc_contiguous);
 
-static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
+/* The caller retains any active session lock across client dispatch. */
+static int32_t q6asm_srvc_dispatch(struct apr_client_data *data,
+				 struct audio_client *ac,
+				 union asm_token_struct asm_token, u32 dir)
 {
-	uint32_t dir = 0;
-	uint32_t i = IN;
-	uint32_t *payload;
-	unsigned long dsp_flags = 0;
-	unsigned long flags = 0;
-	struct asm_buffer_node *buf_node = NULL;
-	struct list_head *ptr, *next;
-	union asm_token_struct asm_token;
-
-	struct audio_client *ac = NULL;
+	u32 *payload = data->payload;
+	unsigned long dsp_flags;
 	struct audio_port_data *port;
-
-	int session_id;
-
-	if (!data) {
-		pr_err("%s: Invalid CB\n", __func__);
-		return 0;
-	}
-
-	payload = data->payload;
-
-	if (data->opcode == RESET_EVENTS) {
-		pr_debug("%s: Reset event is received: %d %d apr[%pK]\n",
-				__func__,
-				data->reset_event,
-				data->reset_proc,
-				this_mmap.apr);
-		atomic_set(&this_mmap.ref_cnt, 0);
-		apr_reset(this_mmap.apr);
-		this_mmap.apr = NULL;
-		for (; i <= OUT; i++) {
-			list_for_each_safe(ptr, next,
-				&common_client.port[i].mem_map_handle) {
-				buf_node = list_entry(ptr,
-						struct asm_buffer_node,
-						list);
-				if (buf_node->buf_phys_addr ==
-				common_client.port[i].buf->phys) {
-					list_del(&buf_node->list);
-					kfree(buf_node);
-				}
-			}
-			pr_debug("%s: Clearing custom topology\n", __func__);
-		}
-
-		cal_utils_clear_cal_block_q6maps(ASM_MAX_CAL_TYPES, cal_data);
-		common_client.mmap_apr = NULL;
-		mutex_lock(&cal_data[ASM_CUSTOM_TOP_CAL]->lock);
-		set_custom_topology = 1;
-		mutex_unlock(&cal_data[ASM_CUSTOM_TOP_CAL]->lock);
-		topology_map_handle = 0;
-		rtac_clear_mapping(ASM_RTAC_CAL);
-		return 0;
-	}
-	asm_token.token = data->token;
-	session_id = asm_token._token.session_id;
-
-	if ((session_id > 0 && session_id <= ASM_ACTIVE_STREAMS_ALLOWED))
-		spin_lock_irqsave(&(session[session_id].session_lock), flags);
-
-	ac = q6asm_get_audio_client(session_id);
-	dir = q6asm_get_flag_from_token(&asm_token, ASM_DIRECTION_OFFSET);
-
-	if (!ac) {
-		pr_debug("%s: session[%d] already freed\n",
-			 __func__, session_id);
-		if ((session_id > 0 &&
-			session_id <= ASM_ACTIVE_STREAMS_ALLOWED))
-			spin_unlock_irqrestore(
-				&(session[session_id].session_lock), flags);
-		return 0;
-	}
 
 	if (data->payload_size >= 2 * sizeof(uint32_t)) {
 		pr_debug("%s:ptr0[0x%x]ptr1[0x%x]opcode[0x%x] token[0x%x]payload_s[%d] src[%d] dest[%d]sid[%d]dir[%d]\n",
@@ -1781,10 +1715,6 @@ static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
 						__func__, payload[0]);
 			break;
 		}
-		if ((session_id > 0 &&
-			session_id <= ASM_ACTIVE_STREAMS_ALLOWED))
-			spin_unlock_irqrestore(
-				&(session[session_id].session_lock), flags);
 		return 0;
 	}
 
@@ -1828,10 +1758,79 @@ static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
 	if (ac->cb)
 		ac->cb(data->opcode, data->token,
 			data->payload, ac->priv);
-	if ((session_id > 0 && session_id <= ASM_ACTIVE_STREAMS_ALLOWED))
-		spin_unlock_irqrestore(
-			&(session[session_id].session_lock), flags);
 
+	return 0;
+}
+
+static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
+{
+	uint32_t i = IN;
+	unsigned long flags = 0;
+	struct asm_buffer_node *buf_node = NULL;
+	struct list_head *ptr, *next;
+	union asm_token_struct asm_token;
+
+	struct audio_client *ac = NULL;
+
+	int session_id;
+	u32 dir;
+
+	if (!data) {
+		pr_err("%s: Invalid CB\n", __func__);
+		return 0;
+	}
+
+	if (data->opcode == RESET_EVENTS) {
+		pr_debug("%s: Reset event is received: %d %d apr[%pK]\n",
+				__func__,
+				data->reset_event,
+				data->reset_proc,
+				this_mmap.apr);
+		atomic_set(&this_mmap.ref_cnt, 0);
+		apr_reset(this_mmap.apr);
+		this_mmap.apr = NULL;
+		for (; i <= OUT; i++) {
+			list_for_each_safe(ptr, next,
+				&common_client.port[i].mem_map_handle) {
+				buf_node = list_entry(ptr,
+						struct asm_buffer_node,
+						list);
+				if (buf_node->buf_phys_addr ==
+				common_client.port[i].buf->phys) {
+					list_del(&buf_node->list);
+					kfree(buf_node);
+				}
+			}
+			pr_debug("%s: Clearing custom topology\n", __func__);
+		}
+
+		cal_utils_clear_cal_block_q6maps(ASM_MAX_CAL_TYPES, cal_data);
+		common_client.mmap_apr = NULL;
+		mutex_lock(&cal_data[ASM_CUSTOM_TOP_CAL]->lock);
+		set_custom_topology = 1;
+		mutex_unlock(&cal_data[ASM_CUSTOM_TOP_CAL]->lock);
+		topology_map_handle = 0;
+		rtac_clear_mapping(ASM_RTAC_CAL);
+		return 0;
+	}
+	asm_token.token = data->token;
+	session_id = asm_token._token.session_id;
+
+	dir = q6asm_get_flag_from_token(&asm_token, ASM_DIRECTION_OFFSET);
+	if (session_id == ASM_CONTROL_SESSION)
+		return q6asm_srvc_dispatch(data, &common_client, asm_token, dir);
+	if (session_id <= 0 || session_id > ASM_ACTIVE_STREAMS_ALLOWED) {
+		q6asm_get_audio_client(session_id);
+		return 0;
+	}
+
+	spin_lock_irqsave(&session[session_id].session_lock, flags);
+	ac = q6asm_get_audio_client(session_id);
+	if (ac)
+		q6asm_srvc_dispatch(data, ac, asm_token, dir);
+	else
+		pr_debug("%s: session[%d] already freed\n", __func__, session_id);
+	spin_unlock_irqrestore(&session[session_id].session_lock, flags);
 	return 0;
 }
 
@@ -4981,7 +4980,7 @@ EXPORT_SYMBOL(q6asm_enc_cfg_blk_g711);
  *       command to set encdec channel map
  *
  * @ac: Audio client handle
- * @channels: number of channels
+ * @num_channels: number of channels
  *
  * Returns 0 on success or error on failure
  */
@@ -6037,7 +6036,7 @@ EXPORT_SYMBOL(q6asm_cfg_aac_sel_mix_coef);
  * @frames_per_buf: Number of frames per buffer
  * @min_rate: Minimum Enc rate
  * @max_rate: Maximum Enc rate
- * reduced_rate_level: Reduced rate level
+ * @reduced_rate_level: Reduced rate level
  * @rate_modulation_cmd: rate modulation command
  *
  * Returns 0 on success or error on failure
@@ -7635,7 +7634,6 @@ EXPORT_SYMBOL(q6asm_media_format_block_wmapro);
  *
  * @ac: Audio client handle
  * @cfg: amrwbplus config
- * @stream_id: stream ID info
  *
  * Returns 0 on success or error on failure
  */

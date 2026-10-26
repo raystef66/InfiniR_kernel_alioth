@@ -77,6 +77,7 @@ static DEFINE_MUTEX(session_lock);
  */
 static spinlock_t mmap_lock;
 static uint32_t *mmap_handle_p;
+static struct lsm_client *mmap_client;
 
 static spinlock_t lsm_session_lock;
 static struct lsm_client *lsm_session[LSM_MAX_SESSION_ID + 1];
@@ -466,7 +467,7 @@ EXPORT_SYMBOL(q6lsm_client_free);
  *			If mmap_handle_p != NULL, disable irq and spin lock to
  *			protect mmap_handle_p
  */
-static int q6lsm_apr_send_pkt(struct lsm_client *client, void *handle,
+static int q6lsm_apr_send_pkt_unlocked(struct lsm_client *client, void *handle,
 			      void *data, bool wait, uint32_t *mmap_p)
 {
 	int ret;
@@ -479,22 +480,26 @@ static int q6lsm_apr_send_pkt(struct lsm_client *client, void *handle,
 	}
 
 	pr_debug("%s: enter wait %d\n", __func__, wait);
-	if (mmap_handle_p) {
-		pr_debug("%s: Invalid mmap_handle\n", __func__);
-		return -EINVAL;
-	}
-	if (wait)
-		mutex_lock(&lsm_common.apr_lock);
 	if (mmap_p) {
 		WARN_ON(!wait);
 		spin_lock_irqsave(&mmap_lock, flags);
+		if (mmap_handle_p) {
+			spin_unlock_irqrestore(&mmap_lock, flags);
+			return -EINVAL;
+		}
 		mmap_handle_p = mmap_p;
-	}
-	atomic_set(&client->cmd_state, CMD_STATE_WAIT_RESP);
-	client->cmd_err_code = 0;
-	ret = apr_send_pkt(handle, data);
-	if (mmap_p)
+		mmap_client = client;
+		atomic_set(&client->cmd_state, CMD_STATE_WAIT_RESP);
+		client->cmd_err_code = 0;
+		ret = apr_send_pkt(handle, data);
 		spin_unlock_irqrestore(&mmap_lock, flags);
+	} else {
+		if (READ_ONCE(mmap_handle_p))
+			return -EINVAL;
+		atomic_set(&client->cmd_state, CMD_STATE_WAIT_RESP);
+		client->cmd_err_code = 0;
+		ret = apr_send_pkt(handle, data);
+	}
 
 	if (ret < 0) {
 		pr_err("%s: apr_send_pkt failed %d\n", __func__, ret);
@@ -523,13 +528,33 @@ static int q6lsm_apr_send_pkt(struct lsm_client *client, void *handle,
 	} else {
 		ret = 0;
 	}
-	if (wait)
-		mutex_unlock(&lsm_common.apr_lock);
 
-	if (mmap_p && *mmap_p == 0)
-		ret = -ENOMEM;
-	mmap_handle_p = NULL;
+	if (mmap_p) {
+		/* Retire our response target before its owner can free it. */
+		spin_lock_irqsave(&mmap_lock, flags);
+		if (mmap_handle_p == mmap_p && mmap_client == client) {
+			if (*mmap_p == 0)
+				ret = -ENOMEM;
+			mmap_handle_p = NULL;
+			mmap_client = NULL;
+		}
+		spin_unlock_irqrestore(&mmap_lock, flags);
+	}
 	pr_debug("%s: leave ret %d\n", __func__, ret);
+	return ret;
+}
+
+static int q6lsm_apr_send_pkt(struct lsm_client *client, void *handle,
+			      void *data, bool wait, uint32_t *mmap_p)
+{
+	int ret;
+
+	if (!wait)
+		return q6lsm_apr_send_pkt_unlocked(client, handle, data, false, mmap_p);
+
+	mutex_lock(&lsm_common.apr_lock);
+	ret = q6lsm_apr_send_pkt_unlocked(client, handle, data, true, mmap_p);
+	mutex_unlock(&lsm_common.apr_lock);
 	return ret;
 }
 
@@ -1205,6 +1230,7 @@ static int q6lsm_send_param_opmode(struct lsm_client *client,
  * set_lsm_port -
  *       Update LSM AFE port
  *
+ * @lsm_port: AFE port assigned to the LSM session
  */
 void set_lsm_port(int lsm_port)
 {
@@ -1645,6 +1671,8 @@ EXPORT_SYMBOL(q6lsm_set_data);
  * @client: LSM client handle
  *
  * Returns 0 on success or error on failure
+ * @detectfailure: Whether detection failures should generate events
+ * @mode: Sound-model detection mode
  */
 int q6lsm_register_sound_model(struct lsm_client *client,
 			       enum lsm_detection_mode mode,
@@ -2096,15 +2124,14 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 
 	switch (data->opcode) {
 	case LSM_SESSION_CMDRSP_SHARED_MEM_MAP_REGIONS:
-		if (atomic_read(&client->cmd_state) == CMD_STATE_WAIT_RESP) {
-			spin_lock_irqsave(&mmap_lock, flags);
-			if (mmap_handle_p)
-				*mmap_handle_p = command;
-			/* spin_unlock_irqrestore implies barrier */
-			spin_unlock_irqrestore(&mmap_lock, flags);
+		spin_lock_irqsave(&mmap_lock, flags);
+		if (mmap_handle_p && mmap_client == client &&
+		    atomic_read(&client->cmd_state) == CMD_STATE_WAIT_RESP) {
+			*mmap_handle_p = command;
 			atomic_set(&client->cmd_state, CMD_STATE_CLEARED);
 			wake_up(&client->cmd_wait);
 		}
+		spin_unlock_irqrestore(&mmap_lock, flags);
 		break;
 	case APR_BASIC_RSP_RESULT:
 		switch (command) {
@@ -2114,17 +2141,15 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 			break;
 		case LSM_SESSION_CMD_SHARED_MEM_MAP_REGIONS:
 			if (retcode != 0) {
-				/* error state, signal to stop waiting */
-				if (atomic_read(&client->cmd_state) ==
+				spin_lock_irqsave(&mmap_lock, flags);
+				if (mmap_handle_p && mmap_client == client &&
+				    atomic_read(&client->cmd_state) ==
 					CMD_STATE_WAIT_RESP) {
-					spin_lock_irqsave(&mmap_lock, flags);
-					/* implies barrier */
-					spin_unlock_irqrestore(&mmap_lock,
-						flags);
 					atomic_set(&client->cmd_state,
 						CMD_STATE_CLEARED);
 					wake_up(&client->cmd_wait);
 				}
+				spin_unlock_irqrestore(&mmap_lock, flags);
 			}
 			break;
 		default:
@@ -2300,6 +2325,9 @@ static int q6lsm_send_param_gain(struct lsm_client *client, u16 gain,
  * param_type: LSM param type
  *
  * Returns 0 on success or error on failure
+ * @data: Parameter payload
+ * @p_info: Sound-model parameter metadata
+ * @param_type: DSP parameter type identifier
  */
 int q6lsm_set_one_param(struct lsm_client *client,
 	struct lsm_params_info_v2 *p_info, void *data,
@@ -2527,6 +2555,7 @@ EXPORT_SYMBOL(q6lsm_get_one_param);
  * @client: LSM client handle
  *
  * Returns 0 on success or error on failure
+ * @wait: Whether to wait for the DSP command response
  */
 int q6lsm_start(struct lsm_client *client, bool wait)
 {
@@ -2541,6 +2570,7 @@ EXPORT_SYMBOL(q6lsm_start);
  * @client: LSM client handle
  *
  * Returns 0 on success or error on failure
+ * @wait: Whether to wait for the DSP command response
  */
 int q6lsm_stop(struct lsm_client *client, bool wait)
 {
@@ -2717,7 +2747,7 @@ EXPORT_SYMBOL(q6lsm_stop_lab);
  *       command for LSM read
  *
  * @client: LSM client handle
- * @lsm_cmd_read: LSM read command
+ * @read: LSM read command
  *
  * Returns 0 on success or error on failure
  */
