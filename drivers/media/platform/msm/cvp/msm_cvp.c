@@ -1490,7 +1490,7 @@ static void aggregate_power_update(struct msm_cvp_core *core,
 			i = 1;
 		}
 		dprintk(CVP_PROF, "pwrUpdate %pK fdu %u od %u mpu %u ica %u\n",
-			inst->prop.fdu_cycles,
+			inst, inst->prop.fdu_cycles,
 			inst->prop.od_cycles,
 			inst->prop.mpu_cycles,
 			inst->prop.ica_cycles);
