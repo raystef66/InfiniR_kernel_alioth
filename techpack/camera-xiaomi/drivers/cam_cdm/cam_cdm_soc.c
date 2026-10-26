@@ -13,6 +13,7 @@
 #include "cam_soc_util.h"
 #include "cam_smmu_api.h"
 #include "cam_cdm.h"
+#include "cam_cdm_soc.h"
 #include "cam_soc_util.h"
 #include "cam_io_util.h"
 
