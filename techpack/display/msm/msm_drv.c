@@ -1150,7 +1150,7 @@ static int msm_disable_all_modes(
 		struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
-	int ret, i;
+	int ret = -EDEADLK, i;
 
 	state = drm_atomic_state_alloc(dev);
 	if (!state)
@@ -1160,10 +1160,13 @@ static int msm_disable_all_modes(
 
 	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
 		ret = msm_disable_all_modes_commit(dev, state);
-		if (ret != -EDEADLK || ret != -ERESTARTSYS)
+		if (ret != -EDEADLK)
 			break;
 		drm_atomic_state_clear(state);
-		drm_modeset_backoff(ctx);
+		ret = drm_modeset_backoff(ctx);
+		if (ret)
+			break;
+		ret = -EDEADLK;
 	}
 
 	drm_atomic_state_put(state);
