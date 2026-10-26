@@ -883,11 +883,12 @@ int crus_adm_set_params(int port_id, int copp_idx, uint32_t module_id,
 	int port_idx;
 	int rc  = 0;
 
-	pr_info("[CSPL] %s: config: port_idx %d copp_idx  %d module 0x%d, len=%d\n",
-			__func__, port_idx, copp_idx,module_id, params_length);
 
 	port_id = q6audio_convert_virtual_to_portid(port_id);
 	port_idx = adm_validate_and_get_port_index(port_id);
+
+	pr_info("[CSPL] %s: config: port_idx %d copp_idx %d module 0x%x, len=%u\n",
+			__func__, port_idx, copp_idx, module_id, params_length);
 
 	if (port_idx < 0) {
 		pr_err("[CSPL] %s: Invalid port_id %#x\n", __func__, port_id);
@@ -2388,6 +2389,9 @@ static void send_adm_cal_type(int cal_index, int path, int port_id,
 
 	ret = adm_remap_and_send_cal_block(cal_index, port_id, copp_idx,
 		cal_block, perf_mode, app_type, acdb_id, sample_rate);
+
+	if (ret < 0)
+		goto unlock;
 
 	cal_utils_mark_cal_used(cal_block);
 unlock:
