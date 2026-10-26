@@ -6,6 +6,7 @@
 #include <linux/msm_audio_ape.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_ape_misc;
 static struct ws_mgr audio_ape_ws_mgr;

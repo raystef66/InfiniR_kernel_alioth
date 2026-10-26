@@ -40,3 +40,4 @@ typedef struct afe_mi_ultrasound_state {
 } afe_mi_ultrasound_state_t;
 
 extern afe_mi_ultrasound_state_t mius_afe;
+int mius_set_hall_state(int state);

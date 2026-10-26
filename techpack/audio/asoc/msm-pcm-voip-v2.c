@@ -23,6 +23,7 @@
 
 #include "msm-pcm-q6-v2.h"
 #include "msm-pcm-routing-v2.h"
+#include "platform_init.h"
 
 #define DRV_NAME "msm-pcm-voip-v2"
 

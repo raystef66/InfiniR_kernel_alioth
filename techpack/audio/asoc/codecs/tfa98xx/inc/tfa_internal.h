@@ -37,4 +37,18 @@ TFA_INTERNAL enum Tfa98xx_Error tfa98xx_check_rpc_status(struct tfa_device *tfa,
 TFA_INTERNAL enum Tfa98xx_Error tfa98xx_wait_result(struct tfa_device *tfa,
 						    int waitRetryCount);
 
+int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead);
+enum Tfa98xx_Error tfa98xx_set_osc_powerdown(struct tfa_device *tfa, int state);
+void tfanone_ops(struct tfa_device_ops *ops);
+void tfa9912_ops(struct tfa_device_ops *ops);
+void tfa9872_ops(struct tfa_device_ops *ops);
+void tfa9874_ops(struct tfa_device_ops *ops);
+void tfa9888_ops(struct tfa_device_ops *ops);
+void tfa9896_ops(struct tfa_device_ops *ops);
+void tfa9897_ops(struct tfa_device_ops *ops);
+void tfa9895_ops(struct tfa_device_ops *ops);
+void tfa9891_ops(struct tfa_device_ops *ops);
+void tfa9890_ops(struct tfa_device_ops *ops);
+void tfa9894_ops(struct tfa_device_ops *ops);
+
 #endif /* __TFA_INTERNAL_H__ */

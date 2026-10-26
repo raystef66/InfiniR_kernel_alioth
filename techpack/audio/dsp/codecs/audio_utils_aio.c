@@ -30,6 +30,7 @@
 #include "audio_utils_aio.h"
 #ifdef CONFIG_USE_DEV_CTRL_VOLUME
 #include <linux/qdsp6v2/audio_dev_ctl.h>
+#include "audio_native.h"
 #endif /*CONFIG_USE_DEV_CTRL_VOLUME*/
 static DEFINE_MUTEX(lock);
 #ifdef CONFIG_DEBUG_FS
@@ -390,7 +391,7 @@ int audio_aio_enable(struct q6audio_aio  *audio)
 	return q6asm_run(audio->ac, 0x00, 0x00, 0x00);
 }
 
-int audio_aio_disable(struct q6audio_aio *audio)
+static int audio_aio_disable(struct q6audio_aio *audio)
 {
 	int rc = 0;
 
@@ -413,7 +414,7 @@ int audio_aio_disable(struct q6audio_aio *audio)
 	return rc;
 }
 
-void audio_aio_reset_ion_region(struct q6audio_aio *audio)
+static void audio_aio_reset_ion_region(struct q6audio_aio *audio)
 {
 	struct audio_aio_ion_region *region;
 	struct list_head *ptr, *next;
@@ -426,7 +427,7 @@ void audio_aio_reset_ion_region(struct q6audio_aio *audio)
 	}
 }
 
-void audio_aio_reset_event_queue(struct q6audio_aio *audio)
+static void audio_aio_reset_event_queue(struct q6audio_aio *audio)
 {
 	unsigned long flags;
 	struct audio_aio_event *drv_evt;
@@ -498,7 +499,7 @@ static void audio_aio_listner(u32 evt_id, union auddev_evt_data *evt_payload,
 	}
 }
 
-int register_volume_listener(struct q6audio_aio *audio)
+static int register_volume_listener(struct q6audio_aio *audio)
 {
 	int rc  = 0;
 
@@ -516,7 +517,7 @@ int register_volume_listener(struct q6audio_aio *audio)
 	}
 	return rc;
 }
-void unregister_volume_listener(struct q6audio_aio *audio)
+static void unregister_volume_listener(struct q6audio_aio *audio)
 {
 	auddev_unregister_evt_listner(AUDDEV_CLNT_DEC, audio->ac->session);
 }
@@ -572,11 +573,11 @@ int enable_volume_ramp(struct q6audio_aio *audio)
 }
 
 #else /*CONFIG_USE_DEV_CTRL_VOLUME*/
-int register_volume_listener(struct q6audio_aio *audio)
+static int register_volume_listener(struct q6audio_aio *audio)
 {
 	return 0;/* do nothing */
 }
-void unregister_volume_listener(struct q6audio_aio *audio)
+static void unregister_volume_listener(struct q6audio_aio *audio)
 {
 	return;/* do nothing */
 }

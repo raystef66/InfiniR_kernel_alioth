@@ -11,6 +11,7 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
+#include "platform_init.h"
 
 static struct snd_soc_dai_ops msm_fe_dai_ops = {};
 

@@ -20,6 +20,7 @@
 #include <linux/ion_kernel.h>
 #include <ipc/apr.h>
 #include <dsp/msm_audio_ion.h>
+#include "q6_init.h"
 
 #define MSM_AUDIO_ION_PROBED (1 << 0)
 
@@ -800,9 +801,7 @@ exit:
 
 static int msm_audio_ion_remove(struct platform_device *pdev)
 {
-	struct device *audio_cb_dev;
 
-	audio_cb_dev = msm_audio_ion_data.cb_dev;
 
 	msm_audio_ion_data.smmu_enabled = 0;
 	msm_audio_ion_data.device_status = 0;

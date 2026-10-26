@@ -1189,14 +1189,12 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 static int wsa883x_codec_probe(struct snd_soc_component *component)
 {
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
-	struct swr_device *dev;
 	int variant = 0, version = 0;
 
 	if (!wsa883x)
 		return -EINVAL;
 	snd_soc_component_init_regmap(component, wsa883x->regmap);
 
-	dev = wsa883x->swr_slave;
 	wsa883x->component = component;
 
 	variant = (snd_soc_component_read32(component, WSA883X_OTP_REG_0)

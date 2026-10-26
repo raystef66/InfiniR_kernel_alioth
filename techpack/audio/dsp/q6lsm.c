@@ -27,6 +27,7 @@
 #include <dsp/q6common.h>
 #include <dsp/audio_cal_utils.h>
 #include "adsp_err.h"
+#include "q6_init.h"
 
 #define APR_TIMEOUT	(HZ)
 #define LSM_SAMPLE_RATE 16000

@@ -16,6 +16,7 @@
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6afe-v2.h>
 #include "msm-dai-q6-v2.h"
+#include "platform_init.h"
 
 #define HDMI_RX_CA_MAX 0x32
 

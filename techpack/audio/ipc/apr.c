@@ -239,7 +239,7 @@ void apr_set_modem_state(enum apr_subsys_state state)
 }
 EXPORT_SYMBOL(apr_set_modem_state);
 
-enum apr_subsys_state apr_cmpxchg_modem_state(enum apr_subsys_state prev,
+static enum apr_subsys_state apr_cmpxchg_modem_state(enum apr_subsys_state prev,
 					      enum apr_subsys_state new)
 {
 	return atomic_cmpxchg(&q6.modem_state, prev, new);
@@ -433,31 +433,6 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 }
 EXPORT_SYMBOL(apr_send_pkt);
 
-int apr_pkt_config(void *handle, struct apr_pkt_cfg *cfg)
-{
-	struct apr_svc *svc = (struct apr_svc *)handle;
-	uint16_t dest_id;
-	uint16_t client_id;
-	struct apr_client *clnt;
-
-	if (!handle) {
-		pr_err("%s: Invalid handle\n", __func__);
-		return -EINVAL;
-	}
-
-	if (svc->need_reset) {
-		pr_err("%s: service need reset\n", __func__);
-		return -ENETRESET;
-	}
-
-	svc->pkt_owner = cfg->pkt_owner;
-	dest_id = svc->dest_id;
-	client_id = svc->client_id;
-	clnt = &client[dest_id][client_id];
-
-	return apr_tal_rx_intents_config(clnt->handle,
-		cfg->intents.num_of_intents, cfg->intents.size);
-}
 
 /**
  * apr_register - Clients call to register
@@ -912,7 +887,6 @@ EXPORT_SYMBOL(apr_end_rx_rt);
 int apr_deregister(void *handle)
 {
 	struct apr_svc *svc = handle;
-	struct apr_client *clnt;
 	uint16_t dest_id;
 	uint16_t client_id;
 
@@ -929,7 +903,6 @@ int apr_deregister(void *handle)
 
 	dest_id = svc->dest_id;
 	client_id = svc->client_id;
-	clnt = &client[dest_id][client_id];
 
 	if (svc->svc_cnt > 0) {
 		if (svc->port_cnt)

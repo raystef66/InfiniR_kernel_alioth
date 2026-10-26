@@ -9,6 +9,7 @@
 #include <linux/compat.h>
 #include <linux/types.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_amrwb_misc;
 static struct ws_mgr audio_amrwb_ws_mgr;

@@ -46,6 +46,7 @@
 
 #ifdef AUDIO_FORCE_RESTART_ADSP
 #include <soc/qcom/subsystem_restart.h>
+#include "q6_init.h"
 #define ADSP_ERR_LIMITED_COUNT   (3)
 static int err_count = 0;
 #endif
@@ -562,7 +563,7 @@ static void config_debug_fs_init(void)
 }
 #endif
 
-int q6asm_mmap_apr_dereg(void)
+static int q6asm_mmap_apr_dereg(void)
 {
 	int c;
 
@@ -781,25 +782,7 @@ done:
 	return result;
 }
 
-int q6asm_unmap_cal_data(int cal_type, struct cal_block_data *cal_block)
-{
-	int ret = 0;
-
-	if ((cal_block->map_data.map_size > 0) &&
-		(cal_block->map_data.q6map_handle != 0)) {
-
-		ret = q6asm_unmap_cal_memory(cal_type, cal_block);
-		if (ret < 0) {
-			pr_err("%s: unmap did not work! size = %zd ret %d\n",
-				__func__, cal_block->map_data.map_size, ret);
-			goto done;
-		}
-	}
-done:
-	return ret;
-}
-
-int send_asm_custom_topology(struct audio_client *ac)
+static int send_asm_custom_topology(struct audio_client *ac)
 {
 	struct cal_block_data		*cal_block = NULL;
 	struct cmd_set_topologies	asm_top;
@@ -1011,7 +994,7 @@ done:
 	return result;
 }
 
-int q6asm_audio_client_buf_free(unsigned int dir,
+static int q6asm_audio_client_buf_free(unsigned int dir,
 			struct audio_client *ac)
 {
 	struct audio_port_data *port;
@@ -2617,7 +2600,6 @@ int q6asm_cpu_buf_release(int dir, struct audio_client *ac)
 {
 	struct audio_port_data *port;
 	int ret = 0;
-	int idx;
 
 	if (!ac || ((dir != IN) && (dir != OUT))) {
 		pr_err("%s: ac %pK dir %d\n", __func__, ac, dir);
@@ -2628,7 +2610,6 @@ int q6asm_cpu_buf_release(int dir, struct audio_client *ac)
 	if (ac->io_mode & SYNC_IO_MODE) {
 		port = &ac->port[dir];
 		mutex_lock(&port->lock);
-		idx = port->cpu_buf;
 		if (port->cpu_buf == 0) {
 			port->cpu_buf = port->max_buf_cnt - 1;
 		} else if (port->cpu_buf < port->max_buf_cnt) {
@@ -8270,7 +8251,6 @@ int q6asm_memory_map(struct audio_client *ac, phys_addr_t buf_add, int dir,
 {
 	struct avs_cmd_shared_mem_map_regions *mmap_regions = NULL;
 	struct avs_shared_map_region_payload  *mregions = NULL;
-	struct audio_port_data *port = NULL;
 	void	*mmap_region_cmd = NULL;
 	void	*payload = NULL;
 	struct asm_buffer_node *buffer_node = NULL;
@@ -8313,7 +8293,6 @@ int q6asm_memory_map(struct audio_client *ac, phys_addr_t buf_add, int dir,
 	mregions = (struct avs_shared_map_region_payload *)payload;
 
 	ac->port[dir].tmp_hdl = 0;
-	port = &ac->port[dir];
 	pr_debug("%s: buf_add 0x%pK, bufsz: %d\n", __func__,
 		&buf_add, bufsz);
 	mregions->shm_addr_lsw = lower_32_bits(buf_add);
@@ -9528,8 +9507,6 @@ int q6asm_async_write(struct audio_client *ac,
 	struct asm_data_cmd_write_v2 write;
 	struct asm_buffer_node *buf_node = NULL;
 	struct list_head *ptr, *next;
-	struct audio_buffer        *ab;
-	struct audio_port_data     *port;
 	phys_addr_t lbuf_phys_addr;
 	u32 liomode;
 	u32 io_compressed;
@@ -9546,8 +9523,6 @@ int q6asm_async_write(struct audio_client *ac,
 
 	q6asm_stream_add_hdr_async(
 			ac, &write.hdr, sizeof(write), TRUE, ac->stream_id);
-	port = &ac->port[IN];
-	ab = &port->buf[port->dsp_buf];
 
 	/* Pass session id as token for AIO scheme */
 	write.hdr.token = param->uid;
@@ -10721,7 +10696,7 @@ int q6asm_stream_cmd_nowait(struct audio_client *ac, int cmd,
 }
 EXPORT_SYMBOL(q6asm_stream_cmd_nowait);
 
-int __q6asm_send_meta_data(struct audio_client *ac, uint32_t stream_id,
+static int __q6asm_send_meta_data(struct audio_client *ac, uint32_t stream_id,
 			  uint32_t initial_samples, uint32_t trailing_samples)
 {
 	struct asm_data_cmd_remove_silence silence;

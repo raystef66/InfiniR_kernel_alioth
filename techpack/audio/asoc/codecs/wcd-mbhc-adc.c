@@ -686,7 +686,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	bool wrk_complete = false;
 	int pt_gnd_mic_swap_cnt = 0;
 	int no_gnd_mic_swap_cnt = 0;
-	bool is_pa_on = false, spl_hs = false, spl_hs_reported = false;
+	bool is_pa_on = false, spl_hs_reported = false;
 	int ret = 0;
 	int spl_hs_count = 0;
 	int output_mv = 0;
@@ -794,14 +794,13 @@ correct_plug_type:
 
 		if ((output_mv > hs_threshold) &&
 		    (spl_hs_count < WCD_MBHC_SPL_HS_CNT)) {
-			spl_hs = wcd_mbhc_adc_check_for_spl_headset(mbhc,
+			wcd_mbhc_adc_check_for_spl_headset(mbhc,
 								&spl_hs_count);
 			output_mv = wcd_measure_adc_once(mbhc, MUX_CTL_IN2P);
 
 			if (spl_hs_count == WCD_MBHC_SPL_HS_CNT) {
 				hs_threshold = (hs_threshold *
 				     wcd_mbhc_get_micbias(mbhc)) / micbias_mv;
-				spl_hs = true;
 				mbhc->micbias_enable = true;
 			}
 		}

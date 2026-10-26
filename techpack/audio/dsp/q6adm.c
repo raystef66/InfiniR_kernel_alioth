@@ -21,6 +21,7 @@
 #include <dsp/q6common.h>
 #include <ipc/apr.h>
 #include "adsp_err.h"
+#include "q6_init.h"
 
 #define TIMEOUT_MS 1000
 
@@ -2524,7 +2525,7 @@ fail_cmd:
 }
 EXPORT_SYMBOL(adm_connect_afe_port);
 
-int adm_arrange_mch_map(struct adm_cmd_device_open_v5 *open, int path,
+static int adm_arrange_mch_map(struct adm_cmd_device_open_v5 *open, int path,
 			 int channel_mode, int port_idx)
 {
 	int rc = 0, idx;
@@ -2613,7 +2614,7 @@ inval_ch_mod:
 	return rc;
 }
 
-int adm_arrange_mch_ep2_map(struct adm_cmd_device_open_v6 *open_v6,
+static int adm_arrange_mch_ep2_map(struct adm_cmd_device_open_v6 *open_v6,
 			 int channel_mode)
 {
 	int rc = 0;
@@ -4113,7 +4114,7 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 }
 EXPORT_SYMBOL(adm_close);
 
-int send_rtac_audvol_cal(void)
+static int send_rtac_audvol_cal(void)
 {
 	int ret = 0;
 	int ret2 = 0;

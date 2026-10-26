@@ -43,6 +43,7 @@
 
 #ifdef AUDIO_FORCE_RESTART_ADSP
 #include <soc/qcom/subsystem_restart.h>
+#include "q6_init.h"
 #define ADSP_ERR_LIMITED_COUNT   (3)
 #define ADSP_TO_LIMITED_COUNT   (10) //TIMEOUT
 static int err_count = 0;
@@ -1480,125 +1481,6 @@ int afe_get_port_type(u16 port_id)
 }
 EXPORT_SYMBOL(afe_get_port_type);
 
-int afe_sizeof_cfg_cmd(u16 port_id)
-{
-	int ret_size;
-
-	switch (port_id) {
-	case PRIMARY_I2S_RX:
-	case PRIMARY_I2S_TX:
-	case SECONDARY_I2S_RX:
-	case SECONDARY_I2S_TX:
-	case MI2S_RX:
-	case MI2S_TX:
-	case AFE_PORT_ID_PRIMARY_MI2S_RX:
-	case AFE_PORT_ID_PRIMARY_MI2S_TX:
-	case AFE_PORT_ID_QUATERNARY_MI2S_RX:
-	case AFE_PORT_ID_QUATERNARY_MI2S_TX:
-	case AFE_PORT_ID_QUINARY_MI2S_RX:
-	case AFE_PORT_ID_QUINARY_MI2S_TX:
-	case AFE_PORT_ID_SENARY_MI2S_RX:
-	case AFE_PORT_ID_SENARY_MI2S_TX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_i2s_cfg);
-		break;
-	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
-	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_meta_i2s_cfg);
-		break;
-	case HDMI_RX:
-	case HDMI_RX_MS:
-	case DISPLAY_PORT_RX:
-		ret_size =
-		SIZEOF_CFG_CMD(afe_param_id_hdmi_multi_chan_audio_cfg);
-		break;
-	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
-	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
-	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
-	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
-		ret_size =
-		SIZEOF_CFG_CMD(afe_param_id_spdif_cfg_v2);
-		break;
-	case SLIMBUS_0_RX:
-	case SLIMBUS_0_TX:
-	case SLIMBUS_1_RX:
-	case SLIMBUS_1_TX:
-	case SLIMBUS_2_RX:
-	case SLIMBUS_2_TX:
-	case SLIMBUS_3_RX:
-	case SLIMBUS_3_TX:
-	case SLIMBUS_4_RX:
-	case SLIMBUS_4_TX:
-	case SLIMBUS_5_RX:
-	case SLIMBUS_5_TX:
-	case SLIMBUS_6_RX:
-	case SLIMBUS_6_TX:
-	case SLIMBUS_7_RX:
-	case SLIMBUS_7_TX:
-	case SLIMBUS_8_RX:
-	case SLIMBUS_8_TX:
-	case SLIMBUS_9_RX:
-	case SLIMBUS_9_TX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_slimbus_cfg);
-		break;
-	case VOICE_PLAYBACK_TX:
-	case VOICE2_PLAYBACK_TX:
-	case VOICE_RECORD_RX:
-	case VOICE_RECORD_TX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_pseudo_port_cfg);
-		break;
-	case RT_PROXY_PORT_001_RX:
-	case RT_PROXY_PORT_001_TX:
-	case RT_PROXY_PORT_002_RX:
-	case RT_PROXY_PORT_002_TX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_rt_proxy_port_cfg);
-		break;
-	case AFE_PORT_ID_USB_RX:
-	case AFE_PORT_ID_USB_TX:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_usb_audio_cfg);
-		break;
-	case AFE_PORT_ID_WSA_CODEC_DMA_RX_0:
-	case AFE_PORT_ID_WSA_CODEC_DMA_TX_0:
-	case AFE_PORT_ID_WSA_CODEC_DMA_RX_1:
-	case AFE_PORT_ID_WSA_CODEC_DMA_TX_1:
-	case AFE_PORT_ID_WSA_CODEC_DMA_TX_2:
-	case AFE_PORT_ID_VA_CODEC_DMA_TX_0:
-	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
-	case AFE_PORT_ID_VA_CODEC_DMA_TX_2:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_0:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_0:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_1:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_1:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_2:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_2:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_3:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_3:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_4:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_4:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_5:
-	case AFE_PORT_ID_TX_CODEC_DMA_TX_5:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_6:
-	case AFE_PORT_ID_RX_CODEC_DMA_RX_7:
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_cdc_dma_cfg_t);
-		break;
-	case AFE_PORT_ID_PRIMARY_PCM_RX:
-	case AFE_PORT_ID_PRIMARY_PCM_TX:
-	case AFE_PORT_ID_SECONDARY_PCM_RX:
-	case AFE_PORT_ID_SECONDARY_PCM_TX:
-	case AFE_PORT_ID_TERTIARY_PCM_RX:
-	case AFE_PORT_ID_TERTIARY_PCM_TX:
-	case AFE_PORT_ID_QUATERNARY_PCM_RX:
-	case AFE_PORT_ID_QUATERNARY_PCM_TX:
-	case AFE_PORT_ID_QUINARY_PCM_RX:
-	case AFE_PORT_ID_QUINARY_PCM_TX:
-	case AFE_PORT_ID_SENARY_PCM_RX:
-	case AFE_PORT_ID_SENARY_PCM_TX:
-	default:
-		pr_debug("%s: default case 0x%x\n", __func__, port_id);
-		ret_size = SIZEOF_CFG_CMD(afe_param_id_pcm_cfg);
-		break;
-	}
-	return ret_size;
-}
 
 /**
  * afe_q6_interface_prepare -
@@ -3744,7 +3626,7 @@ done:
 	return ret;
 }
 
-void afe_send_cal(u16 port_id)
+static void afe_send_cal(u16 port_id)
 {
 	int ret;
 
@@ -4051,7 +3933,7 @@ static int afe_send_bank_selection_clip(
 		__func__, ret);
 	return ret;
 }
-int afe_send_aanc_version(
+static int afe_send_aanc_version(
 	struct afe_param_id_cdc_aanc_version *version_cfg)
 {
 	struct param_hdr_v3 param_hdr;
@@ -4538,7 +4420,7 @@ int afe_send_slot_mapping_cfg(
 	return ret;
 }
 
-int afe_send_slot_mapping_cfg_v2(
+static int afe_send_slot_mapping_cfg_v2(
 	struct afe_param_id_slot_mapping_cfg_v2 *slot_mapping_cfg,
 	u16 port_id)
 {
@@ -4824,7 +4706,7 @@ void afe_set_routing_callback(routing_cb cb)
 }
 EXPORT_SYMBOL(afe_set_routing_callback);
 
-int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
+static int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 {
 	struct afe_param_id_usb_audio_dev_params usb_dev;
 	struct afe_param_id_usb_audio_dev_lpcm_fmt lpcm_fmt;
@@ -9906,7 +9788,7 @@ done:
 	return ret;
 }
 
-int afe_get_sp_v4_rx_tmax_xmax_logging_data(
+static int afe_get_sp_v4_rx_tmax_xmax_logging_data(
 		struct afe_sp_rx_tmax_xmax_logging_param *xt_logging,
 		u16 port_id)
 {
@@ -10327,7 +10209,7 @@ static int get_cal_type_index(int32_t cal_type)
 	return ret;
 }
 
-int afe_alloc_cal(int32_t cal_type, size_t data_size,
+static int afe_alloc_cal(int32_t cal_type, size_t data_size,
 						void *data)
 {
 	int				ret = 0;

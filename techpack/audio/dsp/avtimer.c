@@ -22,6 +22,8 @@
 #endif
 #include <ipc/apr.h>
 #include <dsp/q6core.h>
+#include <dsp/avtimer.h>
+#include "q6_init.h"
 
 #define DEVICE_NAME "avtimer"
 #define TIMEOUT_MS 1000

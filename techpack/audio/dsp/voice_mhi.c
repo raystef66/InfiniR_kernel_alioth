@@ -19,6 +19,7 @@
 #include <dsp/audio_notifier.h>
 #include <ipc/apr.h>
 #include "adsp_err.h"
+#include "q6_init.h"
 
 #define VSS_IPKTEXG_CMD_SET_MAILBOX_MEMORY_CONFIG	0x0001333B
 

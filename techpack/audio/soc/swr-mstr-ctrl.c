@@ -1115,7 +1115,7 @@ end:
 	return is_removed;
 }
 
-int swrm_get_clk_div_rate(int mclk_freq, int bus_clk_freq)
+static int swrm_get_clk_div_rate(int mclk_freq, int bus_clk_freq)
 {
 	if (!bus_clk_freq)
 		return mclk_freq;
@@ -3259,7 +3259,7 @@ static int swrm_device_down(struct device *dev)
 	return 0;
 }
 
-int swrm_register_wake_irq(struct swr_mstr_ctrl *swrm)
+static int swrm_register_wake_irq(struct swr_mstr_ctrl *swrm)
 {
 	int ret = 0;
 	int irq, dir_apps_irq;

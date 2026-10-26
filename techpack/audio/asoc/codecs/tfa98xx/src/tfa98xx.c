@@ -135,7 +135,7 @@ static const struct tfa98xx_rate rate_to_fssel[] = {
 	{ 24000, 5 }, { 32000, 6 }, { 44100, 7 }, { 48000, 8 },
 };
 
-int nxp_spk_id_get(struct device_node *np)
+static int nxp_spk_id_get(struct device_node *np)
 {
 	int id = VENDOR_ID_UNKNOWN;
 	int state = 3;
@@ -448,9 +448,8 @@ static void tfa98xx_inputdev_unregister(struct tfa98xx *tfa98xx)
 	__tfa98xx_inputdev_check_register(tfa98xx, true);
 }
 
-#ifdef TFA_NON_DSP_SOLUTION
-extern int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead);
-#else
+int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead);
+#ifndef TFA_NON_DSP_SOLUTION
 int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead)
 {
 	pr_info("this function is empty!!!\n");
@@ -3797,7 +3796,7 @@ static ssize_t tfa98xx_misc_device_rpc_write(struct file *file,
 	return count;
 }
 
-enum Tfa98xx_Error tfa98xx_read_data_from_hostdsp(struct tfa_device *tfa,
+static enum Tfa98xx_Error tfa98xx_read_data_from_hostdsp(struct tfa_device *tfa,
 						  unsigned char module_id,
 						  unsigned char param_id,
 						  int num_bytes,
@@ -4197,7 +4196,7 @@ static const struct tfa98xx_miscdevice_info miscdevice_info[MISC_DEVICE_MAX] = {
 	},
 };
 
-int tfa98xx_init_misc_device(struct tfa98xx *tfa98xx)
+static int tfa98xx_init_misc_device(struct tfa98xx *tfa98xx)
 {
 	int ret = 0;
 
@@ -4273,7 +4272,7 @@ int tfa98xx_init_misc_device(struct tfa98xx *tfa98xx)
 	return ret;
 }
 
-void tfa98xx_remove_misc_device(struct tfa98xx *tfa98xx)
+static void tfa98xx_remove_misc_device(struct tfa98xx *tfa98xx)
 {
 	pr_info("entry\n");
 	if (NULL == tfa98xx) {

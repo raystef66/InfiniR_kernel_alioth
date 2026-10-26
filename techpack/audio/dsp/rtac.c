@@ -22,6 +22,7 @@
 #include <dsp/q6common.h>
 #include <dsp/q6voice.h>
 #include "adsp_err.h"
+#include "q6_init.h"
 
 
 /* Max size of payload (buf size - apr header) */
@@ -133,7 +134,7 @@ done:
 	return result;
 }
 
-int rtac_allocate_cal_buffer(uint32_t cal_type)
+static int rtac_allocate_cal_buffer(uint32_t cal_type)
 {
 	int result = 0;
 	size_t len;
@@ -174,7 +175,7 @@ done:
 	return result;
 }
 
-int rtac_free_cal_buffer(uint32_t cal_type)
+static int rtac_free_cal_buffer(uint32_t cal_type)
 {
 	int result = 0;
 
@@ -209,7 +210,7 @@ done:
 	return result;
 }
 
-int rtac_map_cal_buffer(uint32_t cal_type)
+static int rtac_map_cal_buffer(uint32_t cal_type)
 {
 	int result = 0;
 
@@ -259,7 +260,7 @@ done:
 	return result;
 }
 
-int rtac_unmap_cal_buffer(uint32_t cal_type)
+static int rtac_unmap_cal_buffer(uint32_t cal_type)
 {
 	int result = 0;
 
@@ -357,7 +358,7 @@ done:
 
 
 /* ADM Info */
-void add_popp(u32 dev_idx, u32 port_id, u32 popp_id)
+static void add_popp(u32 dev_idx, u32 port_id, u32 popp_id)
 {
 	u32 i = 0;
 
@@ -732,7 +733,7 @@ bool rtac_make_adm_callback(uint32_t *payload, u32 payload_size)
 	return true;
 }
 
-int send_adm_apr(void *buf, u32 opcode)
+static int send_adm_apr(void *buf, u32 opcode)
 {
 	s32	result;
 	u32	user_buf_size = 0;
@@ -991,7 +992,7 @@ bool rtac_make_asm_callback(u32 session_id, uint32_t *payload,
 	return true;
 }
 
-int send_rtac_asm_apr(void *buf, u32 opcode)
+static int send_rtac_asm_apr(void *buf, u32 opcode)
 {
 	s32 result;
 	u32 user_buf_size = 0;
@@ -1554,7 +1555,7 @@ bool rtac_make_voice_callback(u32 mode, uint32_t *payload, u32 payload_size)
 	return true;
 }
 
-int send_voice_apr(u32 mode, void *buf, u32 opcode)
+static int send_voice_apr(u32 mode, void *buf, u32 opcode)
 {
 	s32 result;
 	u32 user_buf_size = 0;

@@ -926,7 +926,6 @@ EXPORT_SYMBOL(wcd_mbhc_elec_hs_report_unplug);
 void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 				   enum wcd_mbhc_plug_type plug_type)
 {
-	bool anc_mic_found = false;
 	enum snd_jack_types jack_type;
 
 	if (mbhc->deinit_in_progress) {
@@ -962,7 +961,6 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 	} else if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
 		if (mbhc->mbhc_cfg->enable_anc_mic_detect &&
 		    mbhc->mbhc_fn->wcd_mbhc_detect_anc_plug_type)
-			anc_mic_found =
 			mbhc->mbhc_fn->wcd_mbhc_detect_anc_plug_type(mbhc);
 		jack_type = SND_JACK_HEADSET;
 

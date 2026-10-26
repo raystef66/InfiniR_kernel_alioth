@@ -9,6 +9,7 @@
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>
+#include "platform_init.h"
 
 #define DRV_NAME "msm-pcm-hostless"
 

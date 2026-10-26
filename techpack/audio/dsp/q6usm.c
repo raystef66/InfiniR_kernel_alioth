@@ -106,7 +106,7 @@ fail_cmd:
 	return rc;
 }
 
-int q6usm_memory_unmap(phys_addr_t buf_add, int dir, uint32_t session,
+static int q6usm_memory_unmap(phys_addr_t buf_add, int dir, uint32_t session,
 			uint32_t mem_handle)
 {
 	struct usm_cmd_memory_unmap_region mem_unmap;
@@ -213,7 +213,7 @@ static int q6usm_us_client_buf_free(unsigned int dir,
 	return rc;
 }
 
-int q6usm_us_param_buf_free(unsigned int dir,
+static int q6usm_us_param_buf_free(unsigned int dir,
 			struct us_client *usc)
 {
 	struct us_port_data *port;
@@ -487,7 +487,6 @@ int q6usm_us_param_buf_alloc(unsigned int dir,
 
 static int32_t q6usm_mmapcallback(struct apr_client_data *data, void *priv)
 {
-	uint32_t token;
 	uint32_t *payload = data->payload;
 
 	if (data->payload_size < (2 * sizeof(uint32_t))) {
@@ -507,7 +506,6 @@ static int32_t q6usm_mmapcallback(struct apr_client_data *data, void *priv)
 			pr_err("%s: wrong response[%d] on cmd [%d]\n",
 			       __func__, payload[1], payload[0]);
 		} else {
-			token = data->token;
 			switch (payload[0]) {
 			case USM_CMD_SHARED_MEM_UNMAP_REGION:
 				if (atomic_read(&this_mmap.cmd_state)) {

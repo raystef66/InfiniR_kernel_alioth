@@ -8,6 +8,7 @@
 #include <linux/clk-provider.h>
 #include <linux/ratelimit.h>
 #include <dsp/digital-cdc-rsc-mgr.h>
+#include "q6_init.h"
 
 struct mutex hw_vote_lock;
 static bool is_init_done;

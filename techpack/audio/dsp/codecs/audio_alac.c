@@ -6,6 +6,7 @@
 #include <linux/msm_audio_alac.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_alac_misc;
 static struct ws_mgr audio_alac_ws_mgr;

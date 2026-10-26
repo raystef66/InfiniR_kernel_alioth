@@ -26,6 +26,7 @@
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6lsm.h>
 #include "msm-pcm-routing-v2.h"
+#include "platform_init.h"
 
 #define DRV_NAME "msm-lsm-client"
 

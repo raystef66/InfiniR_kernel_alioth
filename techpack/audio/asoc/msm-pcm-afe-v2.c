@@ -23,6 +23,7 @@
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6adm-v2.h>
 #include "msm-pcm-afe-v2.h"
+#include "platform_init.h"
 
 #define DRV_NAME "msm-pcm-afe-v2"
 

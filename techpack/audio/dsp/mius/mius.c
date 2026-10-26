@@ -34,6 +34,7 @@
 #include <mius/mius_data_io.h>
 #include <mius/mius_mixer_controls.h>
 #include <dsp/apr_mius.h>
+#include "../q6_init.h"
 
 /* Alternative mechanism to load calibration data.
 * Read calibration data during driver initialization

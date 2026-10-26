@@ -17,6 +17,7 @@
  */
 
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_evrc_misc;
 static struct ws_mgr audio_evrc_ws_mgr;

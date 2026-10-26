@@ -20,6 +20,7 @@
 #include <dsp/q6asm-v2.h>
 
 #include "msm-pcm-routing-v2.h"
+#include "platform_init.h"
 
 #define DRV_NAME "msm-pcm-loopback-v2"
 

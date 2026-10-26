@@ -1614,7 +1614,7 @@ static int wcd938x_get_adc_mode(int val)
 	return ret;
 }
 
-int wcd938x_tx_channel_config(struct snd_soc_component *component,
+static int wcd938x_tx_channel_config(struct snd_soc_component *component,
 			      int channel, int mode)
 {
 	int reg = WCD938X_ANA_TX_CH2, mask = 0, val = 0;
@@ -3598,7 +3598,7 @@ static int wcd938x_reset_low(struct device *dev)
 	return rc;
 }
 
-struct wcd938x_pdata *wcd938x_populate_dt_data(struct device *dev)
+static struct wcd938x_pdata *wcd938x_populate_dt_data(struct device *dev)
 {
 	struct wcd938x_pdata *pdata = NULL;
 

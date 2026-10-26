@@ -352,23 +352,6 @@ void elliptic_set_calibration_data(uint8_t *calib_data, size_t size)
 	memcpy((u8 *)calibration_obj->buffer, calib_data, size);
 }
 
-void elliptic_set_diagnostics_data(uint8_t *diag_data, size_t size)
-{
-	struct elliptic_shared_data_block *diagnostics_obj = NULL;
-
-	if (size <= ELLIPTIC_DIAGNOSTICS_DATA_SIZE) {
-		diagnostics_obj = elliptic_get_shared_obj(
-			ELLIPTIC_OBJ_ID_DIAGNOSTICS_DATA);
-		if (diagnostics_obj == NULL) {
-			EL_PRINT_E("el..set_diagnostics_data() NULL (%zu)",
-				   size);
-			return;
-		}
-		memcpy((uint8_t *)&elliptic_engine_diagnostics_data_cache,
-		       diag_data, size);
-		memcpy((u8 *)diagnostics_obj->buffer, diag_data, size);
-	}
-}
 
 static const size_t NUM_SHARED_RW_OBJS =
 	sizeof(shared_data_blocks) / sizeof(struct elliptic_shared_data_block);
@@ -392,65 +375,19 @@ static const struct soc_enum elliptic_enum[] = {
 			    ultrasound_enable_texts),
 };
 
-int get_elliptic_calibration_data(uint8_t *caldata, uint32_t max_size)
-{
-	uint32_t copied;
 
-	copied = ELLIPTIC_CALIBRATION_DATA_SIZE;
-	if (max_size < ELLIPTIC_CALIBRATION_DATA_SIZE) {
-		copied = max_size;
-		EL_PRINT_D("size mismatch : %u vs %u",
-			   (uint32_t)ELLIPTIC_CALIBRATION_DATA_SIZE, max_size);
-	}
 
-	memcpy(caldata, (uint8_t *)&elliptic_engine_calibration_data_cache,
-	       max_size);
-	return copied;
-}
-
-int get_elliptic_calibration_v2_data(uint8_t *caldata, uint32_t max_size)
-{
-	uint32_t copied;
-
-	copied = ELLIPTIC_CALIBRATION_V2_DATA_SIZE;
-	if (max_size < ELLIPTIC_CALIBRATION_V2_DATA_SIZE) {
-		copied = max_size;
-		EL_PRINT_D("size mismatch : %u vs %u",
-			   (uint32_t)ELLIPTIC_CALIBRATION_V2_DATA_SIZE,
-			   max_size);
-	}
-
-	memcpy(caldata, (uint8_t *)&elliptic_engine_calibration_v2_data_cache,
-	       max_size);
-	return copied;
-}
-
-int get_elliptic_diagnostics_data(uint8_t *diagdata, uint32_t max_size)
-{
-	uint32_t copied;
-
-	copied = ELLIPTIC_DIAGNOSTICS_DATA_SIZE;
-	if (max_size < ELLIPTIC_DIAGNOSTICS_DATA_SIZE) {
-		copied = max_size;
-		EL_PRINT_D("size mismatch : %u vs %u",
-			   (uint32_t)ELLIPTIC_DIAGNOSTICS_DATA_SIZE, max_size);
-	}
-
-	memcpy(diagdata, (uint8_t *)&elliptic_engine_diagnostics_data_cache,
-	       max_size);
-	return copied;
-}
 
 static uint32_t ultrasound_enable_cache;
 
-int elliptic_ultrasound_enable_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_enable_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	ucontrol->value.integer.value[0] = ultrasound_enable_cache;
 	return 0;
 }
 
-int elliptic_ultrasound_enable_set(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_enable_set(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	static bool triggered_engine_info;
@@ -473,14 +410,14 @@ int elliptic_ultrasound_enable_set(struct snd_kcontrol *kcontrol,
 
 static uint32_t ultrasound_tx_port_cache;
 
-int elliptic_ultrasound_tx_port_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_tx_port_get(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
 	ucontrol->value.integer.value[0] = ultrasound_tx_port_cache;
 	return 0;
 }
 
-int elliptic_ultrasound_tx_port_set(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_tx_port_set(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
 	int ret;
@@ -505,14 +442,14 @@ int elliptic_ultrasound_tx_port_set(struct snd_kcontrol *kcontrol,
 
 static uint32_t ultrasound_rx_port_cache;
 
-int elliptic_ultrasound_rx_port_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_rx_port_get(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
 	ucontrol->value.integer.value[0] = ultrasound_rx_port_cache;
 	return 0;
 }
 
-int elliptic_ultrasound_rx_port_set(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_rx_port_set(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
 	int ret;
@@ -535,7 +472,7 @@ int elliptic_ultrasound_rx_port_set(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_ultrasound_rampdown_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_rampdown_get(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	/* Rampdown is a strobe, so always return Off */
@@ -543,7 +480,7 @@ int elliptic_ultrasound_rampdown_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_ultrasound_rampdown_set(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_rampdown_set(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	int32_t msg[4] = { -1, 0, 0, 0 };
@@ -555,7 +492,7 @@ int elliptic_ultrasound_rampdown_set(struct snd_kcontrol *kcontrol,
 				   (const char *)msg, sizeof(msg));
 }
 
-int elliptic_ultrasound_diagnostics_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_diagnostics_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	/* Diagnostics is a strobe, so always return Off */
@@ -563,7 +500,7 @@ int elliptic_ultrasound_diagnostics_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_ultrasound_request_diagnostics(struct snd_kcontrol *kcontrol,
+static int elliptic_ultrasound_request_diagnostics(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
 	int32_t msg[3] = { ESCPT_ENGINE_DIAGNOSTICS, 0, 0 };
@@ -575,7 +512,7 @@ int elliptic_ultrasound_request_diagnostics(struct snd_kcontrol *kcontrol,
 				   (const char *)msg, sizeof(msg));
 }
 
-int elliptic_system_configuration_get(struct snd_kcontrol *kcontrol,
+static int elliptic_system_configuration_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data, &elliptic_system_configuration,
@@ -583,7 +520,7 @@ int elliptic_system_configuration_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_system_configuration_put(struct snd_kcontrol *kcontrol,
+static int elliptic_system_configuration_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(&elliptic_system_configuration, ucontrol->value.bytes.data,
@@ -594,7 +531,7 @@ int elliptic_system_configuration_put(struct snd_kcontrol *kcontrol,
 				   ELLIPTIC_SYSTEM_CONFIGURATION_SIZE);
 }
 
-int elliptic_calibration_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_data_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data,
@@ -603,7 +540,7 @@ int elliptic_calibration_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_calibration_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_data_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(&elliptic_engine_calibration_data_cache,
@@ -615,7 +552,7 @@ int elliptic_calibration_data_put(struct snd_kcontrol *kcontrol,
 		ELLIPTIC_CALIBRATION_DATA_SIZE);
 }
 
-int elliptic_calibration_v2_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_v2_data_get(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	struct elliptic_shared_data_block *calibration_obj =
@@ -631,7 +568,7 @@ int elliptic_calibration_v2_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_calibration_v2_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_v2_data_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(&elliptic_engine_calibration_v2_data_cache,
@@ -643,7 +580,7 @@ int elliptic_calibration_v2_data_put(struct snd_kcontrol *kcontrol,
 		ELLIPTIC_CALIBRATION_V2_DATA_SIZE);
 }
 
-int elliptic_diagnostics_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_diagnostics_data_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data,
@@ -652,13 +589,13 @@ int elliptic_diagnostics_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_diagnostics_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_diagnostics_data_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	return 0;
 }
 
-int elliptic_ml_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_ml_data_get(struct snd_kcontrol *kcontrol,
 			 struct snd_ctl_elem_value *ucontrol)
 {
 	struct elliptic_shared_data_block *ml_obj =
@@ -674,7 +611,7 @@ int elliptic_ml_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_ml_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_ml_data_put(struct snd_kcontrol *kcontrol,
 			 struct snd_ctl_elem_value *ucontrol)
 {
 	return elliptic_data_write(ELLIPTIC_ULTRASOUND_SET_PARAMS,
@@ -682,7 +619,7 @@ int elliptic_ml_data_put(struct snd_kcontrol *kcontrol,
 				   ELLIPTIC_ML_DATA_SIZE);
 }
 
-int elliptic_sensor_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_sensor_data_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data, &elliptic_engine_sensor_data_cache,
@@ -690,7 +627,7 @@ int elliptic_sensor_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_sensor_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_sensor_data_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(&elliptic_engine_sensor_data_cache, ucontrol->value.bytes.data,
@@ -702,7 +639,7 @@ int elliptic_sensor_data_put(struct snd_kcontrol *kcontrol,
 		ELLIPTIC_SENSOR_DATA_SIZE);
 }
 
-int elliptic_version_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_version_data_get(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data, &elliptic_engine_version_cache,
@@ -710,13 +647,13 @@ int elliptic_version_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_version_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_version_data_put(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	return 0;
 }
 
-int elliptic_branch_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_branch_data_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data, &elliptic_engine_branch_cache,
@@ -724,13 +661,13 @@ int elliptic_branch_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_branch_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_branch_data_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	return 0;
 }
 
-int elliptic_tag_data_get(struct snd_kcontrol *kcontrol,
+static int elliptic_tag_data_get(struct snd_kcontrol *kcontrol,
 			  struct snd_ctl_elem_value *ucontrol)
 {
 	memcpy(ucontrol->value.bytes.data, &elliptic_engine_tag_cache,
@@ -738,13 +675,13 @@ int elliptic_tag_data_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-int elliptic_tag_data_put(struct snd_kcontrol *kcontrol,
+static int elliptic_tag_data_put(struct snd_kcontrol *kcontrol,
 			  struct snd_ctl_elem_value *ucontrol)
 {
 	return 0;
 }
 
-int elliptic_calibration_param_get(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_param_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct soc_mixer_control *mc =
@@ -776,7 +713,7 @@ int elliptic_calibration_param_get(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
-int elliptic_calibration_param_put(struct snd_kcontrol *kcontrol,
+static int elliptic_calibration_param_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct soc_mixer_control *mc =
@@ -821,7 +758,7 @@ int elliptic_calibration_param_put(struct snd_kcontrol *kcontrol,
 				   sizeof(param));
 }
 
-int elliptic_system_configuration_param_get(struct snd_kcontrol *kcontrol,
+static int elliptic_system_configuration_param_get(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
 	struct soc_mixer_control *mc =
@@ -925,7 +862,7 @@ int elliptic_system_configuration_param_get(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
-int elliptic_system_configuration_param_put(struct snd_kcontrol *kcontrol,
+static int elliptic_system_configuration_param_put(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
 	struct soc_mixer_control *mc =

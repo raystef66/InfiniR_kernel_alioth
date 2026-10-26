@@ -512,7 +512,7 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 	return NOTIFY_OK;
 }
 
-int lpi_pinctrl_suspend(struct device *dev)
+static int lpi_pinctrl_suspend(struct device *dev)
 {
 	int ret = 0;
 
@@ -540,7 +540,7 @@ int lpi_pinctrl_suspend(struct device *dev)
 	return ret;
 }
 
-int lpi_pinctrl_resume(struct device *dev)
+static int lpi_pinctrl_resume(struct device *dev)
 {
 	return 0;
 }
@@ -870,7 +870,7 @@ static const struct of_device_id lpi_pinctrl_of_match[] = {
 
 MODULE_DEVICE_TABLE(of, lpi_pinctrl_of_match);
 
-int lpi_pinctrl_runtime_resume(struct device *dev)
+static int lpi_pinctrl_runtime_resume(struct device *dev)
 {
 	struct lpi_gpio_state *state = dev_get_drvdata(dev);
 	int ret = 0;

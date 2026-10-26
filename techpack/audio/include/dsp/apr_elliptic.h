@@ -39,3 +39,4 @@ typedef struct afe_ultrasound_state {
 } afe_ultrasound_state_t;
 
 extern afe_ultrasound_state_t elus_afe;
+int elliptic_set_hall_state(int state);

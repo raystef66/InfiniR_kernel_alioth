@@ -21,6 +21,7 @@
 #include <dsp/q6voice.h>
 
 #include "msm-pcm-voice-v2.h"
+#include "platform_init.h"
 
 #define DRV_NAME "msm-pcm-voice-v2"
 

@@ -587,7 +587,7 @@ enum Tfa98xx_Error tfa98xx_auto_copy_mtp_to_iic(struct tfa_device *tfa)
 }
 
 /* the ops wrapper for tfa98xx_faim_protect */
-enum Tfa98xx_Error tfa98xx_faim_protect(struct tfa_device *tfa, int state)
+static enum Tfa98xx_Error tfa98xx_faim_protect(struct tfa_device *tfa, int state)
 {
 	return (tfa->dev_ops.faim_protect)(tfa, state);
 }
@@ -652,7 +652,7 @@ enum Tfa98xx_Error tfa98xx_set_osc_powerdown(struct tfa_device *tfa, int state)
 *
 *  @return -1 when error, 0 or 1 depends on switch settings.
 */
-int tfa98xx_powerswitch_is_enabled(struct tfa_device *tfa)
+static int tfa98xx_powerswitch_is_enabled(struct tfa_device *tfa)
 {
 	uint16_t value;
 	enum Tfa98xx_Error ret;

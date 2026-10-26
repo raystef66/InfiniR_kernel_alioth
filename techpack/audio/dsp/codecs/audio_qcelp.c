@@ -17,6 +17,7 @@
  */
 
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 #define FRAME_SIZE_DEC_QCELP  ((32) + sizeof(struct dec_meta_in))
 

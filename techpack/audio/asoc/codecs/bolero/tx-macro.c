@@ -979,7 +979,9 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 tx_gain_ctl_reg = 0;
 	u16 tx_fs_reg = 0;
 	u8 hpf_cut_off_freq = 0;
+#if defined(CONFIG_MACH_XIAOMI_PSYCHE) || defined(CONFIG_MACH_XIAOMI_MUNCH)
 	int hpf_delay = TX_MACRO_DMIC_HPF_DELAY_MS;
+#endif
 	int unmute_delay = TX_MACRO_DMIC_UNMUTE_DELAY_MS;
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
@@ -1057,7 +1059,9 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						CF_MIN_3DB_150HZ << 5);
 
 		if (is_amic_enabled(component, decimator)) {
+#if defined(CONFIG_MACH_XIAOMI_PSYCHE) || defined(CONFIG_MACH_XIAOMI_MUNCH)
 			hpf_delay = TX_MACRO_AMIC_HPF_DELAY_MS;
+#endif
 			unmute_delay = TX_MACRO_AMIC_UNMUTE_DELAY_MS;
 		}
 		if (tx_unmute_delay < unmute_delay)

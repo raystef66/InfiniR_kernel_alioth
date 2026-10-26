@@ -69,14 +69,14 @@ void q6asm_exit(void);
 void afe_exit(void);
 void adm_exit(void);
 void adsp_err_exit(void);
-int elliptic_driver_exit(void);
+void elliptic_driver_exit(void);
 #if IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE)
 int audio_slimslave_init(void);
 void audio_slimslave_exit(void);
 #else
 /* for mius start */
 #ifdef CONFIG_US_PROXIMITY
-int mius_driver_exit(void);
+void mius_driver_exit(void);
 #endif
 /* for mius end */
 static inline int audio_slimslave_init(void)

@@ -34,6 +34,7 @@
 #include <elliptic/elliptic_data_io.h>
 #include <elliptic/elliptic_mixer_controls.h>
 #include <dsp/apr_elliptic.h>
+#include "../q6_init.h"
 
 /* Alternative mechanism to load calibration data.
 * Read calibration data during driver initialization

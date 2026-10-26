@@ -12,6 +12,7 @@
 #include <dsp/msm_audio_ion.h>
 #include <dsp/audio_calibration.h>
 #include <dsp/audio_cal_utils.h>
+#include "q6_init.h"
 
 struct audio_cal_client_info {
 	struct list_head		list;

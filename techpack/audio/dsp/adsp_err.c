@@ -7,6 +7,8 @@
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>
 #include <dsp/apr_audio-v2.h>
+#include "q6_init.h"
+#include "adsp_err.h"
 
 #ifdef AUDIO_FORCE_RESTART_ADSP_TEMP
 #include <soc/qcom/subsystem_restart.h>

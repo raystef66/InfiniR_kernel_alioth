@@ -20,6 +20,7 @@
 #include <linux/msm_audio_wmapro.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_wmapro_misc;
 static struct ws_mgr audio_wmapro_ws_mgr;

@@ -245,7 +245,6 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 	char __iomem *clk_muxsel = NULL;
 	int ret = 0;
 	int default_clk_id = priv->default_clk_id[clk_id];
-	u32 muxsel = 0;
 
 	clk_muxsel = bolero_clk_rsc_get_clk_muxsel(priv, clk_id);
 	if (!clk_muxsel) {
@@ -289,7 +288,7 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 			if (clk_id != VA_CORE_CLK) {
 				if (priv->dev_up_gfmux) {
 					iowrite32(0x1, clk_muxsel);
-					muxsel = ioread32(clk_muxsel);
+					ioread32(clk_muxsel);
 				}
 				bolero_clk_rsc_mux0_clk_request(priv,
 							default_clk_id,
@@ -320,7 +319,7 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 					 */
 					if (priv->dev_up_gfmux) {
 						iowrite32(0x0, clk_muxsel);
-						muxsel = ioread32(clk_muxsel);
+						ioread32(clk_muxsel);
 					}
 				}
 			}

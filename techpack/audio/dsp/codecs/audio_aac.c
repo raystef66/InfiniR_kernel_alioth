@@ -19,6 +19,7 @@
 #include <linux/msm_audio_aac.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 #define AUDIO_AAC_DUAL_MONO_INVALID -1
 #define PCM_BUFSZ_MIN_AAC	((8*1024) + sizeof(struct dec_meta_out))

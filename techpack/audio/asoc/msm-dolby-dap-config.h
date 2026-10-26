@@ -61,14 +61,21 @@ int dolby_dap_set_custom_stereo_onoff(int port_id, int copp_idx,
 				      bool is_custom_stereo_enabled);
 /* Dolby DOLBY end */
 #else
-int msm_dolby_dap_init(int port_id, int copp_idx, int channels,
+static inline int msm_dolby_dap_init(int port_id, int copp_idx, int channels,
 		       bool is_custom_stereo_on)
 {
 	return 0;
 }
-void msm_dolby_dap_deinit(int port_id) { }
-void msm_dolby_dap_add_controls(struct snd_soc_component *component) { }
-int dolby_dap_set_custom_stereo_onoff(int port_id, int copp_idx,
+
+static inline void msm_dolby_dap_deinit(int port_id)
+{
+}
+
+static inline void msm_dolby_dap_add_controls(struct snd_soc_component *component)
+{
+}
+
+static inline int dolby_dap_set_custom_stereo_onoff(int port_id, int copp_idx,
 				      bool is_custom_stereo_enabled)
 {
 	return 0;

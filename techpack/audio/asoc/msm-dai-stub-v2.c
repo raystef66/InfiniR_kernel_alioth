@@ -9,6 +9,7 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
+#include "platform_init.h"
 
 enum {
 	STUB_RX,

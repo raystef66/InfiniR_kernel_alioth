@@ -20,6 +20,7 @@
 #include <linux/compat.h>
 #include <soc/qcom/socinfo.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 #define AUDIO_AAC_DUAL_MONO_INVALID -1
 

@@ -5195,7 +5195,7 @@ static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
+static void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;

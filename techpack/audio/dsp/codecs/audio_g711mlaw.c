@@ -6,6 +6,7 @@
 #include <linux/msm_audio_g711_dec.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
+#include "audio_native.h"
 
 static struct miscdevice audio_g711mlaw_misc;
 static struct ws_mgr audio_g711_ws_mgr;
