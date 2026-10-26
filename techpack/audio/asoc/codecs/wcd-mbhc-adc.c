@@ -396,7 +396,9 @@ done:
 
 	pr_debug("%s: leave, plug type: %d\n", __func__,  plug_type);
 
-	return (plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP) ? true : false;
+	if (ret)
+		return ret;
+	return plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP;
 }
 
 static int wcd_mbhc_adc_get_spl_hs_thres(struct wcd_mbhc *mbhc)

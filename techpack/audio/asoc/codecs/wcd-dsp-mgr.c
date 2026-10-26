@@ -561,7 +561,7 @@ static int wdsp_register_cmpnt_ops(struct device *wdsp_dev,
 {
 	struct wdsp_mgr_priv *wdsp;
 	struct wdsp_cmpnt *cmpnt;
-	int i, ret;
+	int i, ret = 0;
 
 	if (!wdsp_dev || !cdev || !ops)
 		return -EINVAL;
@@ -591,7 +591,7 @@ static int wdsp_register_cmpnt_ops(struct device *wdsp_dev,
 	cmpnt->priv_data = priv_data;
 done:
 	WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->api_mutex);
-	return 0;
+	return ret;
 }
 
 static struct device *wdsp_get_dev_for_cmpnt(struct device *wdsp_dev,
