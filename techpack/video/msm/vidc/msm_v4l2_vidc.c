@@ -249,7 +249,7 @@ static const struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 	.vidioc_default = msm_v4l2_default,
 };
 
-static unsigned int msm_v4l2_poll(struct file *filp,
+static __poll_t msm_v4l2_poll(struct file *filp,
 			      struct poll_table_struct *pt)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(filp, NULL);
