@@ -1256,11 +1256,11 @@ static long compat_mtp_ioctl(struct file *fp, unsigned int code,
 		if (copy_from_user(&cevent, (void __user *)value,
 			sizeof(cevent))) {
 			ret = -EFAULT;
-			goto fail;
+		} else {
+			event.length = cevent.length;
+			event.data = compat_ptr(cevent.data);
+			ret = mtp_send_event(dev, &event);
 		}
-		event.length = cevent.length;
-		event.data = compat_ptr(cevent.data);
-		ret = mtp_send_event(dev, &event);
 		mtp_unlock(&dev->ioctl_excl);
 	}
 fail:
