@@ -1637,25 +1637,21 @@ static ssize_t debug_mtp_reset_stats(struct file *file, const char __user *buf,
 				 size_t count, loff_t *ppos)
 {
 	int clear_stats;
+	int ret;
 	unsigned long flags;
 	struct mtp_dev *dev = _mtp_dev;
 
-	if (buf == NULL) {
-		pr_err("[%s] EINVAL\n", __func__);
-		goto done;
-	}
-
-	if (kstrtoint(buf, 0, &clear_stats) || clear_stats != 0) {
-		pr_err("Wrong value. To clear stats, enter value as 0.\n");
-		goto done;
-	}
+	ret = kstrtoint_from_user(buf, count, 0, &clear_stats);
+	if (ret)
+		return ret;
+	if (clear_stats != 0)
+		return -EINVAL;
 
 	spin_lock_irqsave(&dev->lock, flags);
 	memset(&dev->perf[0], 0, MAX_ITERATION * sizeof(dev->perf[0]));
 	dev->dbg_read_index = 0;
 	dev->dbg_write_index = 0;
 	spin_unlock_irqrestore(&dev->lock, flags);
-done:
 	return count;
 }
 
