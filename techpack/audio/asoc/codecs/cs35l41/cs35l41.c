@@ -344,6 +344,7 @@ static int cs35l41_fast_switch_file_put(struct snd_kcontrol *kcontrol,
 		snd_soc_component_get_drvdata(component);
 	struct soc_enum *soc_enum;
 	unsigned int i = ucontrol->value.enumerated.item[0];
+	unsigned int old_idx = cs35l41->fast_switch_file_idx;
 	int ret = 0;
 
 	soc_enum = (struct soc_enum *)kcontrol->private_value;
@@ -355,6 +356,10 @@ static int cs35l41_fast_switch_file_put(struct snd_kcontrol *kcontrol,
 	if ((i != cs35l41->fast_switch_file_idx) && cs35l41->fast_switch_en) {
 		cs35l41->fast_switch_file_idx = i;
 		ret = cs35l41_do_fast_switch(cs35l41);
+		if (ret) {
+			cs35l41->fast_switch_file_idx = old_idx;
+			return ret;
+		}
 	} else {
 		dev_dbg(
 			cs35l41->dev,
