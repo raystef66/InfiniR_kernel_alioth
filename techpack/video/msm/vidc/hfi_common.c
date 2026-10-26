@@ -175,7 +175,7 @@ struct venus_hfi_vpu_ops iris2_ops = {
 	.boot_firmware = __boot_firmware_iris2,
 };
 
-/**
+/*
  * Utility function to enforce some of our assumptions.  Spam calls to this
  * in hotspots in code to double check some of the assumptions that we hold.
  */
@@ -872,7 +872,7 @@ static int __smem_alloc(struct venus_hfi_device *dev,
 	int rc = 0;
 
 	if (!dev || !mem || !size) {
-		d_vpr_e("%s: invalid params %pK %pK %pK\n",
+		d_vpr_e("%s: invalid params %pK %pK %u\n",
 			__func__, dev, mem, size);
 		return -EINVAL;
 	}
@@ -914,7 +914,7 @@ void __write_register(struct venus_hfi_device *device,
 		u32 reg, u32 value, u32 sid)
 {
 	u32 hwiosymaddr = reg;
-	u8 *base_addr;
+	u8 __iomem *base_addr;
 
 	if (!device) {
 		s_vpr_e(sid, "%s: invalid params\n", __func__);
@@ -944,7 +944,7 @@ void __write_register(struct venus_hfi_device *device,
 int __read_register(struct venus_hfi_device *device, u32 reg, u32 sid)
 {
 	int rc = 0;
-	u8 *base_addr;
+	u8 __iomem *base_addr;
 
 	if (!device) {
 		s_vpr_e(sid, "%s: invalid params\n", __func__);
@@ -1055,7 +1055,7 @@ static int __vote_buses(struct venus_hfi_device *device,
 				bus->range[0], bus->range[1]);
 
 			if (TRIVIAL_BW_CHANGE(ab_kbps, bw_prev) && bw_prev) {
-				s_vpr_l(sid, "Skip voting bus %s to %llu bps",
+				s_vpr_l(sid, "Skip voting bus %s to %lu bps",
 					bus->name, ab_kbps * 1000);
 				continue;
 			}
@@ -1278,7 +1278,7 @@ static int __set_clk_rate(struct venus_hfi_device *device,
 			return rc;
 		}
 		s_vpr_p(sid,
-			"cx_ipeak_update: up, clk freq = %lu rate = %lu threshold_freq = %lu\n",
+			"cx_ipeak_update: up, clk freq = %u rate = %llu threshold_freq = %llu\n",
 			device->clk_freq, rate, threshold_freq);
 	}
 
@@ -1299,7 +1299,7 @@ static int __set_clk_rate(struct venus_hfi_device *device,
 			return rc;
 		}
 		s_vpr_p(sid,
-			"cx_ipeak_update: up, clk freq = %lu rate = %lu threshold_freq = %lu\n",
+			"cx_ipeak_update: up, clk freq = %u rate = %llu threshold_freq = %llu\n",
 			device->clk_freq, rate, threshold_freq);
 	}
 
@@ -2853,7 +2853,7 @@ err_create_pkt:
 }
 
 static int __check_core_registered(struct hal_device_data core,
-		phys_addr_t fw_addr, u8 *reg_addr, u32 reg_size,
+		phys_addr_t fw_addr, u8 __iomem *reg_addr, u32 reg_size,
 		phys_addr_t irq)
 {
 	struct venus_hfi_device *device;
@@ -3455,7 +3455,7 @@ static int __init_regs_and_interrupts(struct venus_hfi_device *device,
 	int rc = 0;
 
 	rc = __check_core_registered(hal_ctxt, res->firmware_base,
-			(u8 *)(uintptr_t)res->register_base,
+			(u8 __iomem *)(uintptr_t)res->register_base,
 			res->register_size, res->irq);
 	if (!rc) {
 		d_vpr_e("Core present/Already added\n");
@@ -3678,7 +3678,7 @@ failed_to_reset:
 static inline int __prepare_enable_clks(struct venus_hfi_device *device,
 	u32 sid)
 {
-	struct clock_info *cl = NULL, *cl_fail = NULL;
+	struct clock_info *cl = NULL;
 	int rc = 0, c = 0;
 
 	if (!device) {
@@ -3714,7 +3714,6 @@ static inline int __prepare_enable_clks(struct venus_hfi_device *device,
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
 			s_vpr_e(sid, "Failed to enable clocks\n");
-			cl_fail = cl;
 			goto fail_clk_enable;
 		}
 
@@ -4766,7 +4765,7 @@ static int __initialize_packetization(struct venus_hfi_device *device)
 	return rc;
 }
 
-void __init_venus_ops(struct venus_hfi_device *device)
+static void __init_venus_ops(struct venus_hfi_device *device)
 {
 	if (device->res->vpu_ver == VPU_VERSION_AR50)
 		device->vpu_ops = &vpu4_ops;

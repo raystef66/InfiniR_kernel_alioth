@@ -202,7 +202,8 @@ struct vidc_iface_q_info {
 
 #define call_venus_op(d, op, ...)			\
 	(((d) && (d)->vpu_ops && (d)->vpu_ops->op) ? \
-	((d)->vpu_ops->op(__VA_ARGS__)):0)
+	((d)->vpu_ops->op(__VA_ARGS__)) : \
+	(typeof((d)->vpu_ops->op(__VA_ARGS__)))0)
 
 /* Internal data used in vidc_hal not exposed to msm_vidc*/
 struct hal_data {
