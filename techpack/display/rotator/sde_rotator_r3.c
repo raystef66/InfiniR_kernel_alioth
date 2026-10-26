@@ -1089,6 +1089,7 @@ static int sde_hw_rotator_reset(struct sde_hw_rotator *rot,
 
 /**
  * _sde_hw_rotator_dump_status - Dump hw rotator status on error
+ * @ubwcerr: Output UBWC error status
  * @rot: Pointer to hw rotator
  */
 static void _sde_hw_rotator_dump_status(struct sde_hw_rotator *rot,

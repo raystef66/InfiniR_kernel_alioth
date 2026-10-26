@@ -208,17 +208,17 @@ static void dp_usbpd_send_event(struct dp_usbpd_private *pd,
 	case DP_USBPD_EVT_DISCOVER:
 		usbpd_send_svdm(pd->pd, USB_C_DP_SID,
 			USBPD_SVDM_DISCOVER_MODES,
-			SVDM_CMD_TYPE_INITIATOR, 0x0, 0x0, 0x0);
+			SVDM_CMD_TYPE_INITIATOR, 0x0, NULL, 0x0);
 		break;
 	case DP_USBPD_EVT_ENTER:
 		usbpd_send_svdm(pd->pd, USB_C_DP_SID,
 			USBPD_SVDM_ENTER_MODE,
-			SVDM_CMD_TYPE_INITIATOR, 0x1, 0x0, 0x0);
+			SVDM_CMD_TYPE_INITIATOR, 0x1, NULL, 0x0);
 		break;
 	case DP_USBPD_EVT_EXIT:
 		usbpd_send_svdm(pd->pd, USB_C_DP_SID,
 			USBPD_SVDM_EXIT_MODE,
-			SVDM_CMD_TYPE_INITIATOR, 0x1, 0x0, 0x0);
+			SVDM_CMD_TYPE_INITIATOR, 0x1, NULL, 0x0);
 		break;
 	case DP_USBPD_EVT_STATUS:
 		config = 0x1; /* DFP_D connected */

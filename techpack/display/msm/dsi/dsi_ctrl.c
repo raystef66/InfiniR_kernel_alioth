@@ -3147,7 +3147,9 @@ error:
 
 /**
  * dsi_ctrl_update_host_config() - update dsi host configuration
- * @dsi_ctrl:          DSI controller handle.
+ * @ctrl: DSI controller hardware object
+ * @mode: Display mode configuration
+ * @clk_handle: Clock manager client handle
  * @config:            DSI host configuration.
  * @flags:             dsi_mode_flags modifying the behavior
  *
@@ -3210,7 +3212,7 @@ error:
 /**
  * dsi_ctrl_validate_timing() - validate a video timing configuration
  * @dsi_ctrl:       DSI controller handle.
- * @timing:         Pointer to timing data.
+ * @mode:         Pointer to timing data.
  *
  * Driver will validate if the timing configuration is supported on the
  * controller hardware.
@@ -3805,6 +3807,7 @@ error:
 
 /**
  * dsi_ctrl_set_clamp_state() - set clamp state for DSI phy
+ * @ulps_enabled: Whether the PHY is in ultra-low-power state
  * @dsi_ctrl:             DSI controller handle.
  * @enable:               enable/disable clamping.
  *
@@ -3994,7 +3997,7 @@ void dsi_ctrl_irq_update(struct dsi_ctrl *dsi_ctrl, bool enable)
 /**
  * dsi_ctrl_wait4dynamic_refresh_done() - Poll for dynamci refresh
  *				done interrupt.
- * @dsi_ctrl:              DSI controller handle.
+ * @ctrl:              DSI controller handle.
  */
 int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl)
 {

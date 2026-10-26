@@ -76,7 +76,8 @@ uint32_t sde_sync_get_name_prefix(void *fence)
 
 /**
  * struct sde_fence - release/retire fence structure
- * @fence: base fence structure
+ * @ctx: Fence timeline/context
+ * @base: base fence structure
  * @name: name of each fence- it is fence timeline + commit_count
  * @fence_list: list to associated this fence on timeline/context
  * @fd: fd attached to this fence - debugging purpose.
@@ -181,7 +182,7 @@ static struct dma_fence_ops sde_fence_ops = {
 /**
  * _sde_fence_create_fd - create fence object and return an fd for it
  * This function is NOT thread-safe.
- * @timeline: Timeline to associate with fence
+ * @fence_ctx: Timeline to associate with fence
  * @val: Timeline value at which to signal the fence
  * Return: File descriptor on success, or error code on error
  */

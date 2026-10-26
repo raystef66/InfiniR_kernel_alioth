@@ -206,10 +206,10 @@
  * @clr_off:	offset to CLEAR reg
  * @en_off:	offset to ENABLE reg
  * @status_off:	offset to STATUS reg
- * @sde_irq_idx;	global index in the 'sde_irq_map' table,
+ * @sde_irq_idx: global index in the 'sde_irq_map' table,
  *		to know which interrupt type, instance, mask, etc. to use
- * @map_idx_start   first offset in the sde_irq_map table
- * @map_idx_end    last offset in the sde_irq_map table
+ * @map_idx_start: first offset in the sde_irq_map table
+ * @map_idx_end: last offset in the sde_irq_map table
  */
 struct sde_intr_reg {
 	u32 clr_off;
@@ -236,7 +236,7 @@ struct sde_irq_type {
 };
 
 /**
- * IRQ mapping tables - use for lookup an irq_idx in this table that have
+ * DOC: sde_irq_intr_map - IRQ mapping tables - use for lookup an irq_idx in this table that have
  *                     a matching interface type and instance index.
  * Each of these tables are copied to a dynamically allocated
  * table, that will be used to service each of the irqs

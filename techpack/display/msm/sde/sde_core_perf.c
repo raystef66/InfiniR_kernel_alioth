@@ -36,6 +36,7 @@ static DEFINE_MUTEX(sde_core_perf_lock);
  * @SDE_PERF_MODE_NORMAL: performance controlled by user mode client
  * @SDE_PERF_MODE_MINIMUM: performance bounded by minimum setting
  * @SDE_PERF_MODE_FIXED: performance bounded by fixed setting
+ * @SDE_PERF_MODE_MAX: Number of supported performance modes
  */
 enum sde_perf_mode {
 	SDE_PERF_MODE_NORMAL,
@@ -356,10 +357,10 @@ static inline enum sde_crtc_client_type _get_sde_client_type(
 }
 
 /**
- * @_sde_core_perf_activate_llcc() - Activates/deactivates the system llcc
- * @kms - pointer to the kms
- * @uid - ID for which the llcc would be activated
- * @activate - boolean to indicate if activate/deactivate the LLCC
+ * _sde_core_perf_activate_llcc() - Activates/deactivates the system llcc
+ * @kms: pointer to the kms
+ * @uid: ID for which the llcc would be activated
+ * @activate: boolean to indicate if activate/deactivate the LLCC
  *
  * Function assumes that caller has already acquired the "sde_core_perf_lock",
  * which would protect from any race condition between CRTC's
@@ -727,8 +728,8 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 }
 
 /**
- * @sde_core_perf_crtc_release_bw() - request zero bandwidth
- * @crtc - pointer to a crtc
+ * sde_core_perf_crtc_release_bw() - request zero bandwidth
+ * @crtc: pointer to a crtc
  *
  * Function checks a state variable for the crtc, if all pending commit
  * requests are done, meaning no more bandwidth is needed, release

@@ -191,9 +191,13 @@ struct tu_algo_data {
 };
 
 /**
- * Mapper function which outputs colorimetry and dynamic range
- * to be used for a given colorspace value when the vsc sdp
- * packets are used to change the colorimetry.
+ * get_sdp_colorimetry_range - Map colorspace to SDP colorimetry and range
+ * @panel: DisplayPort panel state
+ * @colorspace: DRM colorspace requested for the stream
+ * @colorimetry: Output SDP colorimetry value
+ * @dynamic_range: Output SDP dynamic range value
+ *
+ * Select values for VSC SDP packets that change the stream colorimetry.
  */
 static void get_sdp_colorimetry_range(struct dp_panel_private *panel,
 	u32 colorspace, u32 *colorimetry, u32 *dynamic_range)
@@ -239,10 +243,12 @@ static void get_sdp_colorimetry_range(struct dp_panel_private *panel,
 }
 
 /**
- * Mapper function which outputs colorimetry to be used for a
- * given colorspace value when misc field of MSA is used to
- * change the colorimetry. Currently only RGB formats have been
- * added. This API will be extended to YUV once its supported on DP.
+ * get_misc_colorimetry_val - Map colorspace to the MSA colorimetry value
+ * @panel: DisplayPort panel state
+ * @colorspace: DRM colorspace requested for the stream
+ *
+ * Select the MSA misc field used to change colorimetry. Only RGB formats
+ * are currently supported; YUV mapping requires a later extension.
  */
 static u8 get_misc_colorimetry_val(struct dp_panel_private *panel,
 	u32 colorspace)
@@ -1124,7 +1130,7 @@ struct dp_dsc_dto_data {
 	u32 dto_denominator;
 };
 
-struct dp_dsc_dto_data dto_tbl[] = {
+static struct dp_dsc_dto_data dto_tbl[] = {
 	{MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1, 24, 1, 2},
 	{MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1, 30, 5, 8},
 	{MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1, 24, 1, 3},
@@ -1619,7 +1625,7 @@ struct dp_dsc_slice_caps_bit_map {
 	u32 bit_index;
 };
 
-const struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
+static const struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
 	{0,     340,    1   },
 	{340,   680,    2   },
 	{680,   1360,   4   },
@@ -1630,7 +1636,7 @@ const struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
 	{8000,  9600,   24  }
 };
 
-const struct dp_dsc_peak_throughput peak_throughput_mode_0_tbl[] = {
+static const struct dp_dsc_peak_throughput peak_throughput_mode_0_tbl[] = {
 	{0, 0},
 	{1, 340},
 	{2, 400},
@@ -1648,7 +1654,7 @@ const struct dp_dsc_peak_throughput peak_throughput_mode_0_tbl[] = {
 	{14, 1000},
 };
 
-const struct dp_dsc_slice_caps_bit_map slice_caps_bit_map_tbl[] = {
+static const struct dp_dsc_slice_caps_bit_map slice_caps_bit_map_tbl[] = {
 	{1, 0},
 	{2, 1},
 	{4, 3},

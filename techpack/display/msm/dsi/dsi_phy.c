@@ -851,7 +851,7 @@ error:
 
 /**
  * dsi_phy_enable() - enable DSI PHY hardware
- * @dsi_phy:            DSI PHY handle.
+ * @phy:            DSI PHY handle.
  * @config:             DSI host configuration.
  * @pll_source:         Source PLL for PHY clock.
  * @skip_validation:    Validation will not be performed on parameters.

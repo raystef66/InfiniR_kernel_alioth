@@ -828,7 +828,7 @@ static int dp_ctrl_host_init(struct dp_ctrl *dp_ctrl, bool flip, bool reset)
 
 /**
  * dp_ctrl_host_deinit() - Uninitialize DP controller
- * @ctrl: Display Port Driver data
+ * @dp_ctrl: Display Port Driver data
  *
  * Perform required steps to uninitialize DP controller
  * and its resources.

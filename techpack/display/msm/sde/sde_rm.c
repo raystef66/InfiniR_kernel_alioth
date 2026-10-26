@@ -37,7 +37,7 @@
 #define RM_NXT_CLEAR_POLL_TIMEOUT_US 16600
 
 /**
- * toplogy information to be used when ctl path version does not
+ * DOC: g_top_table - toplogy information to be used when ctl path version does not
  * support driving more than one interface per ctl_path
  */
 static const struct sde_rm_topology_def g_top_table[] = {
@@ -53,7 +53,7 @@ static const struct sde_rm_topology_def g_top_table[] = {
 };
 
 /**
- * topology information to be used when the ctl path version
+ * DOC: g_ctl_ver_1_top_table - topology information to be used when the ctl path version
  * is SDE_CTL_CFG_VERSION_1_0_0
  */
 static const struct sde_rm_topology_def g_ctl_ver_1_top_table[] = {
@@ -72,7 +72,7 @@ static const struct sde_rm_topology_def g_ctl_ver_1_top_table[] = {
 /**
  * struct sde_rm_requirements - Reservation requirements parameter bundle
  * @top_ctrl:  topology control preference from kernel client
- * @top:       selected topology for the display
+ * @topology:       selected topology for the display
  * @hw_res:	   Hardware resources required as reported by the encoders
  */
 struct sde_rm_requirements {
@@ -93,7 +93,7 @@ struct sde_rm_requirements {
  * @enc_id:	Reservations are tracked by Encoder DRM object ID.
  *		CRTCs may be connected to multiple Encoders.
  *		An encoder or connector id identifies the display path.
- * @topology	DRM<->HW topology use case
+ * @topology: DRM<->HW topology use case
  */
 struct sde_rm_rsvp {
 	struct list_head list;
@@ -123,7 +123,11 @@ struct sde_rm_hw_blk {
 };
 
 /**
- * sde_rm_dbg_rsvp_stage - enum of steps in making reservation for event logging
+ * enum sde_rm_dbg_rsvp_stage - steps in reservation event logging
+ * @SDE_RM_STAGE_BEGIN: Start of a reservation request
+ * @SDE_RM_STAGE_AFTER_CLEAR: Existing reservations have been cleared
+ * @SDE_RM_STAGE_AFTER_RSVPNEXT: Proposed reservations have been assigned
+ * @SDE_RM_STAGE_FINAL: Reservation request is complete
  */
 enum sde_rm_dbg_rsvp_stage {
 	SDE_RM_STAGE_BEGIN,
@@ -928,6 +932,7 @@ static bool _sde_rm_reserve_pp(
  * _sde_rm_check_lm_and_get_connected_blks - check if proposed layer mixer meets
  *	proposed use case requirements, incl. hardwired dependent blocks like
  *	pingpong, and dspp.
+ * @ds: Output destination scaler attached to the layer mixer
  * @rm: sde resource manager handle
  * @rsvp: reservation currently being created
  * @reqs: proposed use case requirements
@@ -939,7 +944,7 @@ static bool _sde_rm_reserve_pp(
  *      NULL if dspp was not available, or not matching requirements.
  * @primary_lm: if non-null, this function check if lm is compatible primary_lm
  *              as well as satisfying all other requirements
- * @Return: true if lm matches all requirements, false otherwise
+ * Return: true if lm matches all requirements, false otherwise
  */
 static bool _sde_rm_check_lm_and_get_connected_blks(
 		struct sde_rm *rm,

@@ -33,22 +33,22 @@
 #define CDM_MUX                            0x224
 
 /**
- * Horizontal coefficients for cosite chroma downscale
+ * DOC: cosite_h_coeff - Horizontal coefficients for cosite chroma downscale
  * s13 representation of coefficients
  */
 static u32 cosite_h_coeff[] = {0x00000016, 0x000001cc, 0x0100009e};
 
 /**
- * Horizontal coefficients for offsite chroma downscale
+ * DOC: offsite_h_coeff - Horizontal coefficients for offsite chroma downscale
  */
 static u32 offsite_h_coeff[] = {0x000b0005, 0x01db01eb, 0x00e40046};
 
 /**
- * Vertical coefficients for cosite chroma downscale
+ * DOC: cosite_v_coeff - Vertical coefficients for cosite chroma downscale
  */
 static u32 cosite_v_coeff[] = {0x00080004};
 /**
- * Vertical coefficients for offsite chroma downscale
+ * DOC: offsite_v_coeff - Vertical coefficients for offsite chroma downscale
  */
 static u32 offsite_v_coeff[] = {0x00060002};
 

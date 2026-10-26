@@ -166,8 +166,8 @@ struct dp_mst_encoder_info_cache {
 #define to_dp_mst_bridge_state(x) \
 		to_dp_mst_bridge_priv_state((x)->obj.state)
 
-struct dp_mst_private dp_mst;
-struct dp_mst_encoder_info_cache dp_mst_enc_cache;
+static struct dp_mst_private dp_mst;
+static struct dp_mst_encoder_info_cache dp_mst_enc_cache;
 
 static struct drm_private_state *dp_mst_duplicate_bridge_state(
 		struct drm_private_obj *obj)

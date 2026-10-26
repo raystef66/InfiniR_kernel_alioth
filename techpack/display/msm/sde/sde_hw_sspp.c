@@ -288,7 +288,12 @@ static void sde_hw_sspp_set_src_split_order(struct sde_hw_pipe *ctx,
 }
 
 /**
- * Setup source pixel format, flip,
+ * sde_hw_sspp_setup_format - Configure source pixel format and flip flags
+ * @ctx: Hardware context
+ * @fmt: Source pixel format
+ * @const_alpha_en: Whether constant alpha is enabled
+ * @flags: Source-format setup flags
+ * @rect_mode: Multirect operating mode
  */
 static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		const struct sde_format *fmt,
@@ -627,7 +632,10 @@ static u32 _sde_hw_sspp_get_scaler3_ver(struct sde_hw_pipe *ctx)
 }
 
 /**
- * sde_hw_sspp_setup_rects()
+ * sde_hw_sspp_setup_rects - Configure source and destination rectangles
+ * @ctx: Hardware context
+ * @cfg: Hardware configuration
+ * @rect_index: Multirect rectangle index
  */
 static void sde_hw_sspp_setup_rects(struct sde_hw_pipe *ctx,
 		struct sde_hw_pipe_cfg *cfg,
@@ -707,6 +715,7 @@ static void sde_hw_sspp_setup_rects(struct sde_hw_pipe *ctx,
 
 /**
  * _sde_hw_sspp_setup_excl_rect() - set exclusion rect configs
+ * @rect_index: Multirect rectangle index
  * @ctx: Pointer to pipe context
  * @excl_rect: Exclusion rect configs
  */

@@ -24,7 +24,22 @@
 #define SDE_MAX_IMG_HEIGHT		0x3FFF
 
 /**
- * SDE supported format packing, bpp, and other format
+ * INTERLEAVED_RGB_FMT - Describe an interleaved RGB pixel format
+ * @fmt: DRM pixel format suffix
+ * @a: Alpha component bit width
+ * @r: Red component bit width
+ * @g: Green component bit width
+ * @b: Blue component bit width
+ * @e0: First unpacked component
+ * @e1: Second unpacked component
+ * @e2: Third unpacked component
+ * @e3: Fourth unpacked component
+ * @uc: Unpack component count
+ * @alpha: Whether alpha is enabled
+ * @bp: Bytes per pixel
+ * @flg: Format capability flags
+ * @fm: Memory fetch mode
+ * @np: Number of planes
  * information.
  * SDE currently only supports interleaved RGB formats
  * UBWC support for a pixel format is indicated by the flag,

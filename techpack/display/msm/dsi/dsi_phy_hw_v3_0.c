@@ -318,7 +318,8 @@ void dsi_phy_hw_v3_0_enable(struct dsi_phy_hw *phy,
 }
 
 /**
- * disable() - Disable PHY hardware
+ * dsi_phy_hw_v3_0_disable() - Disable PHY hardware
+ * @cfg: PHY hardware configuration
  * @phy:      Pointer to DSI PHY hardware object.
  */
 void dsi_phy_hw_v3_0_disable(struct dsi_phy_hw *phy,

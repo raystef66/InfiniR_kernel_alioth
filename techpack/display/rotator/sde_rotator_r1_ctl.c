@@ -214,7 +214,7 @@ done:
 }
 
 /**
- * @sde_mdp_ctl_mixer_switch() - return ctl mixer of @return_type
+ * sde_mdp_ctl_mixer_switch() - return ctl mixer of @return_type
  * @ctl: Pointer to ctl structure to be switched.
  * @return_type: wb_type of the ctl to be switched to.
  *

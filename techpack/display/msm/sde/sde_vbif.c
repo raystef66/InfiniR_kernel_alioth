@@ -208,7 +208,7 @@ exit:
 
 /**
  * sde_vbif_set_ot_limit - set OT based on usecase & configuration parameters
- * @vbif:	Pointer to hardware vbif driver
+ * @sde_kms:	Pointer to hardware vbif driver
  * @params:	Pointer to usecase parameters
  *
  * Note this function would block waiting for bus halt.

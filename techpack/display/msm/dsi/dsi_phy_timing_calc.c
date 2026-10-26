@@ -22,6 +22,11 @@ static int dsi_phy_cmn_validate_and_set(struct timing_entry *t,
 
 /**
  * calc_clk_prepare - calculates prepare timing params for clk lane.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @actual_frac: Fractional component of actual clock prepare time
+ * @actual_intermediate: Fixed-point intermediate clock prepare time
  */
 static int calc_clk_prepare(struct dsi_phy_hw *phy,
 				struct phy_clk_params *clk_params,
@@ -74,6 +79,11 @@ error:
 
 /**
  * calc_clk_zero - calculates zero timing params for clk lane.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @actual_frac: Fractional component of actual clock prepare time
+ * @actual_intermediate: Fixed-point intermediate clock prepare time
  */
 static int calc_clk_zero(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -117,6 +127,10 @@ error:
 
 /**
  * calc_clk_trail - calculates prepare trail params for clk lane.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @teot_clk_lane: Clock-lane end-of-transmission time
  */
 static int calc_clk_trail(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -187,6 +201,10 @@ error:
 
 /**
  * calc_hs_prepare - calculates prepare timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @temp_mul: Output fixed-point HS prepare time
  */
 static int calc_hs_prepare(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -257,6 +275,10 @@ error:
 
 /**
  * calc_hs_zero - calculates zero timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @temp_multiple: Fixed-point HS prepare time
  */
 static int calc_hs_zero(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -305,6 +327,10 @@ error:
 
 /**
  * calc_hs_trail - calculates trail timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
+ * @teot_clk_lane: Clock-lane end-of-transmission time
  */
 static int calc_hs_trail(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -348,6 +374,9 @@ error:
 
 /**
  * calc_hs_rqst - calculates rqst timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_hs_rqst(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -375,6 +404,9 @@ error:
 
 /**
  * calc_hs_exit - calculates exit timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_hs_exit(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -406,6 +438,9 @@ error:
 
 /**
  * calc_hs_rqst_clk - calculates rqst timing params for clock lane..
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_hs_rqst_clk(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -433,6 +468,9 @@ error:
 
 /**
  * cal_clk_pulse_time - calculates clk pulse time in nsec
+ * @inp1: Number of bit-clock periods
+ * @inp2: Fixed nanosecond component of the pulse
+ * @bitclk_mbps: Bit clock rate in megabits per second
  */
 static s64 cal_clk_pulse_time(u32 inp1, u32 inp2, u32 bitclk_mbps)
 {
@@ -451,6 +489,9 @@ static s64 cal_clk_pulse_time(u32 inp1, u32 inp2, u32 bitclk_mbps)
 
 /**
  * calc_clk_post - calculates clk_post timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_clk_post(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -495,6 +536,9 @@ error:
 
 /**
  * calc_clk_pre - calculates clk_pre timing params for data lanes in HS.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_clk_pre(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -544,7 +588,10 @@ error:
 }
 
 /**
- * dsi_phy_calc_timing_params - calculates timing paramets for a given bit clock
+ * dsi_phy_cmn_calc_timing_params - calculates timing paramets for a given bit clock
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int dsi_phy_cmn_calc_timing_params(struct dsi_phy_hw *phy,
 	struct phy_clk_params *clk_params, struct phy_timing_desc *desc)
@@ -630,6 +677,9 @@ error:
 
 /**
  * calc_cphy_clk_prepare - calculates cphy_clk_prepare parameter for cphy.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_cphy_clk_prepare(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -662,6 +712,9 @@ static int calc_cphy_clk_prepare(struct dsi_phy_hw *phy,
 
 /**
  * calc_cphy_clk_pre - calculates cphy_clk_pre parameter for cphy.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_cphy_clk_pre(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -701,6 +754,9 @@ static int calc_cphy_clk_pre(struct dsi_phy_hw *phy,
 
 /**
  * calc_cphy_clk_post - calculates cphy_clk_post parameter for cphy.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_cphy_clk_post(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -738,6 +794,9 @@ static int calc_cphy_clk_post(struct dsi_phy_hw *phy,
 
 /**
  * calc_cphy_hs_rqst - calculates cphy_hs_rqst parameter for cphy.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_cphy_hs_rqst(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -769,6 +828,9 @@ static int calc_cphy_hs_rqst(struct dsi_phy_hw *phy,
 
 /**
  * calc_cphy_hs_exit - calculates cphy_hs_exit parameter for cphy.
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int calc_cphy_hs_exit(struct dsi_phy_hw *phy,
 			struct phy_clk_params *clk_params,
@@ -798,8 +860,11 @@ static int calc_cphy_hs_exit(struct dsi_phy_hw *phy,
 }
 
 /**
- * dsi_phy_calc_cphy_timing_params - calculates cphy timing parameters
+ * dsi_phy_cmn_calc_cphy_timing_params - calculates cphy timing parameters
  *					for a given bit clock
+ * @phy: DSI PHY hardware object
+ * @clk_params: Bit clock and timing calculation inputs
+ * @desc: Timing limits and calculated register values
  */
 static int dsi_phy_cmn_calc_cphy_timing_params(struct dsi_phy_hw *phy,
 	struct phy_clk_params *clk_params, struct phy_timing_desc *desc)
@@ -841,10 +906,10 @@ error:
 }
 
 /**
- * calculate_timing_params() - calculates timing parameters.
+ * dsi_phy_hw_calculate_timing_params() - calculates timing parameters.
  * @phy:      Pointer to DSI PHY hardware object.
  * @mode:     Mode information for which timing has to be calculated.
- * @config:   DSI host configuration for this mode.
+ * @host:   DSI host configuration for this mode.
  * @timing:   Timing parameters for each lane which will be returned.
  * @use_mode_bit_clk: Boolean to indicate whether reacalculate dsi
  *		bit clk or use the existing bit clk(for dynamic clk case).

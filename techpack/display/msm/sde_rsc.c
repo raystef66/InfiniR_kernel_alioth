@@ -69,14 +69,12 @@ static struct device *rpmh_dev[MAX_RSC_COUNT];
  * Different displays like DSI, HDMI, DP, WB, etc should call this
  * api to register their vote for rpmh. They still need to vote for
  * power handle to get the clocks.
-
+ *
  * @rsc_index:   A client will be created on this RSC. As of now only
  *               SDE_RSC_INDEX is valid rsc index.
- * @name:	 Caller needs to provide some valid string to identify
+ * @client_name:	 Caller needs to provide some valid string to identify
  *               the client. "primary", "dp", "hdmi" are suggested name.
- * @is_primary:	 Caller needs to provide information if client is primary
- *               or not. Primary client votes will be redirected to
- *               display rsc.
+ * @client_type: Client role used to select display RSC voting behavior.
  * @vsync_source: This parameter is only valid for primary display. It provides
  *               vsync source information
  *
@@ -752,7 +750,7 @@ static int sde_rsc_switch_to_idle(struct sde_rsc_priv *rsc,
 /**
  * sde_rsc_client_get_vsync_refcount() - returns the status of the vsync
  * refcount, to signal if the client needs to reset the refcounting logic
- * @client:	 Client pointer provided by sde_rsc_client_create().
+ * @caller_client:	 Client pointer provided by sde_rsc_client_create().
  *
  * Return: value of the vsync refcount.
  */
@@ -779,7 +777,7 @@ int sde_rsc_client_get_vsync_refcount(
 /**
  * sde_rsc_client_reset_vsync_refcount() - reduces the refcounting
  * logic that waits for the vsync.
- * @client:	 Client pointer provided by sde_rsc_client_create().
+ * @caller_client:	 Client pointer provided by sde_rsc_client_create().
  *
  * Return: zero if refcount was already zero.
  */
@@ -812,7 +810,7 @@ int sde_rsc_client_reset_vsync_refcount(
  * sde_rsc_client_is_state_update_complete() - check if state update is complete
  * RSC state transition is not complete until HW receives VBLANK signal. This
  * function checks RSC HW to determine whether that signal has been received.
- * @client:	 Client pointer provided by sde_rsc_client_create().
+ * @caller_client:	 Client pointer provided by sde_rsc_client_create().
  *
  * Return: true if the state update has completed.
  */
@@ -851,7 +849,7 @@ bool sde_rsc_client_is_state_update_complete(
  * set this property during panel config time. A switching client can set the
  * property to change the state
  *
- * @client:	 Client pointer provided by sde_rsc_client_create().
+ * @caller_client:	 Client pointer provided by sde_rsc_client_create().
  * @state:	 Client state - video/cmd
  * @config:	 fps, vtotal, porches, etc configuration for command mode
  *               panel
@@ -975,10 +973,10 @@ EXPORT_SYMBOL(sde_rsc_client_state_update);
 /**
  * sde_rsc_client_vote() - ab/ib vote from rsc client
  *
- * @client:	 Client pointer provided by sde_rsc_client_create().
+ * @caller_client:	 Client pointer provided by sde_rsc_client_create().
  * @bus_id: data bus for which to be voted
- * @ab:		 aggregated bandwidth vote from client.
- * @ib:		 instant bandwidth vote from client.
+ * @ab_vote:		 aggregated bandwidth vote from client.
+ * @ib_vote:		 instant bandwidth vote from client.
  *
  * Return: error code.
  */

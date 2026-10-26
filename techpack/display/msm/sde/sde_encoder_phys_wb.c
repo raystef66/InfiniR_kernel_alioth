@@ -29,7 +29,8 @@ static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
 	INTR_IDX_PP5_OVFL, SDE_NONE, SDE_NONE};
 
 /**
- * sde_rgb2yuv_601l - rgb to yuv color space conversion matrix
+ * DOC: sde_encoder_phys_wb_rgb2yuv_601l
+ * RGB to YUV color-space conversion matrix
  *
  */
 static struct sde_csc_cfg sde_encoder_phys_wb_rgb2yuv_601l = {
@@ -46,6 +47,7 @@ static struct sde_csc_cfg sde_encoder_phys_wb_rgb2yuv_601l = {
 
 /**
  * sde_encoder_phys_wb_is_master - report wb always as master encoder
+ * @phys_enc: Physical writeback encoder
  */
 static bool sde_encoder_phys_wb_is_master(struct sde_encoder_phys *phys_enc)
 {
@@ -193,6 +195,7 @@ static void sde_encoder_phys_wb_set_qos(struct sde_encoder_phys *phys_enc)
 
 /**
  * sde_encoder_phys_setup_cdm - setup chroma down block
+ * @wb_roi: Writeback region of interest
  * @phys_enc:	Pointer to physical encoder
  * @fb:		Pointer to output framebuffer
  * @format:	Output format
@@ -506,6 +509,7 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 /**
  * sde_encoder_phys_wb_setup_cdp - setup chroma down prefetch block
+ * @format: Output pixel format
  * @phys_enc:	Pointer to physical encoder
  */
 static void sde_encoder_phys_wb_setup_cdp(struct sde_encoder_phys *phys_enc,
@@ -1673,6 +1677,7 @@ exit:
 
 /**
  * sde_encoder_phys_wb_get_hw_resources - get hardware resources
+ * @conn_state: Connector atomic state
  * @phys_enc:	Pointer to physical encoder
  * @hw_res:	Pointer to encoder resources
  */
@@ -1790,7 +1795,7 @@ static void sde_encoder_phys_wb_init_ops(struct sde_encoder_phys_ops *ops)
 
 /**
  * sde_encoder_phys_wb_init - initialize writeback encoder
- * @init:	Pointer to init info structure with initialization params
+ * @p:	Pointer to init info structure with initialization params
  */
 struct sde_encoder_phys *sde_encoder_phys_wb_init(
 		struct sde_enc_phys_init_params *p)

@@ -91,7 +91,7 @@ static const char * const iommu_ports[] = {
 #define SDE_KMS_PM_QOS_CPU_DMA_LATENCY 300
 
 /**
- * sdecustom - enable certain driver customizations for sde clients
+ * DOC: sdecustom - sdecustom - enable certain driver customizations for sde clients
  *	Enabling this modifies the standard DRM behavior slightly and assumes
  *	that the clients have specific knowledge about the modifications that
  *	are involved, so don't enable this unless you know what you're doing.
@@ -274,7 +274,7 @@ static int _sde_kms_secure_ctrl_xin_clients(struct sde_kms *sde_kms,
 /**
  * _sde_kms_scm_call - makes secure channel call to switch the VMIDs
  * @sde_kms: Pointer to sde_kms struct
- * @vimd: switch the stage 2 translation to this VMID
+ * @vmid: switch the stage 2 translation to this VMID
  */
 static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 {
@@ -718,7 +718,7 @@ no_ops:
 	return 0;
 }
 
-static void _sde_clear_boot_config(struct sde_boot_config *boot_cfg)
+static void _sde_clear_boot_config(struct sde_boot_config __iomem *boot_cfg)
 {
 	if (!boot_cfg)
 		return;
@@ -736,7 +736,7 @@ static int _sde_kms_release_splash_buffer(struct sde_kms *sde_kms,
 {
 	unsigned long pfn_start, pfn_end, pfn_idx;
 	int ret = 0;
-	struct sde_boot_config *boot_cfg = sde_kms->imem;
+	struct sde_boot_config __iomem *boot_cfg = sde_kms->imem;
 
 	if (!mem_addr || !splash_buffer_size) {
 		SDE_ERROR("invalid params\n");
@@ -1576,7 +1576,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 
 		connector = sde_connector_init(dev,
 				encoder,
-				0,
+				NULL,
 				display,
 				&wb_ops,
 				DRM_CONNECTOR_POLL_HPD,

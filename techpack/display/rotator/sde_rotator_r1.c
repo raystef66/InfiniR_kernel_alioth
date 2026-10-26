@@ -602,7 +602,7 @@ struct intr_callback {
 	void *arg;
 };
 
-struct intr_callback sde_intr_cb[SDE_ROTATOR_INTR_MAX];
+static struct intr_callback sde_intr_cb[SDE_ROTATOR_INTR_MAX];
 
 int sde_mdp_set_intr_callback(u32 intr_type, u32 intf_num,
 			       void (*fnc_ptr)(void *), void *arg)

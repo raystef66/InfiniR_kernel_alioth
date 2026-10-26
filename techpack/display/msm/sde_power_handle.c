@@ -947,7 +947,7 @@ struct clk *sde_power_clk_get_clk(struct sde_power_handle *phandle,
 
 	if (!phandle) {
 		pr_err("invalid input power handle\n");
-		return 0;
+		return NULL;
 	}
 	mp = &phandle->mp;
 

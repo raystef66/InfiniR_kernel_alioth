@@ -100,7 +100,7 @@ static int sde_mdp_wait_for_xin_halt(u32 xin_id)
 /**
  * force_on_xin_clk() - enable/disable the force-on for the pipe clock
  * @bit_off: offset of the bit to enable/disable the force-on.
- * @reg_off: register offset for the clock control.
+ * @clk_ctl_reg_off: register offset for the clock control.
  * @enable: boolean to indicate if the force-on of the clock needs to be
  * enabled or disabled.
  *

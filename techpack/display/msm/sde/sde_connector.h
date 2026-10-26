@@ -616,7 +616,7 @@ struct sde_connector_state {
  * Returns: Output fb associated with specified connector state
  */
 #define sde_connector_get_out_fb(S) \
-	((S) ? to_sde_connector_state((S))->out_fb : 0)
+	((S) ? to_sde_connector_state((S))->out_fb : NULL)
 
 /**
  * sde_connector_get_topology_name - helper accessor to retrieve topology_name

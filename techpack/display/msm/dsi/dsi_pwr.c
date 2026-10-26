@@ -120,6 +120,8 @@ error:
 
 /**
  * dsi_pwr_enable_vregs() - enable/disable regulators
+ * @regs: Regulator configuration
+ * @enable: Whether to enable the regulators
  */
 static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 {
@@ -233,7 +235,7 @@ error:
 
 /**
  * dsi_pwr_of_get_vreg_data - Parse regulator supply information
- * @of_node:        Device of node to parse for supply information.
+ * @utils:        Device of node to parse for supply information.
  * @regs:           Pointer where regulator information will be copied to.
  * @supply_name:    Name of the supply node.
  *

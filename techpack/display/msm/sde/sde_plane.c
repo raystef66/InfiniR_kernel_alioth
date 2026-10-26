@@ -238,6 +238,7 @@ void sde_plane_setup_src_split_order(struct drm_plane *plane,
 
 /**
  * _sde_plane_set_qos_lut - set danger, safe and creq LUT of the given plane
+ * @plane: DRM plane to configure or validate
  * @crtc:		Pointer to drm crtc to find refresh rate on mode
  * @fb:			Pointer to framebuffer associated with the given plane
  */
@@ -663,6 +664,9 @@ int sde_plane_wait_input_fence(struct drm_plane *plane, uint32_t wait_ms)
 
 /**
  * _sde_plane_get_aspace: gets the address space based on the
+ * @psde: SDE plane state
+ * @pstate: Atomic state of the plane
+ * @aspace: Output address space selected for the plane
  *            fb_translation mode property
  */
 static int _sde_plane_get_aspace(
@@ -1665,7 +1669,8 @@ void sde_plane_clear_multirect(const struct drm_plane_state *drm_state)
 }
 
 /**
- * multi_rect validate API allows to validate only R0 and R1 RECT
+ * sde_plane_validate_multirect_v2 - Validate a pair of multirect planes
+ * @plane: DRM plane to configure or validate
  * passing for each plane. Client of this API must not pass multiple
  * plane which are not sharing same XIN client. Such calls will fail
  * even though kernel client is passing valid multirect configuration.
@@ -2639,7 +2644,7 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 			plane->base.id,
 			pstate->rotation,
 			width, height,
-			fb ? (char *) &state->fb->format->format : 0x0,
+			fb ? (char *) &state->fb->format->format : NULL,
 			fb ? state->fb->modifier : 0x0);
 	SDE_DEBUG("src:%dx%d %d,%d crtc:%dx%d+%d+%d\n",
 			state->src_w >> 16, state->src_h >> 16,
@@ -2786,6 +2791,7 @@ void sde_plane_flush(struct drm_plane *plane)
 
 /**
  * sde_plane_set_error: enable/disable error condition
+ * @error: Whether the plane is in an error condition
  * @plane: pointer to drm_plane structure
  */
 void sde_plane_set_error(struct drm_plane *plane, bool error)
@@ -3105,7 +3111,7 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	if (SDE_FORMAT_IS_YUV(fmt))
 		_sde_plane_setup_csc(psde);
 	else
-		psde->csc_ptr = 0;
+		psde->csc_ptr = NULL;
 
 	if (psde->pipe_hw->ops.setup_inverse_pma) {
 		uint32_t pma_mode = 0;
@@ -4044,15 +4050,15 @@ static int sde_plane_atomic_set_property(struct drm_plane *plane,
 				break;
 			case PLANE_PROP_SCALER_V1:
 				_sde_plane_set_scaler_v1(psde, pstate,
-						(void *)(uintptr_t)val);
+						(void __user *)(uintptr_t)val);
 				break;
 			case PLANE_PROP_SCALER_V2:
 				_sde_plane_set_scaler_v2(psde, pstate,
-						(void *)(uintptr_t)val);
+						(void __user *)(uintptr_t)val);
 				break;
 			case PLANE_PROP_EXCL_RECT_V1:
 				_sde_plane_set_excl_rect_v1(psde, pstate,
-						(void *)(uintptr_t)val);
+						(void __user *)(uintptr_t)val);
 				break;
 			default:
 				/* nothing to do */
@@ -4211,7 +4217,7 @@ static void sde_plane_destroy_state(struct drm_plane *plane,
 	/* remove ref count for fence */
 	if (pstate->input_fence)
 		sde_sync_put(pstate->input_fence);
-	pstate->input_fence = 0;
+	pstate->input_fence = NULL;
 
 	/* destroy value helper */
 	msm_property_destroy_state(&psde->property_info, pstate,
@@ -4250,7 +4256,7 @@ sde_plane_duplicate_state(struct drm_plane *plane)
 			&pstate->property_state, pstate->property_values);
 
 	/* clear out any input fence */
-	pstate->input_fence = 0;
+	pstate->input_fence = NULL;
 	input_fence_default = msm_property_get_default(
 			&psde->property_info, PLANE_PROP_INPUT_FENCE);
 	drm_prop = msm_property_index_to_drm_property(
@@ -4290,7 +4296,7 @@ static void sde_plane_reset(struct drm_plane *plane)
 	/* remove previous state, if present */
 	if (plane->state) {
 		sde_plane_destroy_state(plane, plane->state);
-		plane->state = 0;
+		plane->state = NULL;
 	}
 
 	pstate = msm_property_alloc_state(&psde->property_info);
@@ -4667,7 +4673,7 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 
 	psde->nformats = sde_populate_formats(format_list,
 				psde->formats,
-				0,
+				NULL,
 				ARRAY_SIZE(psde->formats));
 
 	if (!psde->nformats) {

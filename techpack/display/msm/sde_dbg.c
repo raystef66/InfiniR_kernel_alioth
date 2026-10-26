@@ -80,7 +80,7 @@
 /**
  * struct sde_dbg_reg_offset - tracking for start and end of region
  * @start: start offset
- * @start: end offset
+ * @end: end offset
  */
 struct sde_dbg_reg_offset {
 	u32 start;
@@ -197,6 +197,10 @@ struct sde_dbg_regbuf {
 
 /**
  * struct sde_dbg_base - global sde debug base structure
+ * @reg_dump_addr: Current write position in the register dump buffer
+ * @dbgbus_dsi: DSI debug bus configuration
+ * @debugfs_ctrl: Debugfs controls for register dumping
+ * @dump_mode: Power context used while dumping registers
  * @evtlog: event log instance
  * @reglog: reg log instance
  * @reg_dump_base: base address of register dump region
@@ -2872,7 +2876,7 @@ static struct vbif_debug_bus_entry vbif_dbg_bus_msm8998[] = {
 	{0x21c, 0x214, 0, 14, 0, 0xc}, /* xin blocks - clock side */
 };
 
-u32 dsi_dbg_bus_kona[] = {
+static u32 dsi_dbg_bus_kona[] = {
 	0x0001, 0x1001, 0x0001, 0x0011,
 	0x1021, 0x0021, 0x0031, 0x0041,
 	0x0051, 0x0061, 0x3061, 0x0061,
@@ -2927,15 +2931,15 @@ static inline bool _sde_power_check(enum sde_dbg_dump_context dump_mode)
  * @addr: starting address offset for dumping
  * @len_bytes: range of the register set
  * @dump_mem: output buffer for memory dump location option
- * @from_isr: whether being called from isr context
  */
 static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
-		char *base_addr, char *addr, size_t len_bytes, u32 **dump_mem)
+		char __iomem *base_addr, char __iomem *addr,
+		size_t len_bytes, u32 **dump_mem)
 {
 	u32 in_log, in_mem, len_align, len_padded;
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	u32 *dump_addr = NULL;
-	char *end_addr;
+	char __iomem *end_addr;
 	int i;
 	int rc;
 
@@ -3018,7 +3022,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
  * _sde_dbg_get_dump_range - helper to retrieve dump length for a range node
  * @range_node: range node to dump
  * @max_offset: max offset of the register base
- * @Return: length
+ * Return: length
  */
 static u32 _sde_dbg_get_dump_range(struct sde_dbg_reg_offset *range_node,
 		size_t max_offset)
@@ -3122,7 +3126,7 @@ static bool is_block_exclude(char **modules, char *name)
 static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
 	u32 reg_dump_flag, bool dump_secure)
 {
-	char *addr;
+	char __iomem *addr;
 	size_t len;
 	struct sde_dbg_reg_range *range_node;
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
@@ -3207,6 +3211,7 @@ static void _sde_dump_reg_by_blk(const char *blk_name, bool dump_secure)
 
 /**
  * _sde_dump_reg_all - dump all register regions
+ * @dump_secure: Whether secure-session exclusions apply
  */
 static void _sde_dump_reg_all(bool dump_secure)
 {
@@ -3233,7 +3238,7 @@ static void _sde_dump_reg_all(bool dump_secure)
 /**
  * _sde_dump_get_blk_addr - retrieve register block address by name
  * @blk_name: register blk name
- * @Return: register blk base, or NULL
+ * Return: register blk base, or NULL
  */
 static struct sde_dbg_reg_base *_sde_dump_get_blk_addr(const char *blk_name)
 {
@@ -3526,6 +3531,7 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 
 /**
  * _sde_dump_array - dump array of register bases
+ * @dump_all: Whether to dump all registered blocks
  * @blk_arr: array of register base pointers
  * @len: length of blk_arr
  * @do_panic: whether to trigger a panic after dumping
@@ -4247,7 +4253,7 @@ static const struct file_operations sde_recovery_vbif_dbgbus_fops = {
  * sde_dbg_reg_base_release - release allocated reg dump file private data
  * @inode: debugfs inode
  * @file: file handle
- * @Return: 0 on success
+ * Return: 0 on success
  */
 static int sde_dbg_reg_base_release(struct inode *inode, struct file *file)
 {
@@ -4273,6 +4279,7 @@ static int sde_dbg_reg_base_release(struct inode *inode, struct file *file)
 
 /**
  * sde_dbg_reg_base_is_valid_range - verify if requested memory range is valid
+ * @base: Register base whose range is being validated
  * @off: address offset in bytes
  * @cnt: memory size in bytes
  * Return: true if valid; false otherwise
@@ -4366,7 +4373,7 @@ static ssize_t sde_dbg_reg_base_offset_write(struct file *file,
 /**
  * sde_dbg_reg_base_offset_read - read current offset and len of register base
  * @file: file handler
- * @user_buf: user buffer content from debugfs
+ * @buff: user buffer content from debugfs
  * @count: size of user buffer
  * @ppos: position offset of user buffer
  */

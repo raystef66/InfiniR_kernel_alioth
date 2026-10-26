@@ -20,6 +20,7 @@ static LIST_HEAD(sde_hw_blk_list);
 
 /**
  * sde_hw_blk_init - initialize hw block object
+ * @hw_blk: Hardware block object to initialize
  * @type: hw block type - enum sde_hw_blk_type
  * @id: instance id of the hw block
  * @ops: Pointer to block operations
@@ -123,7 +124,6 @@ error_start:
 /**
  * sde_hw_blk_put - put hw_blk to free pool if decremented refcount is zero
  * @hw_blk: hw block to be freed
- * @free_blk: function to be called when reference count goes to zero
  */
 void sde_hw_blk_put(struct sde_hw_blk *hw_blk)
 {

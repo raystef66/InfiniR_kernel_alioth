@@ -60,7 +60,7 @@ static int sde_mdp_pipe_qos_lut(struct sde_mdp_pipe *pipe)
 }
 
 /**
- * @sde_mdp_pipe_nrt_vbif_setup -
+ * sde_mdp_pipe_nrt_vbif_setup -
  * @mdata: pointer to global driver data.
  * @pipe: pointer to a pipe
  *

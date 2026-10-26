@@ -72,10 +72,9 @@ static int _get_clk_mngr_index(struct dsi_clk_mngr *mngr,
 
 /**
  * dsi_clk_set_link_frequencies() - set frequencies for link clks
- * @clks:         Link clock information
- * @pixel_clk:    pixel clock frequency in KHz.
- * @byte_clk:     Byte clock frequency in KHz.
- * @esc_clk:      Escape clock frequency in KHz.
+ * @freq: Link clock frequency settings
+ * @index: DSI controller index
+ * @client:         Link clock information
  *
  * return: error code in case of failure or 0 for success.
  */
@@ -106,7 +105,7 @@ int dsi_clk_set_link_frequencies(void *client, struct link_clk_freq freq,
 
 /**
  * dsi_clk_set_pixel_clk_rate() - set frequency for pixel clock
- * @clks:	DSI link clock information.
+ * @client:	DSI link clock information.
  * @pixel_clk:	Pixel clock rate in KHz.
  * @index:	Index of the DSI controller.
  *
@@ -468,7 +467,10 @@ static void dsi_link_hs_clk_disable(struct dsi_link_hs_clk_info *link_hs_clks)
 }
 
 /**
- * dsi_link_clk_start() - enable dsi link clocks
+ * dsi_link_hs_clk_start() - enable dsi link clocks
+ * @link_hs_clks: High-speed link clock handles
+ * @op_type: Clock operation to perform
+ * @index: DSI controller index
  */
 static int dsi_link_hs_clk_start(struct dsi_link_hs_clk_info *link_hs_clks,
 	enum dsi_link_clk_op_type op_type, int index)
@@ -514,7 +516,8 @@ error:
 }
 
 /**
- * dsi_link_clk_stop() - Stop DSI link clocks.
+ * dsi_link_hs_clk_stop() - Stop DSI link clocks.
+ * @link_hs_clks: High-speed link clock handles
  */
 static int dsi_link_hs_clk_stop(struct dsi_link_hs_clk_info *link_hs_clks)
 {
@@ -1229,7 +1232,7 @@ static int dsi_clk_req_state(void *client, enum dsi_clk_type clk,
 	return rc;
 }
 
-DEFINE_MUTEX(dsi_mngr_clk_mutex);
+static DEFINE_MUTEX(dsi_mngr_clk_mutex);
 
 static int dsi_display_link_clk_force_update(void *client)
 {

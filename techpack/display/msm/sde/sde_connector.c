@@ -267,7 +267,7 @@ int sde_connector_register_event(struct drm_connector *connector,
 void sde_connector_unregister_event(struct drm_connector *connector,
 		uint32_t event_idx)
 {
-	(void)sde_connector_register_event(connector, event_idx, 0, 0);
+	(void)sde_connector_register_event(connector, event_idx, NULL, NULL);
 }
 
 static int _sde_connector_get_default_dither_cfg_v1(
@@ -1486,7 +1486,7 @@ static void sde_connector_atomic_reset(struct drm_connector *connector)
 
 	if (connector->state) {
 		sde_connector_atomic_destroy_state(connector, connector->state);
-		connector->state = 0;
+		connector->state = NULL;
 	}
 
 	c_state = msm_property_alloc_state(&c_conn->property_info);
@@ -1790,7 +1790,7 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	struct sde_connector_state *c_state;
 	int idx, rc;
 	uint64_t fence_user_fd;
-	uint64_t __user prev_user_fd;
+	uint64_t prev_user_fd;
 
 	if (!connector || !state || !property) {
 		SDE_ERROR("invalid argument(s), conn %pK, state %pK, prp %pK\n",
@@ -1873,7 +1873,7 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		break;
 	case CONNECTOR_PROP_ROI_V1:
 		rc = _sde_connector_set_roi_v1(c_conn, c_state,
-				(void *)(uintptr_t)val);
+				(void __user *)(uintptr_t)val);
 		if (rc)
 			SDE_ERROR_CONN(c_conn, "invalid roi_v1, rc: %d\n", rc);
 		break;
@@ -1894,7 +1894,7 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		break;
 	case CONNECTOR_PROP_HDR_METADATA:
 		rc = _sde_connector_set_ext_hdr_info(c_conn,
-			c_state, (void *)(uintptr_t)val);
+			c_state, (void __user *)(uintptr_t)val);
 		if (rc)
 			SDE_ERROR_CONN(c_conn, "cannot set hdr info %d\n", rc);
 		break;

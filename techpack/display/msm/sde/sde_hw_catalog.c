@@ -643,7 +643,7 @@ static struct sde_prop_type ctl_prop[] = {
 	{HW_DISP, "qcom,sde-ctl-display-pref", false, PROP_TYPE_STRING_ARRAY},
 };
 
-struct sde_prop_type mixer_blend_prop[] = {
+static struct sde_prop_type mixer_blend_prop[] = {
 	{MIXER_BLEND_OP_OFF, "qcom,sde-mixer-blend-op-off", true,
 		PROP_TYPE_U32_ARRAY},
 };
@@ -858,7 +858,7 @@ static int _parse_dt_bit_offset(struct device_node *np,
 	u32 count, bool mandatory)
 {
 	int rc = 0, len, i, j;
-	const u32 *arr;
+	const __be32 *arr;
 
 	arr = of_get_property(np, prop_name, &len);
 	if (arr) {

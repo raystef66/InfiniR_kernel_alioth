@@ -56,7 +56,7 @@ static struct sde_lm_cfg *_lm_offset(enum sde_lm mixer,
 /**
  * _stage_offset(): returns the relative offset of the blend registers
  * for the stage to be setup
- * @c:     mixer ctx contains the mixer to be programmed
+ * @ctx:     mixer ctx contains the mixer to be programmed
  * @stage: stage index to setup
  */
 static inline int _stage_offset(struct sde_hw_mixer *ctx, enum sde_stage stage)

@@ -1,6 +1,6 @@
 #include "mi_disp_lhbm.h"
 
-struct disp_lhbm *g_disp_lhbm = NULL;
+static struct disp_lhbm *g_disp_lhbm;
 static atomic_t fod_work_status = ATOMIC_INIT(FOD_WORK_INIT);
 static atomic_t touch_current_status = ATOMIC_INIT(-1);
 static atomic_t touch_last_status = ATOMIC_INIT(-1);

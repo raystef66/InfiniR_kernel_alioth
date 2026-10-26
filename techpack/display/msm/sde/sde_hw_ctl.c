@@ -62,80 +62,82 @@
 	((m) = (en) ? ((m) | BIT((idx))) : ((m) & ~BIT((idx))))
 
 /**
- * List of SSPP bits in CTL_FLUSH
+ * DOC: sspp_tbl - List of SSPP bits in CTL_FLUSH
  */
 static const u32 sspp_tbl[SSPP_MAX] = { SDE_NONE, 0, 1, 2, 18, 3, 4, 5,
 	19, 11, 12, 24, 25, SDE_NONE, SDE_NONE};
 
 /**
- * List of layer mixer bits in CTL_FLUSH
+ * DOC: mixer_tbl - List of layer mixer bits in CTL_FLUSH
  */
 static const u32 mixer_tbl[LM_MAX] = {SDE_NONE, 6, 7, 8, 9, 10, 20,
 	SDE_NONE};
 
 /**
- * List of DSPP bits in CTL_FLUSH
+ * DOC: dspp_tbl - List of DSPP bits in CTL_FLUSH
  */
 static const u32 dspp_tbl[DSPP_MAX] = {SDE_NONE, 13, 14, 15, 21};
 
 /**
- * List of DSPP PA LUT bits in CTL_FLUSH
+ * DOC: dspp_pav_tbl - List of DSPP PA LUT bits in CTL_FLUSH
  */
 static const u32 dspp_pav_tbl[DSPP_MAX] = {SDE_NONE, 3, 4, 5, 19};
 
 /**
- * List of CDM LUT bits in CTL_FLUSH
+ * DOC: cdm_tbl - List of CDM LUT bits in CTL_FLUSH
  */
 static const u32 cdm_tbl[CDM_MAX] = {SDE_NONE, 26};
 
 /**
- * List of WB bits in CTL_FLUSH
+ * DOC: wb_tbl - List of WB bits in CTL_FLUSH
  */
 static const u32 wb_tbl[WB_MAX] = {SDE_NONE, SDE_NONE, SDE_NONE, 16};
 
 /**
- * List of ROT bits in CTL_FLUSH
+ * DOC: ROT bits in CTL_FLUSH
  */
 
 /**
- * List of INTF bits in CTL_FLUSH
+ * DOC: intf_tbl - List of INTF bits in CTL_FLUSH
  */
 static const u32 intf_tbl[INTF_MAX] = {SDE_NONE, 31, 30, 29, 28};
 
 /**
- * Below definitions are for CTL supporting SDE_CTL_ACTIVE_CFG,
+ * DOC: Individual block flush controls
+ *
+ * The following definitions are for CTL supporting SDE_CTL_ACTIVE_CFG,
  * certain blocks have the individual flush control as well,
  * for such blocks flush is done by flushing individual control and
  * top level control.
  */
 
 /**
- * list of WB bits in CTL_WB_FLUSH
+ * DOC: wb_flush_tbl - list of WB bits in CTL_WB_FLUSH
  */
 static const u32 wb_flush_tbl[WB_MAX] = {SDE_NONE, SDE_NONE, SDE_NONE, 2};
 
 /**
- * list of INTF bits in CTL_INTF_FLUSH
+ * DOC: intf_flush_tbl - list of INTF bits in CTL_INTF_FLUSH
  */
 static const u32 intf_flush_tbl[INTF_MAX] = {SDE_NONE, 0, 1, 2, 3, 4, 5};
 
 /**
- * list of DSC bits in CTL_DSC_FLUSH
+ * DOC: dsc_flush_tbl - list of DSC bits in CTL_DSC_FLUSH
  */
 static const u32 dsc_flush_tbl[DSC_MAX] = {SDE_NONE, 0, 1, 2, 3, 4, 5};
 
 /**
- * list of MERGE_3D bits in CTL_MERGE_3D_FLUSH
+ * DOC: merge_3d_tbl - list of MERGE_3D bits in CTL_MERGE_3D_FLUSH
  */
 static const u32 merge_3d_tbl[MERGE_3D_MAX] = {SDE_NONE, 0, 1, 2};
 
 /**
- * list of CDM bits in CTL_CDM_FLUSH
+ * DOC: cdm_flush_tbl - list of CDM bits in CTL_CDM_FLUSH
  */
 static const u32 cdm_flush_tbl[CDM_MAX] = {SDE_NONE, 0};
 
 /**
- * list of CWB bits in CTL_CWB_FLUSH
+ * DOC: cwb_flush_tbl - list of CWB bits in CTL_CWB_FLUSH
  */
 static const u32 cwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, 1, 2, 3,
 	4, 5};

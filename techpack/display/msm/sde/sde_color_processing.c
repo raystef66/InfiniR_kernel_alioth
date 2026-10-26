@@ -864,14 +864,14 @@ static int check_rc_pu_feature(struct sde_hw_dspp *hw_dspp,
 	return ret;
 }
 
-feature_wrapper check_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
+static feature_wrapper check_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_check_crtc_feature_wrappers(wrappers) \
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \
 	wrappers[SDE_CP_CRTC_DSPP_RC_MASK] = check_rc_mask_feature; \
 } while (0)
 
-feature_wrapper set_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
+static feature_wrapper set_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_set_crtc_feature_wrappers(wrappers) \
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \
@@ -915,14 +915,14 @@ do { \
 	wrappers[SDE_CP_CRTC_DSPP_RC_MASK] = set_rc_mask_feature; \
 } while (0)
 
-feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
+static feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 #define setup_set_crtc_pu_feature_wrappers(wrappers) \
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \
 	wrappers[SDE_CP_CRTC_DSPP_RC_PU] = set_rc_pu_feature; \
 } while (0)
 
-feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
+static feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 #define setup_check_crtc_pu_feature_wrappers(wrappers) \
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \

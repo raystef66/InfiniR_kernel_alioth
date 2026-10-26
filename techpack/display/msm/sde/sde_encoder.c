@@ -136,7 +136,7 @@
  *	This event is triggered from the input event thread when touch event is
  *	received from the input device. On receiving this event,
  *      - If the device is in SDE_ENC_RC_STATE_IDLE state, it turns ON the
-	  clocks and enable RSC.
+ *        clocks and enable RSC.
  *      - If the device is in SDE_ENC_RC_STATE_ON state, it resets the delayed
  *        off work since a new commit is imminent.
  */
@@ -173,8 +173,14 @@ enum sde_enc_rc_states {
  *	encoders manage one intf block, tied to a specific panel/sub-panel.
  *	Virtual encoder defers as much as possible to the physical encoders.
  *	Virtual encoder registers itself with the DRM Framework as the encoder.
+ * @vblank_ctl_lock: Mutex serializing vblank control
+ * @display_num_of_h_tiles: Number of horizontal display tiles
+ * @hw_dsc_pp: Pingpong blocks associated with DSC encoders
+ * @input_handler_registered: Whether the input handler is registered
+ * @prepare_kickoff: Tracks preparation of the next kickoff
+ * @ready_kickoff: Tracks readiness for the next kickoff
  * @base:		drm_encoder base class for registration with DRM
- * @enc_spin_lock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
+ * @enc_spinlock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
  * @bus_scaling_client:	Client handle to the bus scaling interface
  * @te_source:		vsync source pin information
  * @ops:		Encoder ops from init function
@@ -184,14 +190,14 @@ enum sde_enc_rc_states {
  * @phys_cmd_encs:		Command physical encoders for panel mode switch.
  * @cur_master:		Pointer to the current master in this mode. Optimization
  *			Only valid after enable. Cleared as disable.
- * @hw_pp		Handle to the pingpong blocks used for the display. No.
+ * @hw_pp: Handle to the pingpong blocks used for the display. No.
  *			pingpong blocks can be different than num_phys_encs.
  * @hw_dsc:		Array of DSC block handles used for the display.
  * @dirty_dsc_ids:	Cached dsc indexes for dirty DSC blocks needing flush
- * @intfs_swapped	Whether or not the phys_enc interfaces have been swapped
+ * @intfs_swapped: Whether or not the phys_enc interfaces have been swapped
  *			for partial update right-only cases, such as pingpong
  *			split where virtual pingpong does not generate IRQs
- @qdss_status:		indicate if qdss is modified since last update
+ * @qdss_status:		indicate if qdss is modified since last update
  * @crtc_vblank_cb:	Callback into the upper layer / CRTC for
  *			notification of the VBLANK
  * @crtc_vblank_cb_data:	Data from upper layer for VBLANK notification
@@ -200,7 +206,7 @@ enum sde_enc_rc_states {
  * @crtc_kickoff_cb_data:	Opaque user data given to crtc_kickoff_cb
  * @debugfs_root:		Debug file system root file node
  * @enc_lock:			Lock around physical encoder create/destroy and
-				access.
+ *				access.
  * @frame_done_cnt:		Atomic counter for tracking which phys_enc is
  *				done with frame processing.
  * @crtc_frame_event_cb:	callback handler for frame event
@@ -231,7 +237,7 @@ enum sde_enc_rc_states {
  * @rsc_config:			rsc configuration for display vtotal, fps, etc.
  * @cur_conn_roi:		current connector roi
  * @prv_conn_roi:		previous connector roi to optimize if unchanged
- * @crtc			pointer to drm_crtc
+ * @crtc: pointer to drm_crtc
  * @recovery_events_enabled:	status of hw recovery feature enable by client
  * @elevated_ahb_vote:		increase AHB bus speed for the first frame
  *				after power collapse
@@ -3205,7 +3211,7 @@ static void _sde_encoder_input_disconnect(struct input_handle *handle)
 }
 
 /**
- * Structure for specifying event parameters on which to receive callbacks.
+ * DOC: sde_input_ids - Structure for specifying event parameters on which to receive callbacks.
  * This structure will trigger a callback in case of a touch event (specified by
  * EV_ABS) where there is a change in X and Y coordinates,
  */
@@ -3875,7 +3881,7 @@ static void sde_encoder_frame_done_callback(
 
 	if (!drm_enc || !sde_enc->cur_master) {
 		SDE_ERROR("invalid param: drm_enc %pK, cur_master %pK\n",
-				drm_enc, drm_enc ? sde_enc->cur_master : 0);
+				drm_enc, drm_enc ? sde_enc->cur_master : NULL);
 		return;
 	}
 
@@ -3996,9 +4002,9 @@ int sde_encoder_idle_request(struct drm_encoder *drm_enc)
 
 /**
  * _sde_encoder_trigger_flush - trigger flush for a physical encoder
- * drm_enc: Pointer to drm encoder structure
- * phys: Pointer to physical encoder structure
- * extra_flush: Additional bit mask to include in flush trigger
+ * @drm_enc: Pointer to drm encoder structure
+ * @phys: Pointer to physical encoder structure
+ * @extra_flush: Additional bit mask to include in flush trigger
  */
 static inline void _sde_encoder_trigger_flush(struct drm_encoder *drm_enc,
 		struct sde_encoder_phys *phys,
@@ -4087,7 +4093,7 @@ static inline void _sde_encoder_trigger_flush(struct drm_encoder *drm_enc,
 
 /**
  * _sde_encoder_trigger_start - trigger start for a physical encoder
- * phys: Pointer to physical encoder structure
+ * @phys: Pointer to physical encoder structure
  */
 static inline void _sde_encoder_trigger_start(struct sde_encoder_phys *phys)
 {
@@ -4204,7 +4210,7 @@ void sde_encoder_helper_hw_reset(struct sde_encoder_phys *phys_enc)
  *	encoder rather than the individual physical ones in order to handle
  *	use cases that require visibility into multiple physical encoders at
  *	a time.
- * sde_enc: Pointer to virtual encoder structure
+ * @sde_enc: Pointer to virtual encoder structure
  */
 static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 {
@@ -4244,7 +4250,7 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 				!phys->ops.needs_single_flush(phys)) {
 			if (ctl->ops.reg_dma_flush)
 				ctl->ops.reg_dma_flush(ctl, is_regdma_blocking);
-			_sde_encoder_trigger_flush(&sde_enc->base, phys, 0x0);
+			_sde_encoder_trigger_flush(&sde_enc->base, phys, NULL);
 		} else if (ctl->ops.get_pending_flush) {
 			ctl->ops.get_pending_flush(ctl, &pending_flush);
 		}
@@ -5045,7 +5051,7 @@ end:
 /**
  * _sde_encoder_reset_ctl_hw - reset h/w configuration for all ctl's associated
  *	with the specified encoder, and unstage all pipes from it
- * @encoder:	encoder pointer
+ * @drm_enc:	encoder pointer
  * Returns: 0 on success
  */
 static int _sde_encoder_reset_ctl_hw(struct drm_encoder *drm_enc)
@@ -6124,10 +6130,10 @@ static void _sde_encoder_cache_hw_res_cont_splash(
 /**
  * sde_encoder_update_caps_for_cont_splash - update encoder settings during
  *	device bootup when cont_splash is enabled
- * @drm_enc:	Pointer to drm encoder structure
+ * @encoder:	Pointer to drm encoder structure
  * @splash_display: Pointer to sde_splash_display corresponding to this encoder
  * @enable:	boolean indicates enable or displae state of splash
- * @Return:	true if successful in updating the encoder structure
+ * Return:	true if successful in updating the encoder structure
  */
 int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		struct sde_splash_display *splash_display, bool enable)

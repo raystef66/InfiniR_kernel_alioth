@@ -571,7 +571,7 @@ void *msm_property_get_blob(struct msm_property_info *info,
 {
 	struct drm_property_blob *blob;
 	size_t len = 0;
-	void *rc = 0;
+	void *rc = NULL;
 
 	if (!info || !property_state || !property_state->values ||
 			(property_idx >= info->blob_count)) {

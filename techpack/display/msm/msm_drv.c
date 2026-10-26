@@ -147,7 +147,7 @@ static char *vram = "16m";
 MODULE_PARM_DESC(vram, "Configure VRAM size (for devices without IOMMU/GPUMMU)");
 module_param(vram, charp, 0);
 
-bool dumpstate = false;
+static bool dumpstate;
 MODULE_PARM_DESC(dumpstate, "Dump KMS state on errors");
 module_param(dumpstate, bool, 0600);
 
@@ -250,7 +250,7 @@ void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
 	if (!res) {
 		dev_dbg(&pdev->dev, "failed to get memory resource: %s\n",
 									name);
-		return ERR_PTR(-EINVAL);
+		return (__force void __iomem *)ERR_PTR(-EINVAL);
 	}
 
 	size = resource_size(res);
@@ -258,7 +258,7 @@ void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
 	ptr = devm_ioremap_nocache(&pdev->dev, res->start, size);
 	if (!ptr) {
 		dev_err(&pdev->dev, "failed to ioremap: %s\n", name);
-		return ERR_PTR(-ENOMEM);
+		return (__force void __iomem *)ERR_PTR(-ENOMEM);
 	}
 
 	if (reglog)
@@ -1133,10 +1133,11 @@ fail:
 }
 
 /**
- * msm_clear_all_modes - disables all planes and crtcs via an atomic commit
+ * msm_disable_all_modes - disables all planes and crtcs via an atomic commit
  *	based on restore_fbdev_mode_atomic in drm_fb_helper.c
+ * @ctx: Modeset acquisition context for the atomic commit
  * @dev: device pointer
- * @Return: 0 on success, otherwise -error
+ * Return: 0 on success, otherwise -error
  */
 static int msm_disable_all_modes(
 		struct drm_device *dev,
@@ -1428,24 +1429,34 @@ static int msm_register_event(struct drm_device *dev,
 	return ret;
 }
 
-static int msm_event_client_count(struct drm_device *dev,
-		struct drm_msm_event_req *req_event, bool locked)
+static int msm_event_client_count_locked(struct drm_device *dev,
+		struct drm_msm_event_req *req_event)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	unsigned long flag = 0;
 	struct msm_drm_event *node;
 	int count = 0;
 
-	if (!locked)
-		spin_lock_irqsave(&dev->event_lock, flag);
 	list_for_each_entry(node, &priv->client_event_list, base.link) {
 		if (node->event.base.type == req_event->event &&
 			node->event.info.object_id == req_event->object_id)
 			count++;
 	}
-	if (!locked)
-		spin_unlock_irqrestore(&dev->event_lock, flag);
 
+	return count;
+}
+
+static int msm_event_client_count(struct drm_device *dev,
+		struct drm_msm_event_req *req_event, bool locked)
+{
+	unsigned long flags;
+	int count;
+
+	if (locked)
+		return msm_event_client_count_locked(dev, req_event);
+
+	spin_lock_irqsave(&dev->event_lock, flags);
+	count = msm_event_client_count_locked(dev, req_event);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 	return count;
 }
 

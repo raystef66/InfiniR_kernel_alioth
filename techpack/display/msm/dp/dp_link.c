@@ -314,7 +314,7 @@ static char *dp_link_video_pattern_to_string(u32 test_video_pattern)
 
 /**
  * dp_link_is_dynamic_range_valid() - validates the dynamic range
- * @bit_depth: the dynamic range value to be checked
+ * @dr: the dynamic range value to be checked
  *
  * Returns true if the dynamic range value is supported.
  */
@@ -344,7 +344,7 @@ static char *dp_link_dynamic_range_to_string(u32 dr)
 
 /**
  * dp_link_is_bit_depth_valid() - validates the bit depth requested
- * @bit_depth: bit depth requested by the sink
+ * @tbd: bit depth requested by the sink
  *
  * Returns true if the requested bit depth is supported.
  */
@@ -840,6 +840,7 @@ end:
 
 /**
  * dp_link_parse_sink_count() - parses the sink count
+ * @dp_link: DisplayPort link state
  *
  * Parses the DPCD to check if there is an update to the sink count
  * (Byte 0x200), and whether all the sink devices connected have Content
@@ -1253,7 +1254,7 @@ static void dp_link_reset_data(struct dp_link_private *link)
 
 /**
  * dp_link_process_request() - handle HPD IRQ transition to HIGH
- * @link: pointer to link module data
+ * @dp_link: pointer to link module data
  *
  * This function will handle the HPD IRQ state transitions from LOW to HIGH
  * (including cases when there are back to back HPD IRQ HIGH) indicating
