@@ -576,14 +576,11 @@ static irqreturn_t tsens_tm_critical_irq_thread(int irq, void *data)
 	unsigned int i, status, wd_log, wd_mask;
 	unsigned long flags;
 	void __iomem *sensor_status_addr, *sensor_int_mask_addr;
-	void __iomem *sensor_critical_addr;
 	void __iomem *wd_critical_addr, *wd_log_addr;
 
 	sensor_status_addr = TSENS_TM_SN_STATUS(tm->tsens_tm_addr);
 	sensor_int_mask_addr =
 		TSENS_TM_CRITICAL_INT_MASK(tm->tsens_tm_addr);
-	sensor_critical_addr =
-		TSENS_TM_SN_CRITICAL_THRESHOLD(tm->tsens_tm_addr);
 	wd_critical_addr =
 		TSENS_TM_CRITICAL_INT_STATUS(tm->tsens_tm_addr);
 	if (tm->ctrl_data->ver_major == 2 && tm->ctrl_data->ver_minor == 3)

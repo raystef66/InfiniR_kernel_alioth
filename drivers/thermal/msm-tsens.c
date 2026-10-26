@@ -288,7 +288,7 @@ static void tsens_therm_fwk_notify(struct work_struct *work)
 	}
 }
 
-int tsens_tm_probe(struct platform_device *pdev)
+static int tsens_tm_probe(struct platform_device *pdev)
 {
 	struct tsens_device *tmdev = NULL;
 	int rc;
@@ -381,7 +381,7 @@ static struct platform_driver tsens_tm_driver = {
 	},
 };
 
-int __init tsens_tm_init_driver(void)
+static int __init tsens_tm_init_driver(void)
 {
 	return platform_driver_register(&tsens_tm_driver);
 }

@@ -47,6 +47,8 @@
 #define TSENS_MTC_ZONE_LOG_SIZE         6
 #define TSENS_MTC_ZONE_HISTORY_SIZE     3
 
+int tsens_mtc_reset_history_counter(unsigned int zone);
+
 extern int tsens_get_mtc_zone_history(unsigned int zone, void *zone_hist);
 extern struct tsens_device *tsens_controller_is_present(void);
 extern int tsens_set_mtc_zone_sw_mask(unsigned int zone,
