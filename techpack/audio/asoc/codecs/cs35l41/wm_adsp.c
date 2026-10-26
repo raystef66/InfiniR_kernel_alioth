@@ -4299,6 +4299,9 @@ static int wm_coeff_k_put(struct snd_kcontrol *kctl,
 	char *p = ucontrol->value.bytes.data;
 	int ret = 0;
 
+	if (ctl->len > sizeof(ucontrol->value.bytes.data))
+		return -EINVAL;
+
 	if (ctl->flags & WMFW_CTL_FLAG_VOLATILE) {
 		ret = 0;
 	} else
@@ -4318,11 +4321,15 @@ static int wm_coeff_k_get(struct snd_kcontrol *kctl,
 	char *p = ucontrol->value.bytes.data;
 	int ret = 0;
 
+	if (ctl->len > sizeof(ucontrol->value.bytes.data))
+		return -EINVAL;
+
 	if (ctl->flags & WMFW_CTL_FLAG_VOLATILE) {
 		ret = wm_coeff_read_control(ctl, p, ctl->len);
 	} else {
 		ret = wm_coeff_read_control(ctl, ctl->cache, ctl->len);
-		memcpy(p, ctl->cache, ctl->len);
+		if (!ret)
+			memcpy(p, ctl->cache, ctl->len);
 	}
 
 	return ret;
@@ -4330,7 +4337,8 @@ static int wm_coeff_k_get(struct snd_kcontrol *kctl,
 static int wm_adsp_k_ctl_put(struct wm_adsp *dsp, const char *name, int value)
 {
 	struct snd_kcontrol *kctl = NULL;
-	struct snd_ctl_elem_value ucontrol;
+	struct snd_ctl_elem_value ucontrol = {0};
+	__be32 raw = cpu_to_be32(value);
 	struct snd_soc_card *card = dsp->component->card;
 
 	kctl = snd_soc_card_get_kcontrol(card, name);
@@ -4340,21 +4348,18 @@ static int wm_adsp_k_ctl_put(struct wm_adsp *dsp, const char *name, int value)
 	}
 
 	adsp_dbg(dsp, "%s: %s:0x%x\n", __func__, kctl->id.name, value);
-	value = cpu_to_be32(value);
-	memcpy((char *)ucontrol.value.bytes.data, (char *)&value,
-	       sizeof(value));
-	wm_coeff_k_put(kctl, &ucontrol);
-
-	return 0;
+	memcpy(ucontrol.value.bytes.data, &raw, sizeof(raw));
+	return wm_coeff_k_put(kctl, &ucontrol);
 }
 
 static int wm_adsp_k_ctl_get(struct wm_adsp *dsp, const char *name)
 {
 	struct snd_kcontrol *kctl = NULL;
-	struct snd_ctl_elem_value ucontrol;
+	struct snd_ctl_elem_value ucontrol = {0};
+	__be32 raw;
 	struct snd_soc_card *card = dsp->component->card;
 
-	int value = 0;
+	int value, ret;
 
 	kctl = snd_soc_card_get_kcontrol(card, name);
 	if (kctl == NULL) {
@@ -4362,10 +4367,11 @@ static int wm_adsp_k_ctl_get(struct wm_adsp *dsp, const char *name)
 		return -1;
 	}
 
-	wm_coeff_k_get(kctl, &ucontrol);
-	memcpy((char *)&value, (char *)ucontrol.value.bytes.data,
-	       sizeof(value));
-	value = be32_to_cpu(value);
+	ret = wm_coeff_k_get(kctl, &ucontrol);
+	if (ret)
+		return ret;
+	memcpy(&raw, ucontrol.value.bytes.data, sizeof(raw));
+	value = be32_to_cpu(raw);
 
 	adsp_dbg(dsp, "%s: %s:0x%x\n", __func__, kctl->id.name, value);
 
