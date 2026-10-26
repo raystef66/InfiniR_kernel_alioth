@@ -384,13 +384,11 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on);
 static struct delayed_work *rst_work;
 
 /**
+ * dwc3_msm_read_reg - read a wrapper register
+ * @base: DWC3 register mapping
+ * @offset: register byte offset
  *
- * Read register with debug info.
- *
- * @base - DWC3 base virtual address.
- * @offset - register offset.
- *
- * @return u32
+ * Return: Register value.
  */
 static inline u32 dwc3_msm_read_reg(void __iomem *base, u32 offset)
 {
@@ -399,13 +397,12 @@ static inline u32 dwc3_msm_read_reg(void __iomem *base, u32 offset)
 }
 
 /**
- * Read register masked field with debug info.
+ * dwc3_msm_read_reg_field - read a wrapper register field
+ * @base: DWC3 register mapping
+ * @offset: register byte offset
+ * @mask: nonzero mask selecting the field
  *
- * @base - DWC3 base virtual address.
- * @offset - register offset.
- * @mask - register bitmask.
- *
- * @return u32
+ * Return: Masked field shifted down to bit zero.
  */
 static inline u32 dwc3_msm_read_reg_field(void __iomem *base,
 					  u32 offset,
@@ -420,13 +417,10 @@ static inline u32 dwc3_msm_read_reg_field(void __iomem *base,
 }
 
 /**
- *
- * Write register with debug info.
- *
- * @base - DWC3 base virtual address.
- * @offset - register offset.
- * @val - value to write.
- *
+ * dwc3_msm_write_reg - write a wrapper register
+ * @base: DWC3 register mapping
+ * @offset: register byte offset
+ * @val: register value to write
  */
 static inline void dwc3_msm_write_reg(void __iomem *base, u32 offset, u32 val)
 {
@@ -434,13 +428,11 @@ static inline void dwc3_msm_write_reg(void __iomem *base, u32 offset, u32 val)
 }
 
 /**
- * Write register masked field with debug info.
- *
- * @base - DWC3 base virtual address.
- * @offset - register offset.
- * @mask - register bitmask.
- * @val - value to write.
- *
+ * dwc3_msm_write_reg_field - update a wrapper register field
+ * @base: DWC3 register mapping
+ * @offset: register byte offset
+ * @mask: nonzero mask selecting the field
+ * @val: unshifted field value
  */
 static inline void dwc3_msm_write_reg_field(void __iomem *base, u32 offset,
 					    const u32 mask, u32 val)
@@ -533,14 +525,15 @@ static int dwc3_msm_dbm_disable_updxfer(struct dwc3 *dwc, u8 usb_ep)
 
 #if IS_ENABLED(CONFIG_USB_DWC3_GADGET) || IS_ENABLED(CONFIG_USB_DWC3_DUAL_ROLE)
 /**
- * Configure the DBM with the BAM's data fifo.
- * This function is called by the USB BAM Driver
- * upon initialization.
+ * msm_data_fifo_config - configure the DBM data FIFO
+ * @ep: USB endpoint associated with the DBM
+ * @addr: BAM data FIFO address
+ * @size: data FIFO size in bytes
+ * @dst_pipe_idx: destination BAM pipe index
  *
- * @ep - pointer to usb endpoint.
- * @addr - address of data fifo.
- * @size - size of data fifo.
+ * Called by the USB BAM driver during initialization.
  *
+ * Return: Zero on success or a negative error code.
  */
 int msm_data_fifo_config(struct usb_ep *ep, unsigned long addr,
 			 u32 size, u8 dst_pipe_idx)
@@ -557,14 +550,11 @@ int msm_data_fifo_config(struct usb_ep *ep, unsigned long addr,
 
 
 /**
- * Cleanups for msm endpoint on request complete.
+ * dwc3_msm_req_complete_func - clean up a completed DBM request
+ * @ep: USB endpoint completing the request
+ * @request: completed USB request
  *
- * Also call original request complete.
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to usb_request instance.
- *
- * @return int - 0 on success, negative on error.
+ * Release DBM bookkeeping and invoke the original completion callback.
  */
 static void dwc3_msm_req_complete_func(struct usb_ep *ep,
 				       struct usb_request *request)
@@ -619,14 +609,13 @@ static void dwc3_msm_req_complete_func(struct usb_ep *ep,
 
 
 /**
- * Helper function
+ * __dwc3_msm_dbm_ep_reset - reset a DBM endpoint
+ * @mdwc: Qualcomm DWC3 wrapper instance
+ * @dep: DWC3 endpoint to reset
  *
- * Reset  DBM endpoint.
+ * The reset delay depends on the number of configured DBM endpoints.
  *
- * @mdwc - pointer to dwc3_msm instance.
- * @dep - pointer to dwc3_ep instance.
- *
- * @return int - 0 on success, negative on error.
+ * Return: Zero on success or a negative error code.
  */
 static int __dwc3_msm_dbm_ep_reset(struct dwc3_msm *mdwc, struct dwc3_ep *dep)
 {
@@ -663,11 +652,10 @@ static int __dwc3_msm_dbm_ep_reset(struct dwc3_msm *mdwc, struct dwc3_ep *dep)
 }
 
 /**
- * Reset the DBM endpoint which is linked to the given USB endpoint.
+ * msm_dwc3_reset_dbm_ep - reset the DBM behind a USB endpoint
+ * @ep: USB endpoint associated with the DBM
  *
- * @usb_ep - pointer to usb_ep instance.
- *
- * @return int - 0 on success, negative on error.
+ * Return: Zero on success or a negative error code.
  */
 int msm_dwc3_reset_dbm_ep(struct usb_ep *ep)
 {
@@ -681,13 +669,13 @@ EXPORT_SYMBOL(msm_dwc3_reset_dbm_ep);
 
 
 /**
- * Helper function.
- * See the header of the dwc3_msm_ep_queue function.
+ * __dwc3_msm_ep_queue - prepare and start a DBM transfer
+ * @dep: DWC3 endpoint receiving the request
+ * @req: DWC3 request to queue
  *
- * @dwc3_ep - pointer to dwc3_ep instance.
- * @req - pointer to dwc3_request instance.
+ * Prepare the DBM transfer ring used by dwc3_msm_ep_queue().
  *
- * @return int - 0 on success, negative on error.
+ * Return: Zero on success or a negative error code.
  */
 static int __dwc3_msm_ep_queue(struct dwc3_ep *dep, struct dwc3_request *req)
 {
@@ -755,26 +743,16 @@ static int __dwc3_msm_ep_queue(struct dwc3_ep *dep, struct dwc3_request *req)
 }
 
 /**
- * Queue a usb request to the DBM endpoint.
- * This function should be called after the endpoint
- * was enabled by the ep_enable.
+ * dwc3_msm_ep_queue - queue a USB request to a DBM endpoint
+ * @ep: enabled USB endpoint
+ * @request: USB request to queue
+ * @gfp_flags: allocation flags for completion bookkeeping
  *
- * This function prepares special structure of TRBs which
- * is familiar with the DBM HW, so it will possible to use
- * this endpoint in DBM mode.
+ * The endpoint must already be enabled. DBM uses a normal TRB with a fake
+ * buffer followed by a link TRB pointing back to the first TRB. The call
+ * follows the usb_ep_queue() contract.
  *
- * The TRBs prepared by this function, is one normal TRB
- * which point to a fake buffer, followed by a link TRB
- * that points to the first TRB.
- *
- * The API of this function follow the regular API of
- * usb_ep_queue (see usb_ep_ops in include/linuk/usb/gadget.h).
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to usb_request instance.
- * @gfp_flags - possible flags.
- *
- * @return int - 0 on success, negative on error.
+ * Return: Zero on success or a negative error code.
  */
 static int dwc3_msm_ep_queue(struct usb_ep *ep,
 			     struct usb_request *request, gfp_t gfp_flags)
@@ -902,11 +880,10 @@ err:
 }
 
 /**
- * Returns XferRscIndex for the EP. This is stored at StartXfer GSI EP OP
+ * gsi_get_xfer_index - get the GSI endpoint transfer resource index
+ * @ep: GSI USB endpoint
  *
- * @usb_ep - pointer to usb_ep instance.
- *
- * @return int - XferRscIndex
+ * Return: Transfer resource index recorded when starting the transfer.
  */
 static inline int gsi_get_xfer_index(struct usb_ep *ep)
 {
@@ -916,11 +893,12 @@ static inline int gsi_get_xfer_index(struct usb_ep *ep)
 }
 
 /**
- * Fills up the GSI channel information needed in call to IPA driver
- * for GSI channel creation.
+ * gsi_get_channel_info - fill GSI channel information
+ * @ep: GSI USB endpoint
+ * @ch_info: channel information to populate, including its input request
  *
- * @usb_ep - pointer to usb_ep instance.
- * @ch_info - output parameter with requested channel info
+ * Populate the physical register and transfer-ring information needed by IPA
+ * for channel creation.
  */
 static void gsi_get_channel_info(struct usb_ep *ep,
 			struct gsi_channel_info *ch_info)
@@ -974,11 +952,12 @@ static void gsi_get_channel_info(struct usb_ep *ep,
 }
 
 /**
- * Perform StartXfer on GSI EP. Stores XferRscIndex.
+ * gsi_startxfer_for_ep - start a GSI endpoint transfer
+ * @ep: GSI USB endpoint
  *
- * @usb_ep - pointer to usb_ep instance.
+ * Record the transfer resource index returned by the controller.
  *
- * @return int - 0 on success
+ * Return: Zero on success or a negative error code.
  */
 static int gsi_startxfer_for_ep(struct usb_ep *ep)
 {
@@ -1007,11 +986,9 @@ static int gsi_startxfer_for_ep(struct usb_ep *ep)
 }
 
 /**
- * Store Ring Base and Doorbell Address for GSI EP
- * for GSI channel creation.
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - USB GSI request to get Doorbell address obtained from IPA driver
+ * gsi_store_ringbase_dbl_info - store GSI ring and doorbell addresses
+ * @ep: GSI USB endpoint
+ * @request: GSI request containing doorbell addresses from IPA
  */
 static void gsi_store_ringbase_dbl_info(struct usb_ep *ep,
 			struct usb_gsi_request *request)
@@ -1072,11 +1049,9 @@ static void gsi_store_ringbase_dbl_info(struct usb_ep *ep,
 }
 
 /**
- * Rings Doorbell for GSI Channel
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to GSI request. This is used to pass in the
- * address of the GSI doorbell obtained from IPA driver
+ * gsi_ring_db - ring the GSI channel doorbell
+ * @ep: GSI USB endpoint
+ * @request: GSI request containing buffer counts and doorbell addresses
  */
 static void gsi_ring_db(struct usb_ep *ep, struct usb_gsi_request *request)
 {
@@ -1121,12 +1096,13 @@ static void gsi_ring_db(struct usb_ep *ep, struct usb_gsi_request *request)
 }
 
 /**
- * Sets HWO bit for TRBs and performs UpdateXfer for OUT EP.
+ * gsi_updatexfer_for_ep - update an OUT GSI transfer
+ * @ep: GSI USB endpoint
+ * @request: GSI request specifying the buffer count
  *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to GSI request. Used to determine num of TRBs for OUT EP.
+ * Set hardware ownership on the OUT transfer TRBs before UpdateXfer.
  *
- * @return int - 0 on success
+ * Return: Zero on success or a negative error code.
  */
 static int gsi_updatexfer_for_ep(struct usb_ep *ep,
 					struct usb_gsi_request *request)
@@ -1155,9 +1131,8 @@ static int gsi_updatexfer_for_ep(struct usb_ep *ep,
 }
 
 /**
- * Perform EndXfer on particular GSI EP.
- *
- * @usb_ep - pointer to usb_ep instance.
+ * gsi_endxfer_for_ep - stop a GSI endpoint transfer
+ * @ep: GSI USB endpoint
  */
 static void gsi_endxfer_for_ep(struct usb_ep *ep)
 {
@@ -1168,12 +1143,11 @@ static void gsi_endxfer_for_ep(struct usb_ep *ep)
 }
 
 /**
- * Allocates Buffers and TRBs. Configures TRBs for GSI EPs.
+ * gsi_prepare_trbs - allocate buffers and prepare GSI TRBs
+ * @ep: GSI USB endpoint
+ * @req: GSI request with buffer sizes/counts and allocation results
  *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to GSI request.
- *
- * @return int - 0 on success
+ * Return: Zero on success or a negative error code.
  */
 static int gsi_prepare_trbs(struct usb_ep *ep, struct usb_gsi_request *req)
 {
@@ -1333,10 +1307,9 @@ free_trb_buffer:
 }
 
 /**
- * Frees TRBs and buffers for GSI EPs.
- *
- * @usb_ep - pointer to usb_ep instance.
- *
+ * gsi_free_trbs - free GSI buffers and transfer rings
+ * @ep: GSI USB endpoint
+ * @req: GSI request owning the buffers and scatterlists
  */
 static void gsi_free_trbs(struct usb_ep *ep, struct usb_gsi_request *req)
 {
@@ -1370,10 +1343,9 @@ static void gsi_free_trbs(struct usb_ep *ep, struct usb_gsi_request *req)
 	sg_free_table(&req->sgt_data_buff);
 }
 /**
- * Configures GSI EPs. For GSI EPs we need to set interrupter numbers.
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to GSI request.
+ * gsi_configure_ep - configure a GSI endpoint and interrupter
+ * @ep: GSI USB endpoint
+ * @request: GSI request specifying buffer size and interrupt behavior
  */
 static void gsi_configure_ep(struct usb_ep *ep, struct usb_gsi_request *request)
 {
@@ -1462,9 +1434,8 @@ static void gsi_configure_ep(struct usb_ep *ep, struct usb_gsi_request *request)
 }
 
 /**
- * Enables USB wrapper for GSI
- *
- * @usb_ep - pointer to usb_ep instance.
+ * gsi_enable - enable the USB GSI wrapper
+ * @ep: GSI USB endpoint
  */
 static void gsi_enable(struct usb_ep *ep)
 {
@@ -1484,11 +1455,9 @@ static void gsi_enable(struct usb_ep *ep)
 }
 
 /**
- * Block or allow doorbell towards GSI
- *
- * @usb_ep - pointer to usb_ep instance.
- * @request - pointer to GSI request. In this case num_bufs is used as a bool
- * to set or clear the doorbell bit
+ * gsi_set_clear_dbell - block or allow GSI doorbells
+ * @ep: GSI USB endpoint
+ * @block_db: true to block doorbells, false to allow them
  */
 static void gsi_set_clear_dbell(struct usb_ep *ep,
 					bool block_db)
@@ -1504,9 +1473,10 @@ static void gsi_set_clear_dbell(struct usb_ep *ep,
 }
 
 /**
- * Performs necessary checks before stopping GSI channels
+ * gsi_check_ready_to_suspend - wait for GSI writes to become idle
+ * @mdwc: Qualcomm DWC3 wrapper instance
  *
- * @usb_ep - pointer to usb_ep instance to access DWC3 regs
+ * Return: True when GSI writes are idle, or false on timeout.
  */
 static bool gsi_check_ready_to_suspend(struct dwc3_msm *mdwc)
 {
@@ -1533,14 +1503,12 @@ static inline const char *gsi_op_to_string(unsigned int op)
 }
 
 /**
- * Performs GSI operations or GSI EP related operations.
+ * dwc3_msm_gsi_ep_op - dispatch a GSI endpoint operation
+ * @ep: GSI USB endpoint
+ * @op_data: operation-specific request or result data
+ * @op: GSI endpoint operation to perform
  *
- * @usb_ep - pointer to usb_ep instance.
- * @op_data - pointer to opcode related data.
- * @op - GSI related or GSI EP related op code.
- *
- * @return int - 0 on success, negative on error.
- * Also returns XferRscIdx for GSI_EP_OP_GET_XFER_IDX.
+ * Return: Operation result, transfer resource index, or a negative error code.
  */
 static int dwc3_msm_gsi_ep_op(struct usb_ep *ep,
 		void *op_data, enum gsi_ep_op op)
@@ -1659,18 +1627,14 @@ static int dwc3_msm_gsi_ep_op(struct usb_ep *ep,
 }
 
 /**
- * Configure MSM endpoint.
- * This function do specific configurations
- * to an endpoint which need specific implementaion
- * in the MSM architecture.
+ * msm_ep_config - install Qualcomm endpoint operations
+ * @ep: USB endpoint to configure
+ * @request: optional USB request carrying DBM configuration in udc_priv
  *
- * This function should be called by usb function/class
- * layer which need a support from the specific MSM HW
- * which wrap the USB3 core. (like GSI or DBM specific endpoints)
+ * Install the wrapper operations for GSI/DBM endpoints. When a DBM and request
+ * are present for a non-GSI endpoint, configure the DBM from the request.
  *
- * @ep - a pointer to some usb_ep instance
- *
- * @return int - 0 on success, negetive on error.
+ * Return: Zero on success or a negative error code.
  */
 int msm_ep_config(struct usb_ep *ep, struct usb_request *request)
 {
@@ -1740,13 +1704,10 @@ int msm_ep_config(struct usb_ep *ep, struct usb_request *request)
 EXPORT_SYMBOL(msm_ep_config);
 
 /**
- * Un-configure MSM endpoint.
- * Tear down configurations done in the
- * dwc3_msm_ep_config function.
+ * msm_ep_unconfig - restore original endpoint operations
+ * @ep: USB endpoint configured by msm_ep_config()
  *
- * @ep - a pointer to some usb_ep instance
- *
- * @return int - 0 on success, negative on error.
+ * Return: Zero on success or a negative error code.
  */
 int msm_ep_unconfig(struct usb_ep *ep)
 {
@@ -2927,9 +2888,10 @@ static int dwc3_msm_resume(struct dwc3_msm *mdwc)
 }
 
 /**
- * dwc3_ext_event_notify - callback to handle events from external transceiver
+ * dwc3_ext_event_notify - handle external transceiver state
+ * @mdwc: Qualcomm DWC3 wrapper instance
  *
- * Returns 0 on success
+ * Flush pending state-machine work before updating ID and session inputs.
  */
 static void dwc3_ext_event_notify(struct dwc3_msm *mdwc)
 {
