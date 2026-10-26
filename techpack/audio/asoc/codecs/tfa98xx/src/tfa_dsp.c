@@ -470,7 +470,10 @@ enum Tfa98xx_DMEM tfa98xx_filter_mem(struct tfa_device *tfa, int filter_index,
 /**
 * return revision
 * Used by the LTT
-*/
+ * @major: Receives the API major version
+ * @minor: Receives the API minor version
+ * @revision: Receives the API revision
+ */
 void tfa98xx_rev(int *major, int *minor, int *revision)
 {
 	char version_str[] = TFA98XX_API_REV_STR;
@@ -480,6 +483,8 @@ void tfa98xx_rev(int *major, int *minor, int *revision)
 /**
  * tfa_supported_speakers
  *  returns the number of the supported speaker count
+ * @spkr_count: Receives the supported speaker count
+ * @tfa: TFA device instance
  */
 enum Tfa98xx_Error tfa_supported_speakers(struct tfa_device *tfa,
 					  int *spkr_count)
@@ -1189,10 +1194,11 @@ TFA_INTERNAL enum Tfa98xx_Error tfa98xx_wait_result(struct tfa_device *tfa,
  * *  support functions for data conversion
  */
 /**
- convert memory bytes to signed 24 bit integers
-   input:  bytes contains "num_bytes" byte elements
-   output: data contains "num_bytes/3" int24 elements
-*/
+ * tfa98xx_convert_bytes2data - Decode packed signed 24-bit DSP words
+ * @num_bytes: Input byte count
+ * @bytes: Packed DSP bytes
+ * @data: Decoded signed output words
+ */
 void tfa98xx_convert_bytes2data(int num_bytes, const unsigned char bytes[],
 				int data[])
 {
@@ -1213,10 +1219,11 @@ void tfa98xx_convert_bytes2data(int num_bytes, const unsigned char bytes[],
 }
 
 /**
- convert signed 32 bit integers to 24 bit aligned bytes
-   input:   data contains "num_data" int elements
-   output:  bytes contains "3 * num_data" byte elements
-*/
+ * tfa98xx_convert_data2bytes - Encode signed DSP words into packed 24-bit bytes
+ * @num_data: Input word count
+ * @data: Signed input words
+ * @bytes: Packed DSP output bytes
+ */
 void tfa98xx_convert_data2bytes(int num_data, const int data[],
 				unsigned char bytes[])
 {
@@ -1736,6 +1743,10 @@ enum Tfa98xx_Error tfa_dsp_msg(struct tfa_device *tfa, int length,
  *  the buffer is provided in little endian format, each word occupying 3 bytes, length is in bytes.
  *  The functions will return immediately and do not not wait for DSP reponse.
  *  An ID is added to modify the command-ID
+ * @buf: DSP message data
+ * @cmdid: DSP command identifier
+ * @length: DSP message length in bytes
+ * @tfa: TFA device instance
  */
 enum Tfa98xx_Error tfa_dsp_msg_id(struct tfa_device *tfa, int length,
 				  const char *buf, uint8_t cmdid[3])

@@ -189,7 +189,7 @@ static const struct soc_enum nxp_vendor_id[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(nxp_vendor_id_text), nxp_vendor_id_text),
 };
 
-const struct snd_kcontrol_new nxp_spk_id_controls[] = {
+static const struct snd_kcontrol_new nxp_spk_id_controls[] = {
 	SOC_ENUM_EXT("SPK ID", nxp_vendor_id, nxp_vendor_id_get, NULL),
 };
 
