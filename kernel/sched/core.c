@@ -1517,7 +1517,7 @@ static int effective_prio(struct task_struct *p)
  */
 inline int task_curr(const struct task_struct *p)
 {
-	return cpu_curr(task_cpu(p)) == p;
+	return rcu_access_pointer(cpu_curr(task_cpu(p))) == p;
 }
 
 /*
@@ -4706,7 +4706,7 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 	 * real need to boost.
 	 */
 	if (unlikely(p == rq->idle)) {
-		WARN_ON(p != rq->curr);
+		WARN_ON(p != rcu_access_pointer(rq->curr));
 		WARN_ON(p->pi_blocked_on);
 		goto out_unlock;
 	}
@@ -4907,7 +4907,7 @@ int idle_cpu(int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
 
-	if (rq->curr != rq->idle)
+	if (rcu_access_pointer(rq->curr) != rq->idle)
 		return 0;
 
 	if (rq->nr_running)

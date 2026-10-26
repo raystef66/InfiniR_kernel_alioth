@@ -1422,7 +1422,7 @@ static int account_busy_for_cpu_time(struct rq *rq, struct task_struct *p,
 	 * related groups
 	 */
 	if (event == TASK_UPDATE) {
-		if (rq->curr == p)
+		if (rcu_access_pointer(rq->curr) == p)
 			return 1;
 
 		return p->on_rq ? SCHED_FREQ_ACCOUNT_WAIT_TIME : 0;
@@ -1496,7 +1496,7 @@ static void update_cpu_busy_time(struct task_struct *p, struct rq *rq,
 				 int event, u64 wallclock, u64 irqtime)
 {
 	int new_window, full_window = 0;
-	int p_is_curr_task = (p == rq->curr);
+	int p_is_curr_task = (p == rcu_access_pointer(rq->curr));
 	u64 mark_start = p->ravg.mark_start;
 	u64 window_start = rq->window_start;
 	u32 window_size = rq->prev_window_size;
@@ -1774,7 +1774,7 @@ account_busy_for_task_demand(struct rq *rq, struct task_struct *p, int event)
 	 * The idle exit time is not accounted for the first task _picked_ up to
 	 * run on the idle CPU.
 	 */
-	if (event == PICK_NEXT_TASK && rq->curr == rq->idle)
+	if (event == PICK_NEXT_TASK && rcu_access_pointer(rq->curr) == rq->idle)
 		return 0;
 
 	/*
@@ -1782,7 +1782,7 @@ account_busy_for_task_demand(struct rq *rq, struct task_struct *p, int event)
 	 * related groups
 	 */
 	if (event == TASK_UPDATE) {
-		if (rq->curr == p)
+		if (rcu_access_pointer(rq->curr) == p)
 			return 1;
 
 		return p->on_rq ? SCHED_ACCOUNT_WAIT_TIME : 0;
@@ -1863,7 +1863,7 @@ static void update_history(struct rq *rq, struct task_struct *p,
 				p->sched_class->fixup_walt_sched_stats)
 			p->sched_class->fixup_walt_sched_stats(rq, p,
 					demand_scaled, pred_demand_scaled);
-		else if (rq->curr == p)
+		else if (rcu_access_pointer(rq->curr) == p)
 			walt_fixup_cum_window_demand(rq, demand_scaled);
 	}
 
