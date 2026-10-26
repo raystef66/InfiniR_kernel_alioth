@@ -300,7 +300,7 @@ extern struct hlist_head RMNET_SHS_HT[1 << (RMNET_SHS_HT_SIZE)];
 /* rmnet based functions that we rely on*/
 extern void rmnet_deliver_skb(struct sk_buff *skb,
 			      struct rmnet_port *port);
-extern int (*rmnet_shs_skb_entry)(struct sk_buff *skb,
+extern int (__rcu *rmnet_shs_skb_entry)(struct sk_buff *skb,
 				  struct rmnet_port *port);
 int rmnet_shs_is_lpwr_cpu(u16 cpu);
 void rmnet_shs_cancel_table(void);

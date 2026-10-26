@@ -95,12 +95,12 @@ EXPORT_SYMBOL(rmnet_slow_start_on);
 
 /* Shs hook handler */
 
-int (*rmnet_shs_skb_entry)(struct sk_buff *skb,
+int (__rcu *rmnet_shs_skb_entry)(struct sk_buff *skb,
 			   struct rmnet_port *port) __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_shs_skb_entry);
 
 /* Shs hook handler for work queue*/
-int (*rmnet_shs_skb_entry_wq)(struct sk_buff *skb,
+int (__rcu *rmnet_shs_skb_entry_wq)(struct sk_buff *skb,
 			      struct rmnet_port *port) __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_shs_skb_entry_wq);
 
