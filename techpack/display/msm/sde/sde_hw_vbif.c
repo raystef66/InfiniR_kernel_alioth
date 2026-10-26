@@ -91,7 +91,6 @@ static void sde_hw_set_mem_type_v1(struct sde_hw_vbif *vbif,
 		u32 xin_id, u32 value)
 {
 	struct sde_hw_blk_reg_map *c;
-	u32 reg_val;
 
 	if (!vbif || xin_id >= MAX_XIN_COUNT)
 		return;
@@ -101,13 +100,11 @@ static void sde_hw_set_mem_type_v1(struct sde_hw_vbif *vbif,
 	c = &vbif->hw;
 
 	/* disable outer shareable */
-	reg_val = SDE_REG_READ(c, VBIF_OUT_AXI_ASHARED);
-	reg_val &= ~BIT(xin_id);
+	SDE_REG_READ(c, VBIF_OUT_AXI_ASHARED);
 	SDE_REG_WRITE(c, VBIF_OUT_AXI_ASHARED, 0);
 
 	/* disable inner shareable */
-	reg_val = SDE_REG_READ(c, VBIF_OUT_AXI_AINNERSHARED);
-	reg_val &= ~BIT(xin_id);
+	SDE_REG_READ(c, VBIF_OUT_AXI_AINNERSHARED);
 	SDE_REG_WRITE(c, VBIF_OUT_AXI_AINNERSHARED, 0);
 }
 

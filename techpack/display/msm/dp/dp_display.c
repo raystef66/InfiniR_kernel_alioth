@@ -828,7 +828,7 @@ static void dp_display_process_mst_hpd_high(struct dp_display_private *dp,
 
 		/* add extra delay if MST state is not cleared */
 		if (old_mstm_ctrl) {
-			DP_MST_DEBUG("MSTM_CTRL is not cleared, wait %dus\n",
+			DP_MST_DEBUG("MSTM_CTRL is not cleared, wait %luus\n",
 					clear_mstm_ctrl_timeout_us);
 			usleep_range(clear_mstm_ctrl_timeout_us,
 				clear_mstm_ctrl_timeout_us + 1000);
@@ -2172,7 +2172,7 @@ clean:
 end:
 	mutex_unlock(&dp->session_lock);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
-	return 0;
+	return rc;
 }
 
 static int dp_display_disable(struct dp_display *dp_display, void *panel)
@@ -2331,7 +2331,6 @@ static int dp_display_validate_resources(
 {
 	struct dp_display_private *dp;
 	struct dp_panel *dp_panel;
-	struct dp_debug *debug;
 	struct dp_display_mode dp_mode;
 	u32 mode_rate_khz, supported_rate_khz, mode_bpp, num_lm;
 	int rc, tmds_max_clock, rate;
@@ -2339,7 +2338,6 @@ static int dp_display_validate_resources(
 
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 	dp_panel = panel;
-	debug = dp->debug;
 
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
@@ -2527,7 +2525,6 @@ end:
 static int dp_display_get_modes(struct dp_display *dp, void *panel,
 	struct dp_display_mode *dp_mode)
 {
-	struct dp_display_private *dp_display;
 	struct dp_panel *dp_panel;
 	int ret = 0;
 
@@ -2541,8 +2538,6 @@ static int dp_display_get_modes(struct dp_display *dp, void *panel,
 		DP_ERR("invalid connector\n");
 		return 0;
 	}
-
-	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
 	ret = dp_panel->get_modes(dp_panel, dp_panel->connector, dp_mode);
 	if (dp_mode->timing.pixel_clk_khz)

@@ -1367,7 +1367,6 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 	int i;
 	int max = 0;
 	u8 data;
-	struct dp_link_private *link;
 	u8 buf[8] = {0}, offset = 0;
 
 	if (!dp_link) {
@@ -1375,7 +1374,6 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 		return -EINVAL;
 	}
 
-	link = container_of(dp_link, struct dp_link_private, dp_link);
 
 	/* use the max level across lanes */
 	for (i = 0; i < dp_link->link_params.lane_count; i++) {
@@ -1437,14 +1435,12 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 
 static int dp_link_send_psm_request(struct dp_link *dp_link, bool req)
 {
-	struct dp_link_private *link;
 
 	if (!dp_link) {
 		DP_ERR("invalid input\n");
 		return -EINVAL;
 	}
 
-	link = container_of(dp_link, struct dp_link_private, dp_link);
 
 	return 0;
 }

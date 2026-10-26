@@ -100,7 +100,7 @@ static struct thermal_cooling_device_ops bd_cdev_clone_ops = {
 	.set_cur_state = bd_cdev_set_cur_brightness_clone,
 };
 
-int backlight_clone_cdev_register(struct sde_clone_cdev *cdev_clone,
+static int backlight_clone_cdev_register(struct sde_clone_cdev *cdev_clone,
 					struct device *parent,
 					struct backlight_device *bd)
 {

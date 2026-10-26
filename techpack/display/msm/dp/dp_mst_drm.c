@@ -335,19 +335,15 @@ static int dp_mst_sim_update_payload_part1(struct drm_dp_mst_topology_mgr *mgr)
 	int i, j;
 	int cur_slots = 1;
 	struct drm_dp_payload req_payload;
-	struct drm_dp_mst_port *port;
 
 	mutex_lock(&mgr->payload_lock);
 	for (i = 0; i < mgr->max_payloads; i++) {
 		req_payload.start_slot = cur_slots;
 		if (mgr->proposed_vcpis[i]) {
-			port = container_of(mgr->proposed_vcpis[i],
-					struct drm_dp_mst_port, vcpi);
 			req_payload.num_slots =
 					mgr->proposed_vcpis[i]->num_slots;
 			req_payload.vcpi = mgr->proposed_vcpis[i]->vcpi;
 		} else {
-			port = NULL;
 			req_payload.num_slots = 0;
 		}
 
@@ -405,7 +401,6 @@ static int dp_mst_sim_update_payload_part1(struct drm_dp_mst_topology_mgr *mgr)
 
 static int dp_mst_sim_update_payload_part2(struct drm_dp_mst_topology_mgr *mgr)
 {
-	struct drm_dp_mst_port *port;
 	int i;
 
 	mutex_lock(&mgr->payload_lock);
@@ -413,9 +408,6 @@ static int dp_mst_sim_update_payload_part2(struct drm_dp_mst_topology_mgr *mgr)
 
 		if (!mgr->proposed_vcpis[i])
 			continue;
-
-		port = container_of(mgr->proposed_vcpis[i],
-				struct drm_dp_mst_port, vcpi);
 
 		DP_DEBUG("payload %d %d\n", i, mgr->payloads[i].payload_state);
 		if (mgr->payloads[i].payload_state == DP_PAYLOAD_LOCAL)
@@ -1034,7 +1026,6 @@ static void dp_mst_bridge_post_disable(struct drm_bridge *drm_bridge)
 	int rc = 0;
 	struct dp_mst_bridge *bridge;
 	struct dp_display *dp;
-	struct dp_mst_private *mst;
 
 	if (!drm_bridge) {
 		DP_ERR("Invalid params\n");
@@ -1048,7 +1039,6 @@ static void dp_mst_bridge_post_disable(struct drm_bridge *drm_bridge)
 	}
 
 	dp = bridge->display;
-	mst = dp->dp_mst_prv_info;
 
 	rc = dp->disable(dp, bridge->dp_panel);
 	if (rc)
@@ -1269,7 +1259,7 @@ static int dp_mst_connector_get_modes(struct drm_connector *connector,
 	return rc;
 }
 
-enum drm_mode_status dp_mst_connector_mode_valid(
+static enum drm_mode_status dp_mst_connector_mode_valid(
 		struct drm_connector *connector,
 		struct drm_display_mode *mode,
 		void *display, const struct msm_resource_caps_info *avail_res)
@@ -1327,7 +1317,7 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	return dp_connector_mode_valid(connector, mode, display, avail_res);
 }
 
-int dp_mst_connector_get_info(struct drm_connector *connector,
+static int dp_mst_connector_get_info(struct drm_connector *connector,
 		struct msm_display_info *info,
 		void *display)
 {
@@ -1355,7 +1345,7 @@ int dp_mst_connector_get_info(struct drm_connector *connector,
 	return rc;
 }
 
-int dp_mst_connector_get_mode_info(struct drm_connector *connector,
+static int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
 		void *display,

@@ -119,7 +119,6 @@ static void dp_catalog_aux_clear_hw_int_v420(struct dp_catalog_aux *aux)
 {
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
-	u32 data = 0;
 
 	if (!aux) {
 		DP_ERR("invalid input\n");
@@ -129,7 +128,7 @@ static void dp_catalog_aux_clear_hw_int_v420(struct dp_catalog_aux *aux)
 	catalog = dp_catalog_get_priv_v420(aux);
 	io_data = catalog->io->dp_phy;
 
-	data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V420);
+	dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V420);
 
 	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR_V420, 0x1f);
 	wmb(); /* make sure 0x1f is written before next write */

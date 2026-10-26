@@ -96,7 +96,6 @@ static const u32 wb_tbl[WB_MAX] = {SDE_NONE, SDE_NONE, SDE_NONE, 16};
 /**
  * List of ROT bits in CTL_FLUSH
  */
-static const u32 rot_tbl[ROT_MAX] = {SDE_NONE, 27};
 
 /**
  * List of INTF bits in CTL_FLUSH

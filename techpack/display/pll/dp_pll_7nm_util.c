@@ -387,7 +387,7 @@ enum dp_7nm_pll_status {
 	TSYNC_DONE,
 };
 
-char *dp_7nm_pll_get_status_name(enum dp_7nm_pll_status status)
+static char *dp_7nm_pll_get_status_name(enum dp_7nm_pll_status status)
 {
 	switch (status) {
 	case C_READY:

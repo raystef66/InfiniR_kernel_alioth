@@ -1125,7 +1125,7 @@ int reg_dmav1_setup_rc_datav1(struct sde_hw_dspp *ctx, void *cfg)
 
 	rc = reg_dma_dspp_check(ctx, cfg, RC_DATA);
 	if (rc) {
-		DRM_ERROR("invalid dma dspp check rc = %d\n");
+		DRM_ERROR("invalid dma dspp check rc = %d\n", rc);
 		return -EINVAL;
 	}
 
@@ -1161,7 +1161,7 @@ int reg_dmav1_setup_rc_datav1(struct sde_hw_dspp *ctx, void *cfg)
 	cfg_param_07 = rc_mask_cfg->cfg_param_07;
 	for (i = 0; i < rc_mask_cfg->cfg_param_08; i++) {
 		cfg_param_09 =  rc_mask_cfg->cfg_param_09[i];
-		DRM_DEBUG_DRIVER("cfg_param_09[%d] = 0x%016lX at %u\n", i,
+		DRM_DEBUG_DRIVER("cfg_param_09[%d] = 0x%016llX at %u\n", i,
 				 cfg_param_09,
 				 i + cfg_param_07);
 		data[i * 2] = (i == 0) ? (BIT(30) | (cfg_param_07 << 18)) : 0;
@@ -2909,7 +2909,7 @@ void reg_dmav1_setup_scaler3lite_lut(
 	int i, filter, rc;
 	int config_lut = 0x0;
 	unsigned long lut_flags;
-	u32 lut_addr, lut_offset;
+	u32 lut_addr;
 	struct sde_hw_reg_dma_ops *dma_ops;
 	u32 *lut[QSEED3LITE_FILTERS] = {NULL, NULL};
 	static const uint32_t off_tbl[QSEED3LITE_FILTERS] = {0x000, 0x200};
@@ -2938,7 +2938,6 @@ void reg_dmav1_setup_scaler3lite_lut(
 	for (filter = 0; filter < QSEED3LITE_FILTERS && config_lut; filter++) {
 		if (!lut[filter])
 			continue;
-		lut_offset = 0;
 		lut_addr = QSEED3L_COEF_LUT_OFF + offset
 			+ off_tbl[filter];
 		REG_DMA_SETUP_OPS(*buf, lut_addr,

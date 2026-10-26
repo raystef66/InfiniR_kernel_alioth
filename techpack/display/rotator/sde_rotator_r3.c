@@ -2571,7 +2571,7 @@ static void sde_hw_rotator_swts_destroy(struct sde_hw_rotator *rot)
  * @mgr: Pointer to rotator manager
  * @pmon: Boolean indicate an on/off power event
  */
-void sde_hw_rotator_pre_pmevent(struct sde_rot_mgr *mgr, bool pmon)
+static void sde_hw_rotator_pre_pmevent(struct sde_rot_mgr *mgr, bool pmon)
 {
 	struct sde_hw_rotator *rot;
 	u32 l_ts, h_ts, l_hwts, h_hwts;
@@ -2647,7 +2647,7 @@ void sde_hw_rotator_pre_pmevent(struct sde_rot_mgr *mgr, bool pmon)
  * @mgr: Pointer to rotator manager
  * @pmon: Boolean indicate an on/off power event
  */
-void sde_hw_rotator_post_pmevent(struct sde_rot_mgr *mgr, bool pmon)
+static void sde_hw_rotator_post_pmevent(struct sde_rot_mgr *mgr, bool pmon)
 {
 	struct sde_hw_rotator *rot;
 	u32 l_ts, h_ts;

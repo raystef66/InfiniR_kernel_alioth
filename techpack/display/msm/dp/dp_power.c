@@ -266,7 +266,6 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 		enum dp_pm_type pm_type, bool enable)
 {
 	int rc = 0;
-	struct dss_module_power *mp;
 	struct dp_power_private *power;
 
 	if (!dp_power) {
@@ -276,8 +275,6 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 	}
 
 	power = container_of(dp_power, struct dp_power_private, dp_power);
-
-	mp = &power->parser->mp[pm_type];
 
 	if (pm_type >= DP_MAX_PM) {
 		DP_ERR("unsupported power module: %s\n",

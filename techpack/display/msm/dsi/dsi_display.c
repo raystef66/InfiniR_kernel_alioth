@@ -4038,7 +4038,7 @@ static bool dsi_display_is_seamless_dfps_possible(
 	return true;
 }
 
-void dsi_display_update_byte_intf_div(struct dsi_display *display)
+static void dsi_display_update_byte_intf_div(struct dsi_display *display)
 {
 	struct dsi_host_common_cfg *config;
 	struct dsi_display_ctrl *m_ctrl;
@@ -4577,7 +4577,6 @@ static int dsi_display_get_dfps_timing(struct dsi_display *display,
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_display_mode per_ctrl_mode;
 	struct dsi_mode_info *timing;
-	struct dsi_ctrl *m_ctrl;
 
 	int rc = 0;
 
@@ -4585,7 +4584,6 @@ static int dsi_display_get_dfps_timing(struct dsi_display *display,
 		DSI_ERR("Invalid params\n");
 		return -EINVAL;
 	}
-	m_ctrl = display->ctrl[display->clk_master_idx].ctrl;
 
 	dsi_panel_get_dfps_caps(display->panel, &dfps_caps);
 	if (!dfps_caps.dfps_support) {
@@ -6425,7 +6423,7 @@ int dsi_display_get_mode_count(struct dsi_display *display,
 	return 0;
 }
 
-void dsi_display_adjust_mode_timing(struct dsi_display *display,
+static void dsi_display_adjust_mode_timing(struct dsi_display *display,
 			struct dsi_display_mode *dsi_mode,
 			int lanes, int bpp)
 {
@@ -6578,7 +6576,6 @@ int dsi_display_get_modes(struct dsi_display *display,
 	bool is_split_link, is_cmd_mode;
 	u32 num_dfps_rates, timing_mode_count, display_mode_count;
 	u32 sublinks_count, mode_idx, array_idx = 0;
-	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	int i, start, end, rc = -EINVAL;
 
 	if (!display || !out_modes) {
@@ -6609,8 +6606,6 @@ int dsi_display_get_modes(struct dsi_display *display,
 				display->name);
 		goto error;
 	}
-
-	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 
 	timing_mode_count = display->panel->num_timing_nodes;
 

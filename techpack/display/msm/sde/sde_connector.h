@@ -1009,4 +1009,7 @@ void sde_connector_mi_get_current_alpha(struct drm_connector *connector, uint32_
 
 void sde_connector_fod_notify(struct drm_connector *connector);
 
+struct dsi_display;
+void sde_crtc_fod_ui_ready(struct dsi_display *display, int type, int value);
+
 #endif /* _SDE_CONNECTOR_H_ */

@@ -7,7 +7,7 @@ static atomic_t touch_last_status = ATOMIC_INIT(-1);
 
 extern void sde_crtc_fod_ui_ready(struct dsi_display *display, int type, int value);
 
-int mi_get_disp_id(struct dsi_display *display)
+static int mi_get_disp_id(struct dsi_display *display)
 {
 	if (!strncmp(display->display_type, "primary", 7))
 		return MI_DISP_PRIMARY;

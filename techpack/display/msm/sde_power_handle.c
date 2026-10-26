@@ -812,7 +812,7 @@ vreg_err:
 	return rc;
 }
 
-int sde_cx_ipeak_vote(struct sde_power_handle *phandle, struct dss_clk *clock,
+static int sde_cx_ipeak_vote(struct sde_power_handle *phandle, struct dss_clk *clock,
 		u64 requested_clk_rate, u64 prev_clk_rate, bool enable_vote)
 {
 	int ret = 0;

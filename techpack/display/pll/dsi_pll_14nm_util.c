@@ -377,7 +377,6 @@ static void dsi_pll_disable(struct clk_hw *hw)
 {
 	struct dsi_pll_vco_clk *vco = to_vco_clk_hw(hw);
 	struct mdss_pll_resources *pll = vco->priv;
-	struct mdss_pll_resources *slave;
 
 	if (!pll->pll_on &&
 		mdss_pll_resource_enable(pll, true)) {
@@ -386,7 +385,6 @@ static void dsi_pll_disable(struct clk_hw *hw)
 	}
 
 	pll->handoff_resources = false;
-	slave = pll->slave;
 
 	dsi_pll_stop_14nm(pll->pll_base);
 

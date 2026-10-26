@@ -968,7 +968,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	is_conn_secondary = (reqs->hw_res.display_type ==
 				 SDE_CONNECTOR_SECONDARY) ? true : false;
 
-	SDE_DEBUG("check lm %d: dspp %d ds %d pp %d features %d disp type %d\n",
+	SDE_DEBUG("check lm %d: dspp %d ds %d pp %d features %lu disp type %d\n",
 		 lm_cfg->id, lm_cfg->dspp, lm_cfg->ds, lm_cfg->pingpong,
 		 lm_cfg->features, (int)reqs->hw_res.display_type);
 
@@ -1003,7 +1003,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	} else if ((!is_conn_primary && lm_primary_pref) ||
 			(!is_conn_secondary && lm_secondary_pref)) {
 		SDE_DEBUG(
-			"display preference is not met. display_type: %d lm_features: %x\n",
+			"display preference is not met. display_type: %d lm_features: %lx\n",
 			(int)reqs->hw_res.display_type, lm_cfg->features);
 		return false;
 	}
@@ -1742,9 +1742,7 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 				struct sde_mdss_cfg *cat)
 {
 	struct sde_rm_hw_iter iter_c;
-	int index = 0, ctl_top_cnt;
-	struct sde_kms *sde_kms = NULL;
-	struct sde_hw_mdp *hw_mdp;
+	int index = 0;
 	struct sde_splash_display *splash_display;
 	u8 intf_sel;
 
@@ -1758,15 +1756,11 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 			cat->ctl_count,
 			cat->dsc_count);
 
-	ctl_top_cnt = cat->ctl_count;
-
 	if (!priv->kms) {
 		SDE_ERROR("invalid kms\n");
 		return -EINVAL;
 	}
-	sde_kms = to_sde_kms(priv->kms);
 
-	hw_mdp = sde_rm_get_mdp(rm);
 
 	sde_rm_init_hw_iter(&iter_c, 0, SDE_HW_BLK_CTL);
 	while (_sde_rm_get_hw_locked(rm, &iter_c)
@@ -1973,8 +1967,7 @@ int sde_rm_update_topology(struct drm_connector_state *conn_state,
  */
 static void _sde_rm_release_rsvp(
 		struct sde_rm *rm,
-		struct sde_rm_rsvp *rsvp,
-		struct drm_connector *conn)
+		struct sde_rm_rsvp *rsvp)
 {
 	struct sde_rm_rsvp *rsvp_c, *rsvp_n;
 	struct sde_rm_hw_blk *blk;
@@ -2047,7 +2040,7 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	}
 
 	if (_sde_rm_is_display_in_cont_splash(sde_kms, enc)) {
-		_sde_rm_release_rsvp(rm, rsvp, conn);
+		_sde_rm_release_rsvp(rm, rsvp);
 		goto end;
 	}
 
@@ -2068,7 +2061,7 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	} else {
 		SDE_DEBUG("release rsvp[s%de%d]\n", rsvp->seq,
 				rsvp->enc_id);
-		_sde_rm_release_rsvp(rm, rsvp, conn);
+		_sde_rm_release_rsvp(rm, rsvp);
 	}
 
 end:
@@ -2141,7 +2134,7 @@ static int _sde_rm_commit_rsvp(
 }
 
 /* call this only after rm_mutex held */
-struct sde_rm_rsvp *_sde_rm_poll_get_rsvp_nxt_locked(struct sde_rm *rm,
+static struct sde_rm_rsvp *_sde_rm_poll_get_rsvp_nxt_locked(struct sde_rm *rm,
 		struct drm_encoder *enc)
 {
 	int i;
@@ -2266,7 +2259,7 @@ int sde_rm_reserve(
 	if (rsvp_cur && test_only && RM_RQ_CLEAR(&reqs)) {
 		SDE_DEBUG("test_only & CLEAR: clear rsvp[s%de%d]\n",
 				rsvp_cur->seq, rsvp_cur->enc_id);
-		_sde_rm_release_rsvp(rm, rsvp_cur, conn_state->connector);
+		_sde_rm_release_rsvp(rm, rsvp_cur);
 		rsvp_cur = NULL;
 		_sde_rm_print_rsvps(rm, SDE_RM_STAGE_AFTER_CLEAR);
 	}
@@ -2280,7 +2273,7 @@ int sde_rm_reserve(
 	if (ret) {
 		SDE_ERROR("failed to reserve hw resources: %d, test_only %d\n",
 				ret, test_only);
-		_sde_rm_release_rsvp(rm, rsvp_nxt, conn_state->connector);
+		_sde_rm_release_rsvp(rm, rsvp_nxt);
 		goto end;
 	} else if (test_only && !RM_RQ_LOCK(&reqs)) {
 		/*
@@ -2298,7 +2291,7 @@ int sde_rm_reserve(
 	}
 
 commit_rsvp:
-	_sde_rm_release_rsvp(rm, rsvp_cur, conn_state->connector);
+	_sde_rm_release_rsvp(rm, rsvp_cur);
 	ret = _sde_rm_commit_rsvp(rm, rsvp_nxt, conn_state);
 
 end:

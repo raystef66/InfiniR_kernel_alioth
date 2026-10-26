@@ -1054,4 +1054,7 @@ int msm_get_mixer_count(struct msm_drm_private *priv,
 		const struct drm_display_mode *mode,
 		const struct msm_resource_caps_info *res, u32 *num_lm);
 
+int msm_ioctl_rmfb2(struct drm_device *dev, void *data,
+		    struct drm_file *file_priv);
+
 #endif /* __MSM_DRV_H__ */

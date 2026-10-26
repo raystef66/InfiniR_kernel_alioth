@@ -224,7 +224,7 @@ void dsi_clk_disable_unprepare(struct dsi_clk_link_set *clk)
 	clk_disable_unprepare(clk->byte_clk);
 }
 
-int dsi_core_clk_start(struct dsi_core_clks *c_clks)
+static int dsi_core_clk_start(struct dsi_core_clks *c_clks)
 {
 	int rc = 0;
 
@@ -297,7 +297,7 @@ error:
 	return rc;
 }
 
-int dsi_core_clk_stop(struct dsi_core_clks *c_clks)
+static int dsi_core_clk_stop(struct dsi_core_clks *c_clks)
 {
 	int rc = 0;
 
@@ -518,9 +518,6 @@ error:
  */
 static int dsi_link_hs_clk_stop(struct dsi_link_hs_clk_info *link_hs_clks)
 {
-	struct dsi_link_clks *l_clks;
-
-	l_clks = container_of(link_hs_clks, struct dsi_link_clks, hs_clks);
 
 	dsi_link_hs_clk_disable(link_hs_clks);
 	dsi_link_hs_clk_unprepare(link_hs_clks);
@@ -1132,7 +1129,7 @@ error:
 	return rc;
 }
 
-int dsi_clk_req_state(void *client, enum dsi_clk_type clk,
+static int dsi_clk_req_state(void *client, enum dsi_clk_type clk,
 	enum dsi_clk_state state)
 {
 	int rc = 0;

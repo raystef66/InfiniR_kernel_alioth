@@ -285,7 +285,6 @@ static void dp_catalog_aux_clear_hw_interrupts(struct dp_catalog_aux *aux)
 {
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
-	u32 data = 0;
 
 	if (!aux) {
 		DP_ERR("invalid input\n");
@@ -295,7 +294,7 @@ static void dp_catalog_aux_clear_hw_interrupts(struct dp_catalog_aux *aux)
 	catalog = dp_catalog_get_priv(aux);
 	io_data = catalog->io.dp_phy;
 
-	data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS);
+	dp_read(DP_PHY_AUX_INTERRUPT_STATUS);
 
 	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR, 0x1f);
 	wmb(); /* make sure 0x1f is written before next write */
@@ -496,7 +495,6 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 		struct dp_catalog_panel *panel)
 {
 	struct dp_catalog_private *catalog;
-	struct drm_msm_ext_hdr_metadata *hdr;
 	struct dp_io_data *io_data;
 	u32 header, parity, data, mst_offset = 0;
 	u8 buf[SZ_64], off = 0;
@@ -510,7 +508,6 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 		mst_offset = MMSS_DP1_VSCEXT_0 - MMSS_DP_VSCEXT_0;
 
 	catalog = dp_catalog_get_priv(panel);
-	hdr = &panel->hdr_meta;
 	io_data = catalog->io.dp_link;
 
 	/* HEADER BYTE 1 */
@@ -829,8 +826,6 @@ static void dp_catalog_panel_config_misc(struct dp_catalog_panel *panel)
 static int dp_catalog_panel_set_colorspace(struct dp_catalog_panel *panel,
 bool vsc_supported)
 {
-	struct dp_catalog_private *catalog;
-	struct dp_io_data *io_data;
 
 	if (!panel) {
 		DP_ERR("invalid input\n");
@@ -842,8 +837,6 @@ bool vsc_supported)
 		return -EINVAL;
 	}
 
-	catalog = dp_catalog_get_priv(panel);
-	io_data = catalog->io.dp_link;
 
 	if (vsc_supported) {
 		dp_catalog_panel_setup_vsc_sdp(panel);
@@ -859,7 +852,7 @@ static void dp_catalog_panel_config_hdr(struct dp_catalog_panel *panel, bool en,
 {
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
-	u32 cfg, cfg2, cfg4, misc;
+	u32 cfg, cfg2, cfg4;
 	u32 sdp_cfg_off = 0;
 	u32 sdp_cfg2_off = 0;
 	u32 sdp_cfg4_off = 0;
@@ -887,7 +880,7 @@ static void dp_catalog_panel_config_hdr(struct dp_catalog_panel *panel, bool en,
 
 	cfg = dp_read(MMSS_DP_SDP_CFG + sdp_cfg_off);
 	cfg2 = dp_read(MMSS_DP_SDP_CFG2 + sdp_cfg2_off);
-	misc = dp_read(DP_MISC1_MISC0 + misc1_misc0_off);
+	dp_read(DP_MISC1_MISC0 + misc1_misc0_off);
 
 	if (en) {
 		if (dhdr_max_pkts) {
@@ -2287,7 +2280,7 @@ static void dp_catalog_audio_config_sdp(struct dp_catalog_audio *audio)
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
 	u32 sdp_cfg = 0, sdp_cfg_off = 0;
-	u32 sdp_cfg2 = 0, sdp_cfg2_off = 0;
+	u32 sdp_cfg2 = 0;
 
 	if (!audio)
 		return;
@@ -2299,7 +2292,6 @@ static void dp_catalog_audio_config_sdp(struct dp_catalog_audio *audio)
 
 	if (audio->stream_id == DP_STREAM_1) {
 		sdp_cfg_off = MMSS_DP1_SDP_CFG - MMSS_DP_SDP_CFG;
-		sdp_cfg2_off = MMSS_DP1_SDP_CFG2 - MMSS_DP_SDP_CFG2;
 	}
 
 	catalog = dp_catalog_get_priv(audio);

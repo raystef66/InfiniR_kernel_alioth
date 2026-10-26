@@ -661,7 +661,7 @@ static int sde_rsc_state_update(struct sde_rsc_priv *rsc,
 	return rc;
 }
 
-int rsc_hw_init(struct sde_rsc_priv *rsc)
+static int rsc_hw_init(struct sde_rsc_priv *rsc)
 {
 	int rc = 0;
 

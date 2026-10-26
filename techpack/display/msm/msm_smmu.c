@@ -210,7 +210,7 @@ static void msm_smmu_destroy(struct msm_mmu *mmu)
 	kfree(smmu);
 }
 
-struct device *msm_smmu_get_dev(struct msm_mmu *mmu)
+static struct device *msm_smmu_get_dev(struct msm_mmu *mmu)
 {
 	struct msm_smmu *smmu = to_msm_smmu(mmu);
 

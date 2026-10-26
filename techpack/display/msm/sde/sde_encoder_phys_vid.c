@@ -479,9 +479,8 @@ static void sde_encoder_phys_vid_vblank_irq(void *arg, int irq_idx)
 	unsigned long lock_flags;
 	u32 flush_register = ~0;
 	u32 reset_status = 0;
-	int new_cnt = -1, old_cnt = -1;
+	int old_cnt = -1;
 	u32 event = 0;
-	int pend_ret_fence_cnt = 0;
 
 	if (!phys_enc)
 		return;
@@ -507,8 +506,8 @@ static void sde_encoder_phys_vid_vblank_irq(void *arg, int irq_idx)
 	if (flush_register)
 		goto not_flushed;
 
-	new_cnt = atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
-	pend_ret_fence_cnt = atomic_read(&phys_enc->pending_retire_fence_cnt);
+	atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
+	atomic_read(&phys_enc->pending_retire_fence_cnt);
 
 	/* signal only for master, where there is a pending kickoff */
 	if (sde_encoder_phys_vid_is_master(phys_enc) &&
@@ -712,19 +711,14 @@ end:
 static bool sde_encoder_phys_vid_wait_dma_trigger(
 		struct sde_encoder_phys *phys_enc)
 {
-	struct sde_encoder_phys_vid *vid_enc;
 	struct sde_hw_intf *intf;
-	struct sde_hw_ctl *ctl;
 	struct intf_status status;
 
 	if (!phys_enc) {
 		SDE_ERROR("invalid encoder\n");
 		return false;
 	}
-
-	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	intf = phys_enc->hw_intf;
-	ctl = phys_enc->hw_ctl;
 	if (!phys_enc->hw_intf || !phys_enc->hw_ctl) {
 		SDE_ERROR("invalid hw_intf %d hw_ctl %d\n",
 			phys_enc->hw_intf != NULL, phys_enc->hw_ctl != NULL);
@@ -742,7 +736,6 @@ static bool sde_encoder_phys_vid_wait_dma_trigger(
 
 static void sde_encoder_phys_vid_enable(struct sde_encoder_phys *phys_enc)
 {
-	struct msm_drm_private *priv;
 	struct sde_encoder_phys_vid *vid_enc;
 	struct sde_hw_intf *intf;
 	struct sde_hw_ctl *ctl;
@@ -753,7 +746,6 @@ static void sde_encoder_phys_vid_enable(struct sde_encoder_phys *phys_enc)
 		SDE_ERROR("invalid encoder/device\n");
 		return;
 	}
-	priv = phys_enc->parent->dev->dev_private;
 
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	intf = phys_enc->hw_intf;
@@ -1024,7 +1016,6 @@ static void sde_encoder_phys_vid_single_vblank_wait(
 
 static void sde_encoder_phys_vid_disable(struct sde_encoder_phys *phys_enc)
 {
-	struct msm_drm_private *priv;
 	struct sde_encoder_phys_vid *vid_enc;
 	unsigned long lock_flags;
 	struct intf_status intf_status = {0};
@@ -1034,7 +1025,6 @@ static void sde_encoder_phys_vid_disable(struct sde_encoder_phys *phys_enc)
 		SDE_ERROR("invalid encoder/device\n");
 		return;
 	}
-	priv = phys_enc->parent->dev->dev_private;
 
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	if (!phys_enc->hw_intf || !phys_enc->hw_ctl) {
@@ -1188,13 +1178,10 @@ static void sde_encoder_phys_vid_prepare_for_commit(
 static void sde_encoder_phys_vid_irq_control(struct sde_encoder_phys *phys_enc,
 		bool enable)
 {
-	struct sde_encoder_phys_vid *vid_enc;
 	int ret;
 
 	if (!phys_enc)
 		return;
-
-	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 
 	SDE_EVT32(DRMID(phys_enc->parent), phys_enc->hw_intf->idx - INTF_0,
 			enable, atomic_read(&phys_enc->vblank_refcount));

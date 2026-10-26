@@ -240,7 +240,7 @@ static int dp_lphw_hpd_simulate_attention(struct dp_hpd *dp_hpd, int vdo)
 	return 0;
 }
 
-int dp_lphw_hpd_register(struct dp_hpd *dp_hpd)
+static int dp_lphw_hpd_register(struct dp_hpd *dp_hpd)
 {
 	struct dp_lphw_hpd_private *lphw_hpd;
 	int rc = 0;

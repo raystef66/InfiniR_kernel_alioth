@@ -286,7 +286,6 @@ struct sde_encoder_virt {
 	struct kthread_delayed_work delayed_off_work;
 	struct kthread_work vsync_event_work;
 	struct kthread_work input_event_work;
-	struct kthread_work touch_notify_work;
 	struct kthread_work esd_trigger_work;
 	struct input_handler *input_handler;
 	bool input_handler_registered;
@@ -1148,7 +1147,6 @@ static int sde_encoder_virt_atomic_check(
 	struct sde_encoder_virt *sde_enc;
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
-	const struct drm_display_mode *mode;
 	struct drm_display_mode *adj_mode;
 	struct sde_connector *sde_conn = NULL;
 	struct sde_connector_state *sde_conn_state = NULL;
@@ -1168,7 +1166,6 @@ static int sde_encoder_virt_atomic_check(
 
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
-	mode = &crtc_state->mode;
 	adj_mode = &crtc_state->adjusted_mode;
 	sde_conn = to_sde_connector(conn_state->connector);
 	sde_conn_state = to_sde_connector_state(conn_state);
@@ -1700,7 +1697,6 @@ static int _sde_encoder_dsc_2_lm_2_enc_1_intf(struct sde_encoder_virt *sde_enc,
 static int _sde_encoder_update_roi(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
-	struct drm_connector *drm_conn;
 	struct drm_display_mode *adj_mode;
 	struct sde_rect roi;
 
@@ -1721,7 +1717,6 @@ static int _sde_encoder_update_roi(struct drm_encoder *drm_enc)
 	}
 
 	adj_mode = &sde_enc->cur_master->cached_mode;
-	drm_conn = sde_enc->cur_master->connector;
 
 	_sde_encoder_get_connector_roi(sde_enc, &roi);
 	if (sde_kms_rect_is_null(&roi)) {
@@ -2377,8 +2372,6 @@ static void sde_encoder_input_event_handler(struct input_handle *handle,
 	SDE_EVT32_VERBOSE(DRMID(drm_enc));
 
 	disp_thread = &priv->disp_thread[sde_enc->crtc->index];
-	kthread_queue_work(&disp_thread->worker,
-				&sde_enc->touch_notify_work);
 
 	/* Only consider EV_ABS (touch) events in QC original design */
 	if (type == EV_ABS && sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
@@ -3396,14 +3389,12 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	int i, ret = 0;
 	struct msm_compression_info *comp_info = NULL;
 	struct drm_display_mode *cur_mode = NULL;
-	struct msm_display_info *disp_info;
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
 		return;
 	}
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	disp_info = &sde_enc->disp_info;
 
 	if (!sde_kms_power_resource_is_enabled(drm_enc->dev)) {
 		SDE_ERROR("power resource is not enabled\n");
@@ -3545,8 +3536,6 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
 static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
-	struct msm_drm_private *priv;
-	struct sde_kms *sde_kms;
 	enum sde_intf_mode intf_mode;
 	int i = 0;
 
@@ -3569,8 +3558,6 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
 	intf_mode = sde_encoder_get_intf_mode(drm_enc);
 
 	SDE_EVT32(DRMID(drm_enc));
@@ -3721,7 +3708,7 @@ static enum sde_wb sde_encoder_get_wb(struct sde_mdss_cfg *catalog,
 	return WB_MAX;
 }
 
-void sde_encoder_perf_uidle_status(struct sde_kms *sde_kms,
+static void sde_encoder_perf_uidle_status(struct sde_kms *sde_kms,
 	struct drm_crtc *crtc)
 {
 	struct sde_hw_uidle *uidle;
@@ -4244,7 +4231,6 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	/* don't perform flush/start operations for slave encoders */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
-		enum sde_rm_topology_name topology = SDE_RM_TOPOLOGY_NONE;
 
 		if (!phys || phys->enable_state == SDE_ENC_DISABLED)
 			continue;
@@ -4253,9 +4239,6 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 		if (!ctl)
 			continue;
 
-		if (phys->connector)
-			topology = sde_connector_get_topology_name(
-					phys->connector);
 
 		if (!phys->ops.needs_single_flush ||
 				!phys->ops.needs_single_flush(phys)) {
@@ -4719,26 +4702,6 @@ static void sde_encoder_input_event_work_handler(struct kthread_work *work)
 			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
 }
 
-static void sde_encoder_touch_notify_work_handler(struct kthread_work *work)
-{
-	struct dsi_bridge *c_bridge = NULL;
-	struct dsi_display *dsi_display = NULL;
-	struct drm_encoder *drm_enc = NULL;
-	struct sde_encoder_virt *sde_enc = container_of(work,
-				struct sde_encoder_virt, touch_notify_work);
-
-	if (!sde_enc) {
-		SDE_ERROR("invalid encoder for the touch notify\n");
-		return;
-	}
-
-	drm_enc = &sde_enc->base;
-
-	c_bridge = container_of(drm_enc->bridge, struct dsi_bridge, base);
-	if (c_bridge)
-		dsi_display = c_bridge->display;
-}
-
 static void sde_encoder_vsync_event_work_handler(struct kthread_work *work)
 {
 	struct sde_encoder_virt *sde_enc = container_of(work,
@@ -4973,11 +4936,9 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	struct sde_encoder_virt *sde_enc;
 	struct sde_encoder_phys *phys;
 	struct sde_kms *sde_kms = NULL;
-	struct sde_crtc *sde_crtc;
 	struct msm_drm_private *priv = NULL;
 	bool needs_hw_reset = false, is_cmd_mode;
 	int i, rc, ret = 0;
-	struct msm_display_info *disp_info;
 
 	if (!drm_enc || !params || !drm_enc->dev ||
 		!drm_enc->dev->dev_private) {
@@ -4987,8 +4948,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
-	disp_info = &sde_enc->disp_info;
-	sde_crtc = to_sde_crtc(sde_enc->crtc);
 
 	SDE_DEBUG_ENC(sde_enc, "\n");
 	SDE_EVT32(DRMID(drm_enc));
@@ -5131,8 +5090,6 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error)
 	struct dsi_display_mode adj_mode;
 	ktime_t wakeup_time;
 	unsigned int i;
-	struct sde_kms *sde_kms = NULL;
-	struct msm_drm_private *priv = NULL;
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -5185,11 +5142,6 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error)
 		mutex_unlock(&dsi_display->panel->panel_lock);
 	}
 
-	priv = sde_enc->base.dev->dev_private;
-	if (priv != NULL) {
-		sde_kms = to_sde_kms(priv->kms);
-		sde_kms_kickoff_count(sde_kms);
-	}
 
 	SDE_ATRACE_END("encoder_kickoff");
 }
@@ -5943,8 +5895,6 @@ struct drm_encoder *sde_encoder_init_with_ops(
 	kthread_init_work(&sde_enc->input_event_work,
 			sde_encoder_input_event_work_handler);
 
-	kthread_init_work(&sde_enc->touch_notify_work,
-			sde_encoder_touch_notify_work_handler);
 
 	kthread_init_work(&sde_enc->esd_trigger_work,
 			sde_encoder_esd_trigger_work_handler);

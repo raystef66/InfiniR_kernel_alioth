@@ -74,5 +74,7 @@ enum local_lhbm_target_brightness {
 };
 
 int mi_disp_set_fod_queue_work(u32 fod_btn, bool from_touch);
+int mi_disp_lhbm_attach_primary_dsi_display(struct dsi_display *display);
+
 #endif
 

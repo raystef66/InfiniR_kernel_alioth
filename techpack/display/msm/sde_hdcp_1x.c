@@ -582,7 +582,7 @@ static int sde_hdcp_1x_verify_r0(struct sde_hdcp_1x *hdcp)
 {
 	int rc, r0_retry = 3;
 	u8 buf[2];
-	u32 link0_status, timeout_count;
+	u32 link0_status;
 	u32 const r0_read_delay_us = 1;
 	u32 const r0_read_timeout_us = r0_read_delay_us * 10;
 	struct sde_hdcp_reg_set *reg_set = &hdcp->reg_set;
@@ -612,7 +612,7 @@ static int sde_hdcp_1x_verify_r0(struct sde_hdcp_1x *hdcp)
 	} else {
 		if (!hdcp->sink_r0_ready) {
 			reinit_completion(&hdcp->sink_r0_available);
-			timeout_count = wait_for_completion_timeout(
+			wait_for_completion_timeout(
 				&hdcp->sink_r0_available, HZ / 2);
 
 			if (hdcp->reauth) {

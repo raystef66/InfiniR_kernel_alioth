@@ -704,7 +704,7 @@ end:
 	return (struct device_node *)matched_node;
 }
 
-struct dsi_parser_node *dsi_parser_get_node_by_name(
+static struct dsi_parser_node *dsi_parser_get_node_by_name(
 				struct dsi_parser_node *node,
 				char *name)
 {

@@ -329,12 +329,11 @@ static void hdmi_phy_pll_calculator_28lpm(unsigned long vco_rate,
 
 }
 
-int hdmi_vco_set_rate_28lpm(struct clk_hw *hw, unsigned long rate,
+static int hdmi_vco_set_rate_28lpm(struct clk_hw *hw, unsigned long rate,
 		unsigned long parent_rate)
 {
 	struct hdmi_pll_vco_clk *vco = to_hdmi_vco_clk_hw(hw);
 	struct mdss_pll_resources *hdmi_pll_res = vco->priv;
-	void __iomem		*pll_base;
 	int rc;
 
 	rc = mdss_pll_resource_enable(hdmi_pll_res, true);
@@ -345,8 +344,6 @@ int hdmi_vco_set_rate_28lpm(struct clk_hw *hw, unsigned long rate,
 
 	if (hdmi_pll_res->pll_on)
 		return 0;
-
-	pll_base = hdmi_pll_res->pll_base;
 
 	pr_debug("rate=%ld\n", rate);
 
@@ -403,7 +400,7 @@ static unsigned long hdmi_vco_get_rate(struct hdmi_pll_vco_clk *vco)
 	return freq;
 }
 
-long hdmi_vco_round_rate_28lpm(struct clk_hw *hw, unsigned long rate,
+static long hdmi_vco_round_rate_28lpm(struct clk_hw *hw, unsigned long rate,
 		unsigned long *parent_rate)
 {
 	unsigned long rrate = rate;
@@ -420,7 +417,7 @@ long hdmi_vco_round_rate_28lpm(struct clk_hw *hw, unsigned long rate,
 	return rrate;
 }
 
-int hdmi_vco_prepare_28lpm(struct clk_hw *hw)
+static int hdmi_vco_prepare_28lpm(struct clk_hw *hw)
 {
 	int rc = 0;
 	struct hdmi_pll_vco_clk *vco = to_hdmi_vco_clk_hw(hw);
@@ -459,7 +456,7 @@ error:
 	return rc;
 }
 
-void hdmi_vco_unprepare_28lpm(struct clk_hw *hw)
+static void hdmi_vco_unprepare_28lpm(struct clk_hw *hw)
 {
 	struct hdmi_pll_vco_clk *vco = to_hdmi_vco_clk_hw(hw);
 	struct mdss_pll_resources *hdmi_res = vco->priv;
@@ -486,7 +483,7 @@ void hdmi_vco_unprepare_28lpm(struct clk_hw *hw)
 }
 
 
-unsigned long hdmi_vco_recalc_rate_28lpm(struct clk_hw *hw,
+static unsigned long hdmi_vco_recalc_rate_28lpm(struct clk_hw *hw,
 				unsigned long parent_rate)
 {
 	struct hdmi_pll_vco_clk *vco = to_hdmi_vco_clk_hw(hw);

@@ -321,7 +321,7 @@ msm_crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
  * and do the plane commits at the end. This is useful for drivers doing runtime
  * PM since planes updates then only happen when the CRTC is actually enabled.
  */
-void msm_atomic_helper_commit_modeset_disables(struct drm_device *dev,
+static void msm_atomic_helper_commit_modeset_disables(struct drm_device *dev,
 		struct drm_atomic_state *old_state)
 {
 	msm_disable_outputs(dev, old_state);

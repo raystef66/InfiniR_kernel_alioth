@@ -736,7 +736,6 @@ static int dp_audio_on(struct dp_audio *dp_audio)
 {
 	int rc = 0;
 	struct dp_audio_private *audio;
-	struct msm_ext_disp_init_data *ext;
 
 	if (!dp_audio) {
 		DP_ERR("invalid input\n");
@@ -750,8 +749,6 @@ static int dp_audio_on(struct dp_audio *dp_audio)
 	}
 
 	dp_audio_register_ext_disp(audio);
-
-	ext = &audio->ext_audio_data;
 
 	atomic_set(&audio->session_on, 1);
 
@@ -772,7 +769,6 @@ static int dp_audio_off(struct dp_audio *dp_audio)
 {
 	int rc = 0;
 	struct dp_audio_private *audio;
-	struct msm_ext_disp_init_data *ext;
 	bool work_pending = false;
 
 	if (!dp_audio) {
@@ -786,8 +782,6 @@ static int dp_audio_off(struct dp_audio *dp_audio)
 		DP_DEBUG("audio already off\n");
 		return rc;
 	}
-
-	ext = &audio->ext_audio_data;
 
 	work_pending = cancel_delayed_work_sync(&audio->notify_delayed_work);
 	if (work_pending)

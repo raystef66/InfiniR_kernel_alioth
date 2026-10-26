@@ -59,42 +59,6 @@ void sde_mdp_get_v_h_subsample_rate(u8 chroma_sample,
 	}
 }
 
-void sde_rot_intersect_rect(struct sde_rect *res_rect,
-	const struct sde_rect *dst_rect,
-	const struct sde_rect *sci_rect)
-{
-	int l = max(dst_rect->x, sci_rect->x);
-	int t = max(dst_rect->y, sci_rect->y);
-	int r = min((dst_rect->x + dst_rect->w), (sci_rect->x + sci_rect->w));
-	int b = min((dst_rect->y + dst_rect->h), (sci_rect->y + sci_rect->h));
-
-	if (r < l || b < t)
-		*res_rect = (struct sde_rect){0, 0, 0, 0};
-	else
-		*res_rect = (struct sde_rect){l, t, (r-l), (b-t)};
-}
-
-void sde_rot_crop_rect(struct sde_rect *src_rect,
-	struct sde_rect *dst_rect,
-	const struct sde_rect *sci_rect)
-{
-	struct sde_rect res;
-
-	sde_rot_intersect_rect(&res, dst_rect, sci_rect);
-
-	if (res.w && res.h) {
-		if ((res.w != dst_rect->w) || (res.h != dst_rect->h)) {
-			src_rect->x = src_rect->x + (res.x - dst_rect->x);
-			src_rect->y = src_rect->y + (res.y - dst_rect->y);
-			src_rect->w = res.w;
-			src_rect->h = res.h;
-		}
-		*dst_rect = (struct sde_rect)
-			{(res.x - sci_rect->x), (res.y - sci_rect->y),
-			res.w, res.h};
-	}
-}
-
 /*
  * sde_rect_cmp() - compares two rects
  * @rect1 - rect value to compare
@@ -102,12 +66,6 @@ void sde_rot_crop_rect(struct sde_rect *src_rect,
  *
  * Returns 1 if the rects are same, 0 otherwise.
  */
-int sde_rect_cmp(struct sde_rect *rect1, struct sde_rect *rect2)
-{
-	return rect1->x == rect2->x && rect1->y == rect2->y &&
-	       rect1->w == rect2->w && rect1->h == rect2->h;
-}
-
 /*
  * sde_rect_overlap_check() - compare two rects and check if they overlap
  * @rect1 - rect value to compare
@@ -115,23 +73,7 @@ int sde_rect_cmp(struct sde_rect *rect1, struct sde_rect *rect2)
  *
  * Returns true if rects overlap, false otherwise.
  */
-bool sde_rect_overlap_check(struct sde_rect *rect1, struct sde_rect *rect2)
-{
-	u32 rect1_left = rect1->x, rect1_right = rect1->x + rect1->w;
-	u32 rect1_top = rect1->y, rect1_bottom = rect1->y + rect1->h;
-	u32 rect2_left = rect2->x, rect2_right = rect2->x + rect2->w;
-	u32 rect2_top = rect2->y, rect2_bottom = rect2->y + rect2->h;
-
-	if ((rect1_right <= rect2_left) ||
-	    (rect1_left >= rect2_right) ||
-	    (rect1_bottom <= rect2_top) ||
-	    (rect1_top >= rect2_bottom))
-		return false;
-
-	return true;
-}
-
-int sde_mdp_get_rau_strides(u32 w, u32 h,
+static int sde_mdp_get_rau_strides(u32 w, u32 h,
 			       struct sde_mdp_format_params *fmt,
 			       struct sde_mdp_plane_sizes *ps)
 {
@@ -629,7 +571,7 @@ int sde_validate_offset_for_ubwc_format(
 }
 
 /* x and y are assumed to be valid, expected to line up with start of tiles */
-void sde_rot_ubwc_data_calc_offset(struct sde_mdp_data *data, u16 x, u16 y,
+static void sde_rot_ubwc_data_calc_offset(struct sde_mdp_data *data, u16 x, u16 y,
 	struct sde_mdp_plane_sizes *ps, struct sde_mdp_format_params *fmt)
 {
 	u16 macro_w, micro_w, micro_h;

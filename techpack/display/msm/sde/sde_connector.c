@@ -641,7 +641,7 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 	return rc;
 }
 
-void sde_connector_set_colorspace(struct sde_connector *c_conn)
+static void sde_connector_set_colorspace(struct sde_connector *c_conn)
 {
 	int rc = 0;
 
@@ -778,7 +778,7 @@ static int _sde_connector_update_dirty_properties(
 	return 0;
 }
 
-void sde_connector_update_fod_hbm(struct drm_connector *connector)
+static void sde_connector_update_fod_hbm(struct drm_connector *connector)
 {
 	static atomic_t effective_status = ATOMIC_INIT(false);
 	struct sde_crtc_state *cstate;
@@ -873,7 +873,7 @@ void sde_crtc_fod_ui_ready(struct dsi_display *display, int type, int value)
 	sysfs_notify(&display->drm_conn->kdev->kobj, NULL, "fod_ui_ready");
 }
 
-int mi_sde_connector_gir_fence(struct drm_connector *connector)
+static int mi_sde_connector_gir_fence(struct drm_connector *connector)
 {
 	int rc = 0;
 	struct sde_connector *c_conn;
@@ -928,7 +928,6 @@ static int _sde_connector_mi_dimlayer_hbm_fence(struct drm_connector *connector)
 	struct dsi_display *dsi_display;
 	bool skip = false;
 	bool Prepare_Kickoff = false;
-	bool Ready_Kickoff = false;
 	static int skip_frame_count = 0;
 	bool hbm_overlay;
 	static bool last_fod_unlock_success;
@@ -945,7 +944,7 @@ static int _sde_connector_mi_dimlayer_hbm_fence(struct drm_connector *connector)
 
 	c_conn = to_sde_connector(connector);
 	Prepare_Kickoff = get_sde_encoder_virt_prepare_kickoff(connector);
-	Ready_Kickoff = get_sde_encoder_virt_ready_kickoff(connector);
+	get_sde_encoder_virt_ready_kickoff(connector);
 
 	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI)
 		return 0;
@@ -1238,7 +1237,6 @@ end:
 int sde_connector_prepare_commit(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn;
-	struct sde_connector_state *c_state;
 	struct msm_display_conn_params params;
 	int rc;
 
@@ -1248,7 +1246,6 @@ int sde_connector_prepare_commit(struct drm_connector *connector)
 	}
 
 	c_conn = to_sde_connector(connector);
-	c_state = to_sde_connector_state(connector->state);
 	if (!c_conn->display) {
 		SDE_ERROR("invalid connector display\n");
 		return -EINVAL;
@@ -2222,6 +2219,7 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
 	return vfp;
 }
 
+#ifdef CONFIG_DEBUG_FS
 static int _sde_debugfs_conn_cmd_tx_open(struct inode *inode, struct file *file)
 {
 	/* non-seekable */
@@ -2355,7 +2353,6 @@ static const struct file_operations conn_cmd_tx_fops = {
 	.write =	_sde_debugfs_conn_cmd_tx_write,
 };
 
-#ifdef CONFIG_DEBUG_FS
 /**
  * sde_connector_init_debugfs - initialize connector debugfs
  * @connector: Pointer to drm connector
@@ -2808,8 +2805,6 @@ static const struct drm_connector_helper_funcs sde_connector_helper_ops_v2 = {
 static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	struct sde_kms_info *info)
 {
-	struct msm_drm_private *priv;
-	struct sde_kms *sde_kms;
 	struct sde_connector *c_conn = NULL;
 	struct drm_display_mode *mode;
 	struct msm_mode_info mode_info;
@@ -2820,8 +2815,6 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		return -EINVAL;
 	}
 
-	priv = conn->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
 
 	c_conn = to_sde_connector(conn);
 	if (!c_conn->ops.get_mode_info) {

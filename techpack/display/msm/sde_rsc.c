@@ -1637,7 +1637,7 @@ static int sde_rsc_rpmh_probe(struct platform_device *pdev)
 	return 0;
 }
 
-int sde_rsc_rpmh_remove(struct platform_device *pdev)
+static int sde_rsc_rpmh_remove(struct platform_device *pdev)
 {
 	int i;
 

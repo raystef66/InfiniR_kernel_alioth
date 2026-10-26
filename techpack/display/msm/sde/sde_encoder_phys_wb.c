@@ -97,7 +97,6 @@ static void sde_encoder_phys_wb_set_qos_remap(
 {
 	struct sde_encoder_phys_wb *wb_enc;
 	struct sde_hw_wb *hw_wb;
-	struct drm_crtc *crtc;
 	struct sde_vbif_set_qos_params qos_params;
 
 	if (!phys_enc || !phys_enc->parent || !phys_enc->parent->crtc) {
@@ -111,7 +110,6 @@ static void sde_encoder_phys_wb_set_qos_remap(
 		return;
 	}
 
-	crtc = wb_enc->crtc;
 
 	if (!wb_enc->hw_wb || !wb_enc->hw_wb->caps) {
 		SDE_ERROR("invalid writeback hardware\n");
@@ -1094,7 +1092,7 @@ static void sde_encoder_phys_wb_irq_ctrl(
 {
 
 	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys);
-	int index = 0, refcount;
+	int index = 0;
 	int ret = 0, pp = 0;
 
 	if (!wb_enc)
@@ -1109,7 +1107,7 @@ static void sde_encoder_phys_wb_irq_ctrl(
 		return;
 	}
 
-	refcount = atomic_read(&phys->wbirq_refcount);
+	atomic_read(&phys->wbirq_refcount);
 
 	if (enable && atomic_inc_return(&phys->wbirq_refcount) == 1) {
 		sde_encoder_helper_register_irq(phys, INTR_IDX_WB_DONE);
@@ -1572,7 +1570,6 @@ static void sde_encoder_phys_wb_enable(struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys_enc);
 	struct sde_hw_wb *hw_wb = wb_enc->hw_wb;
-	struct drm_device *dev;
 	struct drm_connector *connector;
 
 	SDE_DEBUG("[wb:%d]\n", hw_wb->idx - WB_0);
@@ -1581,7 +1578,6 @@ static void sde_encoder_phys_wb_enable(struct sde_encoder_phys *phys_enc)
 		SDE_ERROR("invalid drm device\n");
 		return;
 	}
-	dev = wb_enc->base.parent->dev;
 
 	/* find associated writeback connector */
 	connector = phys_enc->connector;

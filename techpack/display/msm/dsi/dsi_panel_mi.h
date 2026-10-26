@@ -412,4 +412,12 @@ int dsi_panel_power_turn_off(bool on);
 
 int mi_dsi_panel_set_fod_brightness(struct mipi_dsi_device *dsi, u16 brightness);
 
+ssize_t dsi_panel_lockdown_info_read(unsigned char *plockdowninfo);
+
+int mi_mipi_dsi_dcs_set_pwm_value(u16 dbv_value);
+
+ssize_t dsi_panel_vendor_info_read(unsigned char *plockdowninfo);
+
+void dsi_panel_doubleclick_enable(bool on);
+
 #endif /* _DSI_PANEL_MI_H_ */

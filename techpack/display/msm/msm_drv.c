@@ -102,7 +102,7 @@ static void msm_fb_output_poll_changed(struct drm_device *dev)
  * RETURNS
  * Zero for success or -errorno.
  */
-int msm_atomic_check(struct drm_device *dev,
+static int msm_atomic_check(struct drm_device *dev,
 			    struct drm_atomic_state *state)
 {
 	struct msm_drm_private *priv;
@@ -333,7 +333,6 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 					int crtc_id, bool enable)
 {
 	struct vblank_work *cur_work;
-	struct drm_crtc *crtc;
 	struct kthread_worker *worker;
 
 	if (!priv || crtc_id >= priv->num_crtcs)
@@ -342,8 +341,6 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 	cur_work = kzalloc(sizeof(*cur_work), GFP_ATOMIC);
 	if (!cur_work)
 		return -ENOMEM;
-
-	crtc = priv->crtcs[crtc_id];
 
 	kthread_init_work(&cur_work->work, vblank_ctrl_worker);
 	cur_work->crtc_id = crtc_id;
@@ -1087,10 +1084,7 @@ static int msm_disable_all_modes_commit(
 {
 	struct drm_plane *plane;
 	struct drm_crtc *crtc;
-	unsigned int plane_mask;
 	int ret;
-
-	plane_mask = 0;
 	drm_for_each_plane(plane, dev) {
 		struct drm_plane_state *plane_state;
 
@@ -1103,7 +1097,6 @@ static int msm_disable_all_modes_commit(
 		plane_state->rotation = 0;
 
 		plane->old_fb = plane->fb;
-		plane_mask |= 1 << drm_plane_index(plane);
 
 		/* disable non-primary: */
 		if (plane->type == DRM_PLANE_TYPE_PRIMARY)
@@ -1750,7 +1743,7 @@ EXPORT_SYMBOL(msm_ioctl_rmfb2);
  * @file_priv: drm file for the ioctl call
  *
  */
-int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
+static int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
 			struct drm_file *file_priv)
 {
 	struct msm_file_private *ctx = file_priv->driver_priv;

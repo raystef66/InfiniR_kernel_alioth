@@ -38,7 +38,7 @@ struct msm_framebuffer {
 };
 #define to_msm_framebuffer(x) container_of(x, struct msm_framebuffer, base)
 
-int msm_framebuffer_dirty(struct drm_framebuffer *fb,
+static int msm_framebuffer_dirty(struct drm_framebuffer *fb,
 		struct drm_file *file_priv, unsigned int flags,
 		unsigned int color, struct drm_clip_rect *clips,
 		unsigned int num_clips)
@@ -135,7 +135,6 @@ void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m)
 
 void msm_framebuffer_set_keepattrs(struct drm_framebuffer *fb, bool enable)
 {
-	struct msm_framebuffer *msm_fb;
 	int i, n;
 	struct drm_gem_object *bo;
 	struct msm_gem_object *msm_obj;
@@ -150,8 +149,6 @@ void msm_framebuffer_set_keepattrs(struct drm_framebuffer *fb, bool enable)
 				__builtin_return_address(0));
 		return;
 	}
-
-	msm_fb = to_msm_framebuffer(fb);
 	n = fb->format->num_planes;
 	for (i = 0; i < n; i++) {
 		bo = msm_framebuffer_bo(fb, i);

@@ -316,7 +316,7 @@ static int dp_vco_pll_init_db_14nm(struct dp_pll_db *pdb,
 	return 0;
 }
 
-int dp_config_vco_rate_14nm(struct dp_pll_vco_clk *vco,
+static int dp_config_vco_rate_14nm(struct dp_pll_vco_clk *vco,
 		unsigned long rate)
 {
 	u32 res = 0;

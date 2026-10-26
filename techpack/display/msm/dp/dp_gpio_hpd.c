@@ -182,7 +182,7 @@ error:
 	return rc;
 }
 
-int dp_gpio_hpd_register(struct dp_hpd *dp_hpd)
+static int dp_gpio_hpd_register(struct dp_hpd *dp_hpd)
 {
 	struct dp_gpio_hpd_private *gpio_hpd;
 	int edge;
