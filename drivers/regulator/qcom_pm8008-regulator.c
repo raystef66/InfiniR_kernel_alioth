@@ -177,7 +177,8 @@ static int pm8008_read(struct regmap *regmap,  u16 reg, u8 *val, int count)
 		rc = regmap_bulk_read(regmap, reg, val, count);
 	} while (rc < 0 && retry++ < MAX_RETRY_TIME);
 	if (retry > 0)
-		pr_err("failed to read 0x%04x retry time %d success\n", reg, retry);
+		pr_err("read %d bytes at 0x%04x retries %d, result %d\n",
+		       count, reg, retry, rc);
 	if (rc < 0)
 		pr_err("failed to read 0x%04x\n", reg);
 #else
@@ -196,16 +197,17 @@ static int pm8008_write(struct regmap *regmap, u16 reg, const u8 *val,
 
 #ifdef CONFIG_I2C_RETRY
 	int retry = 0;
-	pr_debug("Writing 0x%02x to 0x%04x\n", val, reg);
+	pr_debug("Writing %d bytes to 0x%04x\n", count, reg);
 	do {
 		rc = regmap_bulk_write(regmap, reg, val, count);
 	} while (rc < 0 && retry++ < MAX_RETRY_TIME);
 	if (retry > 0)
-		pr_err("failed to write 0x%04x retry time %d success\n", reg, retry);
+		pr_err("write %d bytes to 0x%04x retries %d, result %d\n",
+		       count, reg, retry, rc);
 	if (rc < 0)
 		pr_err("failed to write 0x%04x\n", reg);
 #else
-	pr_debug("Writing 0x%02x to 0x%04x\n", val, reg);
+	pr_debug("Writing %d bytes to 0x%04x\n", count, reg);
 	rc = regmap_bulk_write(regmap, reg, val, count);
 	if (rc < 0)
 		pr_err("failed to write 0x%04x\n", reg);
@@ -226,8 +228,8 @@ static int pm8008_masked_write(struct regmap *regmap, u16 reg, u8 mask,
 		rc = regmap_update_bits(regmap, reg, mask, val);
 	} while (rc < 0 && retry++ < MAX_RETRY_TIME);
 	if (retry > 0)
-		pr_err("failed to write 0x%02x to 0x%04x with mask 0x%02x retry time %d success\n",
-				val, reg, retry);
+		pr_err("write 0x%02x to 0x%04x with mask 0x%02x retries %d, result %d\n",
+		       val, reg, mask, retry, rc);
 	if (rc < 0)
 	pr_err("failed to write 0x%02x to 0x%04x with mask 0x%02x\n",
 				val, reg, mask);
