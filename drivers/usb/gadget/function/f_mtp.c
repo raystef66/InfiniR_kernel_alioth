@@ -334,7 +334,7 @@ static u8 mtp_os_string[] = {
 /* Microsoft Extended Configuration Descriptor Header Section */
 struct mtp_ext_config_desc_header {
 	__le32	dwLength;
-	__u16	bcdVersion;
+	__le16	bcdVersion;
 	__le16	wIndex;
 	__u8	bCount;
 	__u8	reserved[7];
@@ -879,8 +879,8 @@ static void send_file_work(struct work_struct *data)
                          * set file size with header according to
                          * MTP Specification v1.0
                          */
-			header->length = (count > MTP_MAX_FILE_SIZE) ?
-				MTP_MAX_FILE_SIZE : __cpu_to_le32(count);
+			header->length = cpu_to_le32(count > MTP_MAX_FILE_SIZE ?
+						    MTP_MAX_FILE_SIZE : count);
 			header->type = __cpu_to_le16(2); /* data packet */
 			header->command = __cpu_to_le16(dev->xfer_command);
 			header->transaction_id =
