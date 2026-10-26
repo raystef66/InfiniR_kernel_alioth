@@ -286,15 +286,15 @@ static int mdss_pll_util_parse_dt_dfps(struct platform_device *pdev,
 {
 	int rc = 0;
 	struct device_node *pnode;
-	const u32 *addr;
+	const __be32 *addr;
 	struct vm_struct *area;
-	u64 size;
+	u64 size, mem_addr;
 	u32 offsets[2];
 	unsigned long virt_add;
 
 	pnode = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);
-	if (IS_ERR_OR_NULL(pnode)) {
-		rc = PTR_ERR(pnode);
+	if (!pnode) {
+		rc = -ENODEV;
 		goto pnode_err;
 	}
 
@@ -304,8 +304,13 @@ static int mdss_pll_util_parse_dt_dfps(struct platform_device *pdev,
 		rc = -EINVAL;
 		goto pnode_err;
 	}
-	/* maintain compatibility for 32/64 bit */
-	offsets[0] = (u32) of_read_ulong(addr, 2);
+	mem_addr = of_read_number(addr, of_n_addr_cells(pnode));
+	if (mem_addr > U32_MAX || size < sizeof(struct dfps_info) ||
+	    size > U32_MAX - mem_addr) {
+		rc = -EINVAL;
+		goto pnode_err;
+	}
+	offsets[0] = (u32)mem_addr;
 	offsets[1] = (u32) size;
 
 	area = get_vm_area(offsets[1], VM_IOREMAP);
@@ -323,14 +328,20 @@ static int mdss_pll_util_parse_dt_dfps(struct platform_device *pdev,
 	}
 
 	pll_res->dfps = kzalloc(sizeof(struct dfps_info), GFP_KERNEL);
-	if (IS_ERR_OR_NULL(pll_res->dfps)) {
-		rc = PTR_ERR(pll_res->dfps);
+	if (!pll_res->dfps) {
+		rc = -ENOMEM;
 		pr_err("couldn't allocate dfps kernel memory\n");
 		goto addr_err;
 	}
 
 	/* memcopy complete dfps structure from kernel virtual memory */
-	memcpy_fromio(pll_res->dfps, area->addr, sizeof(struct dfps_info));
+	memcpy(pll_res->dfps, area->addr, sizeof(struct dfps_info));
+	if (pll_res->dfps->vco_rate_cnt >
+			ARRAY_SIZE(pll_res->dfps->codes_dfps)) {
+		kfree(pll_res->dfps);
+		pll_res->dfps = NULL;
+		rc = -EINVAL;
+	}
 
 addr_err:
 	if (virt_add)
