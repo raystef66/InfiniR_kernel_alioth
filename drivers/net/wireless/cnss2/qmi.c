@@ -684,10 +684,8 @@ static void cnss_get_xiaomi_bdf_elf_file_name(char *filename_tmp, u32 filename_l
 static void cnss_get_xiaomi_bdf_regdb_file_name(char *filename_tmp, u32 filename_len)
 {
 	int hw_platform_ver = -1;
-	uint32_t hw_country_ver = 0;
 
 	hw_platform_ver = get_hw_version_platform();
-	hw_country_ver = get_hw_country_version();
 
 	switch (hw_platform_ver) {
 	case HARDWARE_PLATFORM_LMI:
@@ -1042,7 +1040,7 @@ static int cnss_wlfw_wlan_mac_req_send_sync(struct cnss_plat_data *plat_priv,
 
 	if (resp->resp.result != QMI_RESULT_SUCCESS_V01) {
 		cnss_pr_err("WLAN mac req failed, result: %d, err: %d\n",
-			    resp->resp.result);
+			    resp->resp.result, resp->resp.error);
 
 		ret = -EIO;
 		goto out;
@@ -2464,7 +2462,7 @@ int cnss_wlfw_server_exit(struct cnss_plat_data *plat_priv)
 
 	ret = cnss_qmi_init(plat_priv);
 	if (ret < 0) {
-		cnss_pr_err("QMI WLFW service registraton failed, ret\n", ret);
+		cnss_pr_err("QMI WLFW service registration failed, ret: %d\n", ret);
 		CNSS_ASSERT(0);
 	}
 	return 0;
@@ -2754,7 +2752,7 @@ void cnss_unregister_coex_service(struct cnss_plat_data *plat_priv)
 }
 
 /* IMS Service */
-int ims_subscribe_for_indication_send_async(struct cnss_plat_data *plat_priv)
+static int ims_subscribe_for_indication_send_async(struct cnss_plat_data *plat_priv)
 {
 	int ret;
 	struct ims_private_service_subscribe_for_indications_req_msg_v01 *req;

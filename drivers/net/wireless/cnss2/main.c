@@ -544,7 +544,7 @@ int cnss_driver_event_post(struct cnss_plat_data *plat_priv,
 {
 	struct cnss_driver_event *event;
 	unsigned long irq_flags;
-	int gfp = GFP_KERNEL;
+	gfp_t gfp = GFP_KERNEL;
 	int ret = 0;
 
 	if (!plat_priv)
@@ -613,7 +613,7 @@ out:
 /**
  * cnss_get_timeout - Get timeout for corresponding type.
  * @plat_priv: Pointer to platform driver context.
- * @cnss_timeout_type: Timeout type.
+ * @timeout_type: Timeout type.
  *
  * Return: Timeout in milliseconds.
  */
@@ -1253,7 +1253,7 @@ void cnss_schedule_recovery(struct device *dev,
 {
 	struct cnss_plat_data *plat_priv = cnss_bus_dev_to_plat_priv(dev);
 	struct cnss_recovery_data *data;
-	int gfp = GFP_KERNEL;
+	gfp_t gfp = GFP_KERNEL;
 
 	if (!test_bit(CNSS_DEV_ERR_NOTIFY, &plat_priv->driver_state) &&
 	    test_bit(CNSS_QMI_WLFW_CONNECTED, &plat_priv->driver_state))
@@ -1755,7 +1755,7 @@ int cnss_va_to_pa(struct device *dev, size_t size, void *va, dma_addr_t dma,
 
 	ret = dma_get_sgtable_attrs(dev, &sgt, va, dma, size, attrs);
 	if (ret) {
-		cnss_pr_err("Failed to get sgtable for va: 0x%pK, dma: %pa, size: 0x%zx, attrs: 0x%x\n",
+		cnss_pr_err("Failed to get sgtable for va: 0x%pK, dma: %pa, size: 0x%zx, attrs: 0x%lx\n",
 			    va, &dma, size, attrs);
 		return -EINVAL;
 	}
@@ -2555,7 +2555,7 @@ static int cnss_reboot_notifier(struct notifier_block *nb,
 	del_timer(&plat_priv->fw_boot_timer);
 	complete_all(&plat_priv->power_up_complete);
 	complete_all(&plat_priv->cal_complete);
-	cnss_pr_dbg("Reboot is in progress with action %d\n", action);
+	cnss_pr_dbg("Reboot is in progress with action %lu\n", action);
 
 	return NOTIFY_DONE;
 }
