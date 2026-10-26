@@ -613,7 +613,7 @@ void rmnet_shs_wq_cpu_caps_list_add(
 				struct rmnet_shs_wq_cpu_rx_pkt_q_s *cpu_node,
 				struct list_head *cpu_caps)
 {
-	u64 pps_uthresh, pps_lthresh = 0;
+	u64 pps_uthresh;
 	struct rmnet_shs_wq_cpu_cap_s *cap_node;
 	int flows = 0;
 
@@ -625,7 +625,6 @@ void rmnet_shs_wq_cpu_caps_list_add(
 	flows = rx_flow_tbl_p->cpu_list[cpu_node->cpu_num].flows;
 
 	pps_uthresh = rmnet_shs_cpu_rx_max_pps_thresh[cpu_node->cpu_num];
-	pps_lthresh = rmnet_shs_cpu_rx_min_pps_thresh[cpu_node->cpu_num];
 
 	cap_node = kzalloc(sizeof(*cap_node), GFP_ATOMIC);
 	if (cap_node == NULL) {
@@ -748,7 +747,6 @@ void rmnet_shs_wq_mem_update_cached_sorted_gold_flows(struct list_head *gold_flo
 {
 	struct rmnet_shs_wq_gold_flow_s *gflow_node;
 	uint16_t idx = 0;
-	int num_gold_flows = 0;
 
 	if (!gold_flows) {
 		rm_err("%s", "SHS_SGOLD: Gold Flows List is NULL");
@@ -771,7 +769,6 @@ void rmnet_shs_wq_mem_update_cached_sorted_gold_flows(struct list_head *gold_flo
 		rm_err("SHS_SGOLD: > flow 0x%x with pps %llu on cpu[%d]",
 		       gflow_node->hash, gflow_node->rx_pps,
 		       gflow_node->cpu_num);
-		num_gold_flows += 1;
 
 
 		/* Update the cached gold flow list */
@@ -814,7 +811,6 @@ void rmnet_shs_wq_mem_update_cached_sorted_ss_flows(struct list_head *ss_flows)
 {
 	struct rmnet_shs_wq_ss_flow_s *ssflow_node;
 	uint16_t idx = 0;
-	int num_ss_flows = 0;
 
 	if (!ss_flows) {
 		rm_err("%s", "SHS_SLOW: SS Flows List is NULL");
@@ -838,7 +834,6 @@ void rmnet_shs_wq_mem_update_cached_sorted_ss_flows(struct list_head *ss_flows)
 		rm_err("SHS_SLOW: > flow 0x%x with pps %llu on cpu[%d]",
 		       ssflow_node->hash, ssflow_node->rx_pps,
 		       ssflow_node->cpu_num);
-		num_ss_flows += 1;
 
 		/* Update the cached ss flow list */
 		rmnet_shs_wq_ssflows_usr[idx].cpu_num = ssflow_node->cpu_num;
@@ -911,13 +906,13 @@ void rmnet_shs_wq_mem_update_cached_netdevs(void)
 		       ep->ep->name);
 		rm_err("SHS_NETDEV: ep %u has mux_id = %u \n", count,
 		       priv->mux_id);
-		rm_err("SHS_NETDEV: ep %u has ip_miss = %lu \n", count,
+		rm_err("SHS_NETDEV: ep %u has ip_miss = %llu\n", count,
 		       priv->stats.coal.close.ip_miss);
-		rm_err("SHS_NETDEV: ep %u has coal_rx_pkts = %lu \n", count,
+		rm_err("SHS_NETDEV: ep %u has coal_rx_pkts = %llu\n", count,
 		       priv->stats.coal.coal_pkts);
-		rm_err("SHS_NETDEV: ep %u has udp_rx_bps = %lu \n", count,
+		rm_err("SHS_NETDEV: ep %u has udp_rx_bps = %llu\n", count,
 		       ep->udp_rx_bps);
-		rm_err("SHS_NETDEV: ep %u has tcp_rx_bps = %lu \n", count,
+		rm_err("SHS_NETDEV: ep %u has tcp_rx_bps = %llu\n", count,
 		       ep->tcp_rx_bps);
 
 		/* Set netdev name and ip mismatch count */

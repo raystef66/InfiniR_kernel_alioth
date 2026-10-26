@@ -76,7 +76,7 @@ static void update_cpu_policy(struct work_struct *work)
 	put_online_cpus();
 }
 
-void rmnet_shs_reset_freq(void)
+static void rmnet_shs_reset_freq(void)
 {
 	struct cpu_freq *boost;
 	int i;

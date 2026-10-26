@@ -603,10 +603,8 @@ void rmnet_perf_opt_flush_all_flow_nodes(void)
 	struct rmnet_perf_opt_flow_node *flow_node;
 	int bkt_cursor;
 	int num_pkts_held;
-	u32 hash_val;
 
 	hash_for_each(rmnet_perf_opt_fht, bkt_cursor, flow_node, list) {
-		hash_val = flow_node->hash_value;
 		num_pkts_held = flow_node->num_pkts_held;
 		if (num_pkts_held > 0) {
 			rmnet_perf_opt_flush_single_flow_node(flow_node);

@@ -340,7 +340,7 @@ u32 rmnet_perf_core_compute_flow_hash(struct rmnet_perf_pkt_info *pkt_info)
  * Return:
  *		- void
  **/
-void rmnet_perf_core_accept_new_skb(struct sk_buff *skb)
+static void rmnet_perf_core_accept_new_skb(struct sk_buff *skb)
 {
 	struct rmnet_perf *perf = rmnet_perf_config_get_perf();
 	struct rmnet_perf_core_skb_list *skb_needs_free_list;
@@ -553,7 +553,7 @@ void rmnet_perf_core_handle_map_control_end(struct rmnet_map_dl_ind_trl *dltrl)
 		rmnet_perf_core_release_lock();
 }
 
-int rmnet_perf_core_validate_pkt_csum(struct sk_buff *skb,
+static int rmnet_perf_core_validate_pkt_csum(struct sk_buff *skb,
 				      struct rmnet_perf_pkt_info *pkt_info)
 {
 	int result;
@@ -591,7 +591,7 @@ int rmnet_perf_core_validate_pkt_csum(struct sk_buff *skb,
  *		- true if packet needs to be dropped
  *		- false if rmnet_perf can potentially optimize
  **/
-bool rmnet_perf_core_dissect_pkt(unsigned char *payload,
+static bool rmnet_perf_core_dissect_pkt(unsigned char *payload,
 				 struct rmnet_perf_pkt_info *pkt_info,
 				 int offset, u16 pkt_len, bool *skip_hash,
 				 bool *len_mismatch)
@@ -758,7 +758,7 @@ done:
  *		- false if rmnet_perf can potentially optimize
  **/
 
-bool rmnet_perf_core_dissect_skb(struct sk_buff *skb,
+static bool rmnet_perf_core_dissect_skb(struct sk_buff *skb,
 				 struct rmnet_perf_pkt_info *pkt_info,
 				 int offset, u16 pkt_len, bool *skip_hash,
 				 bool *len_mismatch)
@@ -783,7 +783,7 @@ bool rmnet_perf_core_dissect_skb(struct sk_buff *skb,
  *		- false if rmnet_perf can potentially optimize
  **/
 
-bool rmnet_perf_core_dissect_desc(struct rmnet_frag_descriptor *frag_desc,
+static bool rmnet_perf_core_dissect_desc(struct rmnet_frag_descriptor *frag_desc,
 				  struct rmnet_perf_pkt_info *pkt_info,
 				  int offset, u16 pkt_len, bool *skip_hash,
 				  bool *len_mismatch)
@@ -801,7 +801,7 @@ bool rmnet_perf_core_dissect_desc(struct rmnet_frag_descriptor *frag_desc,
 					   skip_hash, len_mismatch);
 }
 
-void rmnet_perf_core_handle_packet_ingress(struct sk_buff *skb,
+static void rmnet_perf_core_handle_packet_ingress(struct sk_buff *skb,
 					   struct rmnet_endpoint *ep,
 					   struct rmnet_perf_pkt_info *pkt_info,
 					   u32 frame_len, u32 trailer_len)
@@ -906,7 +906,7 @@ flush:
 	rmnet_perf_core_release_lock();
 }
 
-int __rmnet_perf_core_deaggregate(struct sk_buff *skb, struct rmnet_port *port)
+static int __rmnet_perf_core_deaggregate(struct sk_buff *skb, struct rmnet_port *port)
 {
 	struct rmnet_perf_pkt_info pkt_info;
 	struct timespec curr_time, diff;

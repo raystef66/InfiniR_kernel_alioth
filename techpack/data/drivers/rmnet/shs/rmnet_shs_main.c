@@ -169,7 +169,7 @@ void rmnet_shs_cpu_node_remove(struct rmnet_shs_skbn_s *node)
 
 }
 
-void rmnet_shs_cpu_node_add(struct rmnet_shs_skbn_s *node,
+static void rmnet_shs_cpu_node_add(struct rmnet_shs_skbn_s *node,
 			    struct list_head *hd)
 {
 	SHS_TRACE_LOW(RMNET_SHS_CPU_NODE, RMNET_SHS_CPU_NODE_FUNC_ADD,
@@ -179,7 +179,7 @@ void rmnet_shs_cpu_node_add(struct rmnet_shs_skbn_s *node,
 	rmnet_shs_change_cpu_num_flows(node->map_cpu, INCREMENT);
 }
 
-void rmnet_shs_cpu_node_move(struct rmnet_shs_skbn_s *node,
+static void rmnet_shs_cpu_node_move(struct rmnet_shs_skbn_s *node,
 			     struct list_head *hd, int oldcpu)
 {
 	SHS_TRACE_LOW(RMNET_SHS_CPU_NODE, RMNET_SHS_CPU_NODE_FUNC_MOVE,
@@ -200,7 +200,7 @@ static void rmnet_shs_cpu_ooo(u8 cpu, int count)
 /* Evaluates the incoming transport protocol of the incoming skb. Determines
  * if the skb transport protocol will be supported by SHS module
  */
-int rmnet_shs_is_skb_stamping_reqd(struct sk_buff *skb)
+static int rmnet_shs_is_skb_stamping_reqd(struct sk_buff *skb)
 {
 	int ret_val = 0;
 	struct iphdr *ip4h;
@@ -472,7 +472,6 @@ static void rmnet_shs_deliver_skb_segmented(struct sk_buff *in_skb,
 	struct sk_buff *skb = NULL;
 	struct sk_buff *nxt_skb = NULL;
 	struct sk_buff *segs = NULL;
-	int count = 0;
 
 	SHS_TRACE_LOW(RMNET_SHS_DELIVER_SKB, RMNET_SHS_DELIVER_SKB_START,
 			    0x1, 0xDEF, 0xDEF, 0xDEF, in_skb, NULL);
@@ -501,27 +500,11 @@ static void rmnet_shs_deliver_skb_segmented(struct sk_buff *in_skb,
 			netif_receive_skb(skb);
 		else
 			netif_rx(skb);
-
-		count += 1;
 	}
 
 	consume_skb(in_skb);
 
 	return;
-}
-
-int rmnet_shs_flow_num_perf_cores(struct rmnet_shs_skbn_s *node_p)
-{
-	int ret = 0;
-	int core = 1;
-	u16 idx = 0;
-
-	for (idx = 0; idx < MAX_CPUS; idx++) {
-		if (node_p->hstats->pri_core_msk & core)
-			ret++;
-		core = core << 1;
-	}
-	return ret;
 }
 
 inline int rmnet_shs_is_lpwr_cpu(u16 cpu)
@@ -534,7 +517,7 @@ inline int rmnet_shs_is_lpwr_cpu(u16 cpu)
  * SHS module (for all the packets arriving with same incoming hash)
  * before delivering them to next layer.
  */
-u32 rmnet_shs_form_hash(u32 index, u32 maplen, u32 hash)
+static u32 rmnet_shs_form_hash(u32 index, u32 maplen, u32 hash)
 {
 	int offsetmap[MAX_CPUS / 2] = {8, 4, 3, 2};
 	u32 ret = 0;
@@ -557,7 +540,7 @@ u32 rmnet_shs_form_hash(u32 index, u32 maplen, u32 hash)
 	return ret;
 }
 
-u8 rmnet_shs_mask_from_map(struct rps_map *map)
+static u8 rmnet_shs_mask_from_map(struct rps_map *map)
 {
 	u8 mask = 0;
 	u8 i;
@@ -580,11 +563,10 @@ int rmnet_shs_get_mask_len(u8 mask)
 	return sum;
 }
 
-int rmnet_shs_get_core_prio_flow(u8 mask)
+static int rmnet_shs_get_core_prio_flow(u8 mask)
 {
 	int ret = INVALID_CPU;
 	int least_flows = INVALID_CPU;
-	u8 curr_idx = 0;
 	u8 i;
 
 	/* Return 1st free core or the core with least # flows
@@ -593,9 +575,6 @@ int rmnet_shs_get_core_prio_flow(u8 mask)
 
 		if (!(mask & (1 << i)))
 			continue;
-
-		if (mask & (1 << i))
-			curr_idx++;
 
 		if (list_empty(&rmnet_shs_cpu_node_tbl[i].node_list_id))
 			return i;
@@ -614,7 +593,7 @@ int rmnet_shs_get_core_prio_flow(u8 mask)
 /* Take a index and a mask and returns what active CPU is
  * in that index.
  */
-int rmnet_shs_cpu_from_idx(u8 index, u8 mask)
+static int rmnet_shs_cpu_from_idx(u8 index, u8 mask)
 {
 	int ret = INVALID_CPU;
 	u8 curr_idx = 0;
@@ -636,7 +615,7 @@ int rmnet_shs_cpu_from_idx(u8 index, u8 mask)
 /* Takes a CPU and a CPU mask and computes what index of configured
  * the CPU is in. Returns INVALID_CPU if CPU is not enabled in the mask.
  */
-int rmnet_shs_idx_from_cpu(u8 cpu, u8 mask)
+static int rmnet_shs_idx_from_cpu(u8 cpu, u8 mask)
 {
 	int ret = INVALID_CPU;
 	u8 idx = 0;
@@ -668,7 +647,7 @@ int rmnet_shs_idx_from_cpu(u8 cpu, u8 mask)
  * If two or more cores within a cluster are handling the same number of
  * packets per second, the first match will be assigned.
  */
-int rmnet_shs_new_flow_cpu(u64 burst_size, struct net_device *dev)
+static int rmnet_shs_new_flow_cpu(u64 burst_size, struct net_device *dev)
 {
 	int flow_cpu = INVALID_CPU;
 
@@ -685,7 +664,7 @@ int rmnet_shs_new_flow_cpu(u64 burst_size, struct net_device *dev)
 	return flow_cpu;
 }
 
-int rmnet_shs_get_suggested_cpu(struct rmnet_shs_skbn_s *node)
+static int rmnet_shs_get_suggested_cpu(struct rmnet_shs_skbn_s *node)
 {
 	int cpu = INVALID_CPU;
 
@@ -702,7 +681,7 @@ int rmnet_shs_get_suggested_cpu(struct rmnet_shs_skbn_s *node)
 	return cpu;
 }
 
-int rmnet_shs_get_hash_map_idx_to_stamp(struct rmnet_shs_skbn_s *node)
+static int rmnet_shs_get_hash_map_idx_to_stamp(struct rmnet_shs_skbn_s *node)
 {
 	int cpu, idx = INVALID_CPU;
 
@@ -732,7 +711,7 @@ u32 rmnet_shs_get_cpu_qhead(u8 cpu_num)
 	return ret;
 }
 
-u32 rmnet_shs_get_cpu_qtail(u8 cpu_num)
+static u32 rmnet_shs_get_cpu_qtail(u8 cpu_num)
 {
 	u32 ret = 0;
 
@@ -745,7 +724,7 @@ u32 rmnet_shs_get_cpu_qtail(u8 cpu_num)
 	return ret;
 }
 
-u32 rmnet_shs_get_cpu_qdiff(u8 cpu_num)
+static u32 rmnet_shs_get_cpu_qdiff(u8 cpu_num)
 {
 	u32 ret = 0;
 
@@ -780,7 +759,7 @@ static int rmnet_shs_is_core_loaded(int cpu, int backlog_check, int parked_pkts)
  * CPU qtail keeps track of total number of pkts on a core
  * qtail - qhead = pkts yet to be processed by next layer
  */
-void rmnet_shs_update_cpu_proc_q(u8 cpu_num)
+static void rmnet_shs_update_cpu_proc_q(u8 cpu_num)
 {
 	if (cpu_num >= MAX_CPUS)
 		return;
@@ -828,7 +807,7 @@ void rmnet_shs_update_cpu_proc_q_all_cpus(void)
 	rcu_read_unlock();
 
 }
-int rmnet_shs_node_can_flush_pkts(struct rmnet_shs_skbn_s *node, u8 force_flush)
+static int rmnet_shs_node_can_flush_pkts(struct rmnet_shs_skbn_s *node, u8 force_flush)
 {
 	int cpu_map_index;
 	u32 cur_cpu_qhead;
@@ -931,7 +910,7 @@ int rmnet_shs_node_can_flush_pkts(struct rmnet_shs_skbn_s *node, u8 force_flush)
 	return ret;
 }
 
-void rmnet_shs_flush_core(u8 cpu_num)
+static void rmnet_shs_flush_core(u8 cpu_num)
 {
 	struct rmnet_shs_skbn_s *n;
 	struct list_head *ptr, *next;
@@ -1000,7 +979,7 @@ static void rmnet_shs_flush_core_work(struct work_struct *work)
 }
 
 /* Flushes all the packets parked in order for this flow */
-void rmnet_shs_flush_node(struct rmnet_shs_skbn_s *node, u8 ctext)
+static void rmnet_shs_flush_node(struct rmnet_shs_skbn_s *node, u8 ctext)
 {
 	struct sk_buff *skb = NULL;
 	struct sk_buff *nxt_skb = NULL;
@@ -1200,7 +1179,7 @@ static void rmnet_shs_core_prio_check(u8 cpu_num, u8 segmented, u32 parked_pkts)
  * packets waiting & have been processed by the next layers.
  */
 
-void rmnet_shs_flush_lock_table(u8 flsh, u8 ctxt)
+static void rmnet_shs_flush_lock_table(u8 flsh, u8 ctxt)
 {
 	struct rmnet_shs_skbn_s *n = NULL;
 	struct list_head *ptr = NULL, *next = NULL;
@@ -1349,7 +1328,7 @@ void rmnet_shs_flush_table(u8 flsh, u8 ctxt)
 /* After we have decided to handle the incoming skb we park them in order
  * per flow
  */
-void rmnet_shs_chain_to_skb_list(struct sk_buff *skb,
+static void rmnet_shs_chain_to_skb_list(struct sk_buff *skb,
 				 struct rmnet_shs_skbn_s *node)
 {
 	u8 pushflush = 0;
@@ -1442,7 +1421,7 @@ static void rmnet_flush_buffered(struct work_struct *work)
  * Upon the next expiry, if the packets haven't yet been delivered to the
  * next layer, a workqueue will be scheduled to flush all the parked packets.
  */
-enum hrtimer_restart rmnet_shs_map_flush_queue(struct hrtimer *t)
+static enum hrtimer_restart rmnet_shs_map_flush_queue(struct hrtimer *t)
 {
 	enum hrtimer_restart ret = HRTIMER_NORESTART;
 
@@ -1477,7 +1456,7 @@ enum hrtimer_restart rmnet_shs_map_flush_queue(struct hrtimer *t)
 	return ret;
 }
 
-enum hrtimer_restart rmnet_shs_queue_core(struct hrtimer *t)
+static enum hrtimer_restart rmnet_shs_queue_core(struct hrtimer *t)
 {
 	const enum hrtimer_restart ret = HRTIMER_NORESTART;
 	struct core_flush_s *core_work = container_of(t,
@@ -1532,7 +1511,7 @@ unsigned int rmnet_shs_rx_wq_exit(void)
 	return cpu_switch;
 }
 
-int rmnet_shs_drop_backlog(struct sk_buff_head *list, int cpu)
+static int rmnet_shs_drop_backlog(struct sk_buff_head *list, int cpu)
 {
 	struct sk_buff *skb;
 	struct softnet_data *sd = &per_cpu(softnet_data, cpu);
@@ -1712,7 +1691,7 @@ void rmnet_shs_cancel_table(void)
 
 }
 
-void rmnet_shs_get_update_skb_proto(struct sk_buff *skb,
+static void rmnet_shs_get_update_skb_proto(struct sk_buff *skb,
 				    struct rmnet_shs_skbn_s *node_p)
 {
 	struct iphdr *ip4h;
@@ -1762,7 +1741,7 @@ int rmnet_shs_assign(struct sk_buff *skb, struct rmnet_port *port)
 	int new_cpu;
 	int map_cpu;
 	u64 brate = 0;
-	u32 cpu_map_index, hash;
+	u32 hash;
 	u8 is_match_found = 0;
 	u8 is_shs_reqd = 0;
 	struct rmnet_shs_cpu_node_s *cpu_node_tbl_p;
@@ -1802,7 +1781,6 @@ int rmnet_shs_assign(struct sk_buff *skb, struct rmnet_port *port)
 				RMNET_SHS_ASSIGN_MATCH_FLOW_COMPLETE,
 				0xDEF, 0xDEF, 0xDEF, 0xDEF, skb, NULL);
 
-			cpu_map_index = node_p->map_index;
 
 			rmnet_shs_chain_to_skb_list(skb, node_p);
 			is_match_found = 1;
