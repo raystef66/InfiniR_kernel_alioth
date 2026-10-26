@@ -452,6 +452,9 @@ static void stop_hwmon(struct memlat_hwmon *hw)
 }
 
 /**
+ * set_update_ms() - Refresh the group polling interval
+ * @cpu_grp: Group whose active monitors determine the interval
+ *
  * We should set update_ms to the lowest requested_update_ms of all of the
  * active mons, or 0 (i.e. stop polling) if ALL active mons have 0.
  * This is expected to be called with cpu_grp->mons_lock taken.
@@ -649,7 +652,8 @@ static int memlat_mon_probe(struct platform_device *pdev, bool is_compute)
 		if (!cpumask_subset(&mon->cpus, &cpu_grp->cpus)) {
 			dev_err(dev,
 				"Mon CPUs must be a subset of cpu_grp CPUs. mon=%*pbl cpu_grp=%*pbl\n",
-				mon->cpus, cpu_grp->cpus);
+				cpumask_pr_args(&mon->cpus),
+				cpumask_pr_args(&cpu_grp->cpus));
 			ret = -EINVAL;
 			goto unlock_out;
 		}
