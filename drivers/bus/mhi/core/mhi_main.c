@@ -113,8 +113,8 @@ static void mhi_reg_write_enqueue(struct mhi_controller *mhi_cntrl,
 
 	q_index = q_index & (REG_WRITE_QUEUE_LEN - 1);
 
-	MHI_ASSERT(mhi_cntrl->reg_write_q[q_index].valid, "queue full idx %d",
-			q_index);
+	MHI_ASSERT(mhi_cntrl->reg_write_q[q_index].valid, "queue full idx %u",
+		   q_index);
 
 	mhi_cntrl->reg_write_q[q_index].reg_addr = reg_addr;
 	mhi_cntrl->reg_write_q[q_index].val = val;
@@ -319,7 +319,7 @@ void *mhi_to_virtual(struct mhi_ring *ring, dma_addr_t addr)
 	return (addr - ring->iommu_base) + ring->base;
 }
 
-dma_addr_t mhi_to_physical(struct mhi_ring *ring, void *addr)
+static dma_addr_t mhi_to_physical(struct mhi_ring *ring, void *addr)
 {
 	return (addr - ring->base) + ring->iommu_base;
 }
@@ -1416,7 +1416,7 @@ int mhi_process_tsync_ev_ring(struct mhi_controller *mhi_cntrl,
 	sequence = MHI_TRE_GET_EV_TSYNC_SEQ(dev_rp);
 	remote_time = MHI_TRE_GET_EV_TIME(dev_rp);
 
-	MHI_VERB("Received TSYNC event with seq:0x%llx time:0x%llx\n",
+	MHI_VERB("Received TSYNC event with seq:0x%x time:0x%llx\n",
 		 sequence, remote_time);
 
 	read_lock_bh(&mhi_cntrl->pm_lock);
@@ -1428,7 +1428,7 @@ int mhi_process_tsync_ev_ring(struct mhi_controller *mhi_cntrl,
 	mutex_lock(&mhi_cntrl->tsync_mutex);
 
 	if (unlikely(mhi_tsync->int_sequence != sequence)) {
-		MHI_ASSERT(1, "Unexpected response:0x%llx Expected:0x%llx\n",
+		MHI_ASSERT(1, "Unexpected response:0x%x Expected:0x%x\n",
 			   sequence, mhi_tsync->int_sequence);
 
 		mhi_device_put(mhi_cntrl->mhi_dev,
@@ -1734,9 +1734,9 @@ irqreturn_t mhi_intvec_handlr(int irq_number, void *dev)
 	/* wake up any events waiting for state change */
 	MHI_VERB("Enter\n");
 	if (unlikely(mhi_cntrl->initiate_mhi_reset)) {
-		mhi_read_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
-			MHICTRL_RESET_MASK, MHICTRL_RESET_SHIFT, &in_reset);
-		mhi_cntrl->initiate_mhi_reset = !!in_reset;
+		if (!mhi_read_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
+					MHICTRL_RESET_MASK, MHICTRL_RESET_SHIFT, &in_reset))
+			mhi_cntrl->initiate_mhi_reset = !!in_reset;
 	}
 	wake_up_all(&mhi_cntrl->state_event);
 	MHI_VERB("Exit\n");
@@ -2042,13 +2042,12 @@ static void mhi_reset_data_chan(struct mhi_controller *mhi_cntrl,
 static void mhi_reset_rsc_chan(struct mhi_controller *mhi_cntrl,
 			       struct mhi_chan *mhi_chan)
 {
-	struct mhi_ring *buf_ring, *tre_ring;
+	struct mhi_ring *buf_ring;
 	struct mhi_result result;
 	struct mhi_buf_info *buf_info;
 
 	/* reset any pending buffers */
 	buf_ring = &mhi_chan->buf_ring;
-	tre_ring = &mhi_chan->tre_ring;
 	result.transaction_status = -ENOTCONN;
 	result.bytes_xferd = 0;
 
@@ -2319,16 +2318,14 @@ int mhi_debugfs_mhi_chan_show(struct seq_file *m, void *d)
 }
 
 /* show bus/device votes for a specific device */
-int mhi_device_vote_show(struct device *dev, void *data)
+static int mhi_device_vote_show(struct device *dev, void *data)
 {
 	struct mhi_device *mhi_dev;
-	struct mhi_controller *mhi_cntrl;
 
 	if (dev->bus != &mhi_bus_type)
 		return 0;
 
 	mhi_dev = to_mhi_device(dev);
-	mhi_cntrl = mhi_dev->mhi_cntrl;
 
 	/* we dont care about timesync or similar special devices */
 	if (mhi_dev->dev_type == MHI_TIMESYNC_TYPE)
@@ -2789,7 +2786,7 @@ int mhi_get_remote_time(struct mhi_device *mhi_dev,
 
 	mhi_cntrl->lpm_enable(mhi_cntrl, mhi_cntrl->priv_data);
 
-	MHI_VERB("time DB request with seq:0x%llx\n", mhi_tsync->int_sequence);
+	MHI_VERB("time DB request with seq:0x%x\n", mhi_tsync->int_sequence);
 
 	mhi_tsync->db_response_pending = true;
 	init_completion(&mhi_tsync->db_completion);

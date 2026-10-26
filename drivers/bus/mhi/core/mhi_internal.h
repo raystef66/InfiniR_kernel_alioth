@@ -987,7 +987,7 @@ void mhi_ev_task(unsigned long data);
 
 #define MHI_ASSERT(cond, fmt, ...) do { \
 	if (cond) \
-		panic(fmt); \
+		panic(fmt, ##__VA_ARGS__); \
 } while (0)
 
 #endif /* _MHI_INT_H */
