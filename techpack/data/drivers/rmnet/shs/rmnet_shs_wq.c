@@ -1806,7 +1806,7 @@ void rmnet_shs_wq_cleanup_hash_tbl(u8 force_clean)
 
 }
 
-void rmnet_shs_wq_update_ep_rps_msk(struct rmnet_shs_wq_ep_s *ep)
+static void rmnet_shs_wq_update_ep_rps_msk(struct rmnet_shs_wq_ep_s *ep)
 {
 	struct rps_map *map;
 	u8 len = 0;
@@ -1820,6 +1820,7 @@ void rmnet_shs_wq_update_ep_rps_msk(struct rmnet_shs_wq_ep_s *ep)
 	if (!ep->ep) {
 		pr_info(" rmnet_shs invalid state %p", ep->ep);
 		rmnet_shs_crit_err[RMNET_SHS_WQ_EP_ACCESS_ERR]++;
+		rcu_read_unlock();
 		return;
 	}
 	map = rcu_dereference(ep->ep->_rx->rps_map);
