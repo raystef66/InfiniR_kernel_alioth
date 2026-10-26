@@ -1878,7 +1878,7 @@ static struct msm_vidc_platform_data default_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_IRIS2,
 	.num_vpp_pipes = 0x4,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.max_inst_count = MAX_SUPPORTED_INSTANCES,
 };
 
@@ -1895,7 +1895,7 @@ static struct msm_vidc_platform_data lito_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_IRIS1,
 	.num_vpp_pipes = 0x2,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.codecs = default_codecs,
 	.codecs_count = ARRAY_SIZE(default_codecs),
 	.codec_caps = lito_capabilities_v0,
@@ -1937,7 +1937,7 @@ static struct msm_vidc_platform_data lagoon_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_IRIS2_1,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.codecs = lagoon_codecs,
 	.codecs_count = ARRAY_SIZE(lagoon_codecs),
 	.codec_caps = lagoon_capabilities_v0,
@@ -1958,7 +1958,7 @@ static struct msm_vidc_platform_data sm6150_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_AR50,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.max_inst_count = MAX_SUPPORTED_INSTANCES,
 };
 
@@ -1975,7 +1975,7 @@ static struct msm_vidc_platform_data bengal_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_AR50_LITE,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.codecs = bengal_codecs,
 	.codecs_count = ARRAY_SIZE(bengal_codecs),
 	.codec_caps = bengal_capabilities_v0,
@@ -1996,7 +1996,7 @@ static struct msm_vidc_platform_data scuba_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_AR50_LITE,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.codecs = scuba_codecs,
 	.codecs_count = ARRAY_SIZE(scuba_codecs),
 	.codec_caps = scuba_capabilities,
@@ -2017,7 +2017,7 @@ static struct msm_vidc_platform_data sm8150_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_IRIS1,
 	.num_vpp_pipes = 0x2,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.max_inst_count = MAX_SUPPORTED_INSTANCES,
 };
 
@@ -2034,7 +2034,7 @@ static struct msm_vidc_platform_data sdm845_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_AR50,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.max_inst_count = MAX_SUPPORTED_INSTANCES,
 };
 
@@ -2051,7 +2051,7 @@ static struct msm_vidc_platform_data sdm670_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_AR50,
 	.num_vpp_pipes = 0x1,
-	.ubwc_config = 0x0,
+	.ubwc_config = NULL,
 	.max_inst_count = MAX_SUPPORTED_INSTANCES,
 };
 

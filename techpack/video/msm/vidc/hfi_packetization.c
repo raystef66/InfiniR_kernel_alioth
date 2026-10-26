@@ -224,7 +224,7 @@ static int create_pkt_cmd_sys_release_resource(
 	return rc;
 }
 
-inline int create_pkt_cmd_sys_session_init(
+static inline int create_pkt_cmd_sys_session_init(
 		struct hfi_cmd_sys_session_init_packet *pkt,
 		u32 sid, u32 session_domain, u32 session_codec)
 {

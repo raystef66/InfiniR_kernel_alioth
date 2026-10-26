@@ -420,7 +420,7 @@ static struct msm_vidc_ctrl msm_vdec_ctrls[] = {
 #define NUM_CTRLS ARRAY_SIZE(msm_vdec_ctrls)
 
 
-struct msm_vidc_format_desc vdec_output_formats[] = {
+static struct msm_vidc_format_desc vdec_output_formats[] = {
 	{
 		.name = "YCbCr Semiplanar 4:2:0",
 		.description = "Y/CbCr 4:2:0",
@@ -443,7 +443,7 @@ struct msm_vidc_format_desc vdec_output_formats[] = {
 	},
 };
 
-struct msm_vidc_format_desc vdec_input_formats[] = {
+static struct msm_vidc_format_desc vdec_input_formats[] = {
 	{
 		.name = "Mpeg2",
 		.description = "Mpeg2 compressed format",
@@ -471,7 +471,7 @@ struct msm_vidc_format_desc vdec_input_formats[] = {
 	},
 };
 
-struct msm_vidc_format_constraint dec_pix_format_constraints[] = {
+static struct msm_vidc_format_constraint dec_pix_format_constraints[] = {
 	{
 		.fourcc = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
 		.num_planes = 2,

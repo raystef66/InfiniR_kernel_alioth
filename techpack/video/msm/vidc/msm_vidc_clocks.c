@@ -26,7 +26,7 @@ static unsigned long msm_vidc_calc_freq_iris1(struct msm_vidc_inst *inst,
 static unsigned long msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst,
 	u32 filled_len);
 
-struct msm_vidc_core_ops core_ops_ar50 = {
+static struct msm_vidc_core_ops core_ops_ar50 = {
 	.calc_freq = msm_vidc_calc_freq_ar50,
 	.decide_work_route = NULL,
 	.decide_work_mode = msm_vidc_decide_work_mode_ar50,
@@ -34,7 +34,7 @@ struct msm_vidc_core_ops core_ops_ar50 = {
 	.calc_bw = NULL,
 };
 
-struct msm_vidc_core_ops core_ops_ar50lt = {
+static struct msm_vidc_core_ops core_ops_ar50lt = {
 	.calc_freq = msm_vidc_calc_freq_ar50,
 	.decide_work_route = NULL,
 	.decide_work_mode = msm_vidc_decide_work_mode_ar50,
@@ -43,7 +43,7 @@ struct msm_vidc_core_ops core_ops_ar50lt = {
 	.calc_bw = calc_bw_ar50lt,
 };
 
-struct msm_vidc_core_ops core_ops_iris1 = {
+static struct msm_vidc_core_ops core_ops_iris1 = {
 	.calc_freq = msm_vidc_calc_freq_iris1,
 	.decide_work_route = msm_vidc_decide_work_route_iris1,
 	.decide_work_mode = msm_vidc_decide_work_mode_iris1,
@@ -51,7 +51,7 @@ struct msm_vidc_core_ops core_ops_iris1 = {
 	.calc_bw = calc_bw_iris1,
 };
 
-struct msm_vidc_core_ops core_ops_iris2 = {
+static struct msm_vidc_core_ops core_ops_iris2 = {
 	.calc_freq = msm_vidc_calc_freq_iris2,
 	.decide_work_route = msm_vidc_decide_work_route_iris2,
 	.decide_work_mode = msm_vidc_decide_work_mode_iris2,

@@ -1067,7 +1067,7 @@ static struct msm_vidc_format_desc venc_output_formats[] = {
 	},
 };
 
-struct msm_vidc_format_constraint enc_pix_format_constraints[] = {
+static struct msm_vidc_format_constraint enc_pix_format_constraints[] = {
 	{
 		.fourcc = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
 		.num_planes = 2,

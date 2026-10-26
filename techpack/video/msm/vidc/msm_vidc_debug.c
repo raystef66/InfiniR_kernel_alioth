@@ -602,8 +602,11 @@ int msm_vidc_check_ratelimit(void)
 }
 
 /**
- * get_sid() must be called under "&core->lock"
- * to avoid race condition at occupying empty slot.
+ * get_sid() - Allocate a session identifier
+ * @sid: destination for the allocated identifier
+ * @session_type: session type used for logging
+ *
+ * Must be called under "&core->lock" to avoid racing for an empty slot.
  */
 int get_sid(u32 *sid, u32 session_type)
 {
