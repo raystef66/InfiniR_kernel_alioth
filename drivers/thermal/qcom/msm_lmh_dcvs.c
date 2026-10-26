@@ -85,9 +85,9 @@ struct limits_dcvs_hw {
 	uint32_t affinity;
 	uint32_t temp_limits[LIMITS_TRIP_MAX];
 	int irq_num;
-	void *osm_hw_reg;
-	void *int_clr_reg;
-	void *min_freq_reg;
+	void __iomem *osm_hw_reg;
+	void __iomem *int_clr_reg;
+	void __iomem *min_freq_reg;
 	cpumask_t core_map;
 	cpumask_t online_mask;
 	struct delayed_work freq_poll_work;
@@ -104,8 +104,8 @@ struct limits_dcvs_hw {
 	struct work_struct cdev_register_work;
 };
 
-LIST_HEAD(lmh_dcvs_hw_list);
-DEFINE_MUTEX(lmh_dcvs_list_access);
+static LIST_HEAD(lmh_dcvs_hw_list);
+static DEFINE_MUTEX(lmh_dcvs_list_access);
 
 static void limits_dcvs_get_freq_limits(struct limits_dcvs_hw *hw)
 {

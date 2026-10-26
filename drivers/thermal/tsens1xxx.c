@@ -85,7 +85,6 @@ static int tsens1xxx_get_temp(struct tsens_sensor *sensor, int *temp)
 	struct tsens_device *tmdev = NULL;
 	unsigned int code;
 	void __iomem *sensor_addr;
-	void __iomem *trdy_addr;
 	int last_temp = 0, last_temp2 = 0, last_temp3 = 0;
 	bool last_temp_valid = false, last_temp2_valid = false;
 	bool last_temp3_valid = false;
@@ -95,7 +94,6 @@ static int tsens1xxx_get_temp(struct tsens_sensor *sensor, int *temp)
 
 	tmdev = sensor->tmdev;
 
-	trdy_addr = TSENS_TRDY_ADDR(tmdev->tsens_tm_addr);
 	sensor_addr = TSENS_SN_STATUS_ADDR(tmdev->tsens_tm_addr);
 
 	code = readl_relaxed(sensor_addr +
@@ -147,7 +145,7 @@ static int tsens_tz_activate_trip_type(struct tsens_sensor *tm_sensor,
 			int trip, enum thermal_device_mode mode)
 {
 	struct tsens_device *tmdev = NULL;
-	unsigned int reg_cntl, code, hi_code, lo_code, mask;
+	unsigned int reg_cntl, mask;
 
 	/* clear the interrupt and unmask */
 	if (!tm_sensor || trip < 0)
@@ -156,9 +154,6 @@ static int tsens_tz_activate_trip_type(struct tsens_sensor *tm_sensor,
 	tmdev = tm_sensor->tmdev;
 	if (!tmdev)
 		return -EINVAL;
-
-	lo_code = TSENS_THRESHOLD_MIN_CODE;
-	hi_code = TSENS_THRESHOLD_MAX_CODE;
 
 	reg_cntl = readl_relaxed((TSENS_S0_UPPER_LOWER_STATUS_CTRL_ADDR
 					(tmdev->tsens_tm_addr) +
@@ -169,22 +164,14 @@ static int tsens_tz_activate_trip_type(struct tsens_sensor *tm_sensor,
 	case THERMAL_TRIP_CONFIGURABLE_HI:
 		tmdev->sensor[tm_sensor->hw_id].thr_state.high_th_state = mode;
 
-		code = (reg_cntl & TSENS_UPPER_THRESHOLD_MASK)
-					>> TSENS_UPPER_THRESHOLD_SHIFT;
 		mask = TSENS_UPPER_STATUS_CLR;
 
-		if (!(reg_cntl & TSENS_LOWER_STATUS_CLR))
-			lo_code = (reg_cntl & TSENS_LOWER_THRESHOLD_MASK);
 		break;
 	case THERMAL_TRIP_CONFIGURABLE_LOW:
 		tmdev->sensor[tm_sensor->hw_id].thr_state.low_th_state = mode;
 
-		code = (reg_cntl & TSENS_LOWER_THRESHOLD_MASK);
 		mask = TSENS_LOWER_STATUS_CLR;
 
-		if (!(reg_cntl & TSENS_UPPER_STATUS_CLR))
-			hi_code = (reg_cntl & TSENS_UPPER_THRESHOLD_MASK)
-					>> TSENS_UPPER_THRESHOLD_SHIFT;
 		break;
 	default:
 		return -EINVAL;

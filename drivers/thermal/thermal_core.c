@@ -64,7 +64,7 @@ struct screen_monitor {
 	int screen_state; /* 1: on; 0:off */
 };
 
-struct screen_monitor sm;
+static struct screen_monitor sm;
 #endif
 
 static struct device thermal_message_dev;
@@ -72,9 +72,9 @@ static atomic_t switch_mode = ATOMIC_INIT(-1);
 static atomic_t temp_state = ATOMIC_INIT(0);
 static DEFINE_MUTEX(thermal_message_lock);
 static char boost_buf[128];
-const char *board_sensor;
+static const char *board_sensor;
 static char board_sensor_temp[128];
-const char *ambient_sensor;
+static const char *ambient_sensor;
 static char ambient_sensor_temp[128];
 
 /*

@@ -14,7 +14,7 @@
 #include <linux/iio/iio.h>
 #include "adc-tm.h"
 
-LIST_HEAD(adc_tm_device_list);
+static LIST_HEAD(adc_tm_device_list);
 
 static int adc_tm_get_temp(void *data, int *temp)
 {
