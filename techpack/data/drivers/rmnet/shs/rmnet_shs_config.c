@@ -177,8 +177,8 @@ static int rmnet_shs_dev_notify_cb(struct notifier_block *nb,
 					     RMNET_SHS_MODULE_INIT_WQ,
 					     0xDEF, 0xDEF, 0xDEF,
 					     0xDEF, NULL, NULL);
-			RCU_INIT_POINTER(rmnet_shs_skb_entry,
-					 rmnet_shs_assign);
+			rcu_assign_pointer(rmnet_shs_skb_entry,
+					   rmnet_shs_assign);
 		}
 
 		break;
