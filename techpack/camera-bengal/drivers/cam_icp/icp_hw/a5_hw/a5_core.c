@@ -162,7 +162,7 @@ static int32_t cam_icp_program_fw(const uint8_t *elf,
 			dest = (u8 *)(((u8 *)core_info->fw_kva_addr) +
 				prg_hdr->p_vaddr);
 
-			memcpy_toio(dest, src, prg_hdr->p_filesz);
+			memcpy(dest, src, prg_hdr->p_filesz);
 		}
 	}
 
