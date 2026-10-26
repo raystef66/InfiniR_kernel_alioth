@@ -17,8 +17,7 @@
 
 #define CAM_CUSTOM_CSID_DRV_NAME  "custom_csid"
 
-static struct cam_hw_intf *cam_custom_csid_hw_list[CAM_IFE_CSID_HW_NUM_MAX] = {
-	0, 0, 0, 0};
+static struct cam_hw_intf *cam_custom_csid_hw_list[CAM_IFE_CSID_HW_NUM_MAX] = { NULL };
 
 static char csid_dev_name[16];
 

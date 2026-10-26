@@ -14,7 +14,8 @@
 #include "cam_debug_util.h"
 
 /**
- * @e_ctrl: ctrl structure
+ * cam_ois_get_dt_data() - Parse OIS device-tree data
+ * @o_ctrl: ctrl structure
  *
  * Parses ois dt
  */
@@ -72,6 +73,7 @@ static int cam_ois_get_dt_data(struct cam_ois_ctrl_t *o_ctrl)
 	return rc;
 }
 /**
+ * cam_ois_driver_soc_init() - Initialize OIS SoC resources
  * @o_ctrl: ctrl structure
  *
  * This function is called from cam_ois_platform/i2c_driver_probe, it parses

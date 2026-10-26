@@ -11,8 +11,7 @@
 #include "cam_ife_csid_hw_intf.h"
 #include "cam_debug_util.h"
 
-static struct cam_hw_intf *cam_ife_csid_hw_list[CAM_IFE_CSID_HW_NUM_MAX] = {
-	0, 0, 0, 0};
+static struct cam_hw_intf *cam_ife_csid_hw_list[CAM_IFE_CSID_HW_NUM_MAX] = { NULL };
 
 static char csid_dev_name[8];
 

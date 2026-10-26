@@ -23,7 +23,7 @@
 #include "cpastop_v175_130.h"
 #include "cpastop_v480_100.h"
 
-struct cam_camnoc_info *camnoc_info;
+static struct cam_camnoc_info *camnoc_info;
 
 #define CAMNOC_SLAVE_MAX_ERR_CODE 7
 static const char * const camnoc_salve_err_code[] = {

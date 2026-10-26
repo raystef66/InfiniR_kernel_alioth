@@ -516,7 +516,7 @@ static struct cam_cpas_hw_errata_wa_list cam170_cpas100_errata_wa_list = {
 	},
 };
 
-struct cam_camnoc_info cam170_cpas100_camnoc_info = {
+static struct cam_camnoc_info cam170_cpas100_camnoc_info = {
 	.specific = &cam_cpas100_camnoc_specific[0],
 	.specific_size = sizeof(cam_cpas100_camnoc_specific) /
 		sizeof(cam_cpas100_camnoc_specific[0]),

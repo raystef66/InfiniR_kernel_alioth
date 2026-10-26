@@ -35,7 +35,7 @@ void cam_req_mgr_core_link_reset(struct cam_req_mgr_core_link *link)
 	link->parent = NULL;
 	link->subscribe_event = 0;
 	link->trigger_mask = 0;
-	link->sync_link = 0;
+	link->sync_link = NULL;
 	link->sync_link_sof_skip = false;
 	link->open_req_cnt = 0;
 	link->last_flush_id = 0;
@@ -86,11 +86,11 @@ static int __cam_req_mgr_setup_payload(struct cam_req_mgr_core_workq *workq)
 /**
  * __cam_req_mgr_find_pd_tbl()
  *
- * @brief    : Find pipeline delay based table pointer which matches delay
+ * Description: Find pipeline delay based table pointer which matches delay
  * @tbl      : Pointer to list of request table
  * @delay    : Pipeline delay value to be searched for comparison
  *
- * @return   : pointer to request table for matching pipeline delay table.
+ * Return: pointer to request table for matching pipeline delay table.
  *
  */
 static struct cam_req_mgr_req_tbl *__cam_req_mgr_find_pd_tbl(
@@ -112,7 +112,7 @@ static struct cam_req_mgr_req_tbl *__cam_req_mgr_find_pd_tbl(
 /**
  * __cam_req_mgr_inc_idx()
  *
- * @brief    : Increment val passed by step size and rollover after max_val
+ * Description: Increment val passed by step size and rollover after max_val
  * @val      : value to be incremented
  * @step     : amount/step by which val is incremented
  * @max_val  : max val after which idx will roll over
@@ -126,7 +126,7 @@ static void __cam_req_mgr_inc_idx(int32_t *val, int32_t step, int32_t max_val)
 /**
  * __cam_req_mgr_dec_idx()
  *
- * @brief    : Decrement val passed by step size and rollover after max_val
+ * Description: Decrement val passed by step size and rollover after max_val
  * @val      : value to be decremented
  * @step     : amount/step by which val is decremented
  * @max_val  : after zero value will roll over to max val
@@ -142,11 +142,11 @@ static void __cam_req_mgr_dec_idx(int32_t *val, int32_t step, int32_t max_val)
 /**
  * __cam_req_mgr_inject_delay()
  *
- * @brief    : Check if any pd device is injecting delay
+ * Description: Check if any pd device is injecting delay
  * @tbl      : cam_req_mgr_req_tbl
  * @curr_idx : slot idx
  *
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  */
 static int __cam_req_mgr_inject_delay(
 	struct cam_req_mgr_req_tbl  *tbl,
@@ -174,7 +174,7 @@ static int __cam_req_mgr_inject_delay(
 /**
  * __cam_req_mgr_find_dev_name()
  *
- * @brief      : Find the dev name whose req is not ready
+ * Description: Find the dev name whose req is not ready
  * @link       : link info
  * @req_id     : req_id which is not ready
  * @pd         : pipeline delay
@@ -207,8 +207,9 @@ static void __cam_req_mgr_find_dev_name(
 
 /**
  * __cam_req_mgr_notify_error_on_link()
+ * @dev: Device that failed to apply the request
  *
- * @brief : Notify userspace on exceeding max retry
+ * Description: Notify userspace on exceeding max retry
  *          attempts to apply same req
  * @link  : link on which the req could not be applied
  *
@@ -259,7 +260,7 @@ static int __cam_req_mgr_notify_error_on_link(
 /**
  * __cam_req_mgr_traverse()
  *
- * @brief    : Traverse through pd tables, it will internally cover all linked
+ * Description: Traverse through pd tables, it will internally cover all linked
  *             pd tables. Each pd table visited will check if idx passed to its
  *             in ready state. If ready means all devices linked to the pd table
  *             have this request id packet ready. Then it calls subsequent pd
@@ -267,7 +268,7 @@ static int __cam_req_mgr_notify_error_on_link(
  *             between current pd table and next one.
  * @traverse_data: contains all the info to traverse through pd tables
  *
- * @return: 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_traverse(struct cam_req_mgr_traverse *traverse_data)
@@ -349,7 +350,7 @@ static int __cam_req_mgr_traverse(struct cam_req_mgr_traverse *traverse_data)
 /**
  * __cam_req_mgr_in_q_skip_idx()
  *
- * @brief    : Decrement val passed by step size and rollover after max_val
+ * Description: Decrement val passed by step size and rollover after max_val
  * @in_q     : input queue pointer
  * @idx      : Sets skip_idx bit of the particular slot to true so when traverse
  *             happens for this idx, no req will be submitted for devices
@@ -368,7 +369,7 @@ static void __cam_req_mgr_in_q_skip_idx(struct cam_req_mgr_req_queue *in_q,
 /**
  * __cam_req_mgr_tbl_set_id()
  *
- * @brief    : Set unique id to table
+ * Description: Set unique id to table
  * @tbl      : pipeline based table which requires new id
  * @req      : pointer to request data wihch contains num_tables counter
  *
@@ -390,7 +391,7 @@ static void __cam_req_mgr_tbl_set_id(struct cam_req_mgr_req_tbl *tbl,
 /**
  * __cam_req_mgr_tbl_set_all_skip_cnt()
  *
- * @brief    : Each pd table sets skip value based on delta between itself and
+ * Description: Each pd table sets skip value based on delta between itself and
  *             max pd value. During initial streamon or bubble case this is
  *             used. That way each pd table skips required num of traverse and
  *             align themselve with req mgr connected devs.
@@ -419,7 +420,7 @@ static void __cam_req_mgr_tbl_set_all_skip_cnt(
 /**
  * __cam_req_mgr_flush_req_slot()
  *
- * @brief    : reset all the slots/pd tables when flush is
+ * Description: reset all the slots/pd tables when flush is
  *             invoked
  * @link     : link pointer
  *
@@ -464,7 +465,7 @@ static void __cam_req_mgr_flush_req_slot(
 /**
  * __cam_req_mgr_reset_req_slot()
  *
- * @brief    : reset specified idx/slot in input queue as well as all pd tables
+ * Description: reset specified idx/slot in input queue as well as all pd tables
  * @link     : link pointer
  * @idx      : slot index which will be reset
  *
@@ -504,7 +505,7 @@ static void __cam_req_mgr_reset_req_slot(struct cam_req_mgr_core_link *link,
 /**
  * __cam_req_mgr_validate_crm_wd_timer()
  *
- * @brief    : Validate/modify the wd timer based on associated
+ * Description: Validate/modify the wd timer based on associated
  *             timeout with the request
  * @link     : link pointer
  *
@@ -565,11 +566,11 @@ static void __cam_req_mgr_validate_crm_wd_timer(
 /**
  * __cam_req_mgr_check_for_lower_pd_devices()
  *
- * @brief    : Checks if there are any devices on the link having a lesser
+ * Description: Checks if there are any devices on the link having a lesser
  *             pd than the max pd of the link
  * @link     : Pointer to link which needs to be checked
  *
- * @return   : 0 if a lower pd device is found negative otherwise
+ * Return: 0 if a lower pd device is found negative otherwise
  */
 static int __cam_req_mgr_check_for_lower_pd_devices(
 	struct cam_req_mgr_core_link	*link)
@@ -589,12 +590,12 @@ static int __cam_req_mgr_check_for_lower_pd_devices(
 /**
  * __cam_req_mgr_check_next_req_slot()
  *
- * @brief    : While streaming if input queue does not contain any pending
+ * Description: While streaming if input queue does not contain any pending
  *             request, req mgr still needs to submit pending request ids to
  *             devices with lower pipeline delay value.
- * @in_q     : Pointer to input queue where req mgr wil peep into
+ * @link: Link whose input queue is inspected
  *
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  */
 static int __cam_req_mgr_check_next_req_slot(
 	struct cam_req_mgr_core_link *link)
@@ -629,13 +630,15 @@ static int __cam_req_mgr_check_next_req_slot(
 
 /**
  * __cam_req_mgr_send_req()
+ * @trigger: Trigger point for request application
+ * @failed_dev: Receives the device that failed to apply the request
  *
- * @brief    : send request id to be applied to each device connected on link
+ * Description: send request id to be applied to each device connected on link
  * @link     : pointer to link whose input queue and req tbl are
  *             traversed through
  * @in_q     : pointer to input request queue
  *
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
@@ -761,14 +764,14 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
 /**
  * __cam_req_mgr_check_link_is_ready()
  *
- * @brief    : traverse through all request tables and see if all devices are
+ * Description: traverse through all request tables and see if all devices are
  *             ready to apply request settings.
  * @link     : pointer to link whose input queue and req tbl are
  *             traversed through
  * @idx      : index within input request queue
  * @validate_only : Whether to validate only and/or update settings
  *
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_check_link_is_ready(struct cam_req_mgr_core_link *link,
@@ -842,11 +845,11 @@ static int __cam_req_mgr_check_link_is_ready(struct cam_req_mgr_core_link *link,
 /**
  * __cam_req_mgr_find_slot_for_req()
  *
- * @brief    : Find idx from input queue at which req id is enqueued
+ * Description: Find idx from input queue at which req id is enqueued
  * @in_q     : input request queue pointer
  * @req_id   : request id which needs to be searched in input queue
  *
- * @return   : slot index where passed request id is stored, -1 for failure
+ * Return: slot index where passed request id is stored, -1 for failure
  *
  */
 static int32_t __cam_req_mgr_find_slot_for_req(
@@ -875,13 +878,13 @@ static int32_t __cam_req_mgr_find_slot_for_req(
 /**
  * __cam_req_mgr_check_sync_for_mslave()
  *
- * @brief    : Processes requests during sync mode [master-slave]
+ * Description: Processes requests during sync mode [master-slave]
  *             Here master corresponds to the link having a higher
  *             max_delay (pd) compared to the slave link.
  * @link     : Pointer to link whose input queue and req tbl are
  *             traversed through
  * @slot     : Pointer to the current slot being processed
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_check_sync_for_mslave(
@@ -1090,11 +1093,11 @@ static int __cam_req_mgr_check_sync_for_mslave(
 /**
  * __cam_req_mgr_check_sync_request_is_ready()
  *
- * @brief    : processes requests during sync mode
+ * Description: processes requests during sync mode
  * @link     : pointer to link whose input queue and req tbl are
  *             traversed through
  * @slot     : pointer to the current slot being processed
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_check_sync_req_is_ready(
@@ -1320,12 +1323,13 @@ static int __cam_req_mgr_check_sync_req_is_ready(
 
 /**
  * __cam_req_mgr_process_req()
+ * @trigger_data: Trigger notification for the request
  *
- * @brief    : processes read index in request queue and traverse through table
+ * Description: processes read index in request queue and traverse through table
  * @link     : pointer to link whose input queue and req tbl are
  *             traversed through
  *
- * @return   : 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_process_req(struct cam_req_mgr_core_link *link,
@@ -1517,7 +1521,7 @@ error:
 /**
  * __cam_req_mgr_add_tbl_to_link()
  *
- * @brief    : Add table to list under link sorted by pd decremeting order
+ * Description: Add table to list under link sorted by pd decremeting order
  * @l_tbl    : list of pipeline delay tables.
  * @new_tbl  : new tbl which will be appended to above list as per its pd value
  *
@@ -1560,10 +1564,10 @@ static void __cam_req_mgr_add_tbl_to_link(struct cam_req_mgr_req_tbl **l_tbl,
 /**
  * __cam_req_mgr_create_pd_tbl()
  *
- * @brief    : Creates new request table for new delay value
+ * Description: Creates new request table for new delay value
  * @delay    : New pd table allocated will have this delay value
  *
- * @return   : pointer to newly allocated table, NULL for failure
+ * Return: pointer to newly allocated table, NULL for failure
  *
  */
 static struct cam_req_mgr_req_tbl *__cam_req_mgr_create_pd_tbl(int32_t delay)
@@ -1581,7 +1585,7 @@ static struct cam_req_mgr_req_tbl *__cam_req_mgr_create_pd_tbl(int32_t delay)
 /**
  * __cam_req_mgr_destroy_all_tbl()
  *
- * @brief   : This func will destroy all pipeline delay based req table structs
+ * Description: This func will destroy all pipeline delay based req table structs
  * @l_tbl    : pointer to first table in list and it has max pd .
  *
  */
@@ -1601,10 +1605,10 @@ static void __cam_req_mgr_destroy_all_tbl(struct cam_req_mgr_req_tbl **l_tbl)
 /**
  * __cam_req_mgr_setup_in_q()
  *
- * @brief : Initialize req table data
+ * Description: Initialize req table data
  * @req   : request data pointer
  *
- * @return: 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int  __cam_req_mgr_setup_in_q(struct cam_req_mgr_req_data *req)
@@ -1637,10 +1641,10 @@ static int  __cam_req_mgr_setup_in_q(struct cam_req_mgr_req_data *req)
 /**
  * __cam_req_mgr_reset_req_tbl()
  *
- * @brief : Initialize req table data
+ * Description: Initialize req table data
  * @req   : request queue pointer
  *
- * @return: 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_reset_in_q(struct cam_req_mgr_req_data *req)
@@ -1667,7 +1671,7 @@ static int __cam_req_mgr_reset_in_q(struct cam_req_mgr_req_data *req)
 /**
  * __cam_req_mgr_notify_sof_freeze()
  *
- * @brief : Notify devices on link on detecting a SOF freeze
+ * Description: Notify devices on link on detecting a SOF freeze
  * @link  : link on which the sof freeze was detected
  *
  */
@@ -1693,7 +1697,7 @@ static void __cam_req_mgr_notify_sof_freeze(
 /**
  * __cam_req_mgr_process_sof_freeze()
  *
- * @brief : Apoptosis - Handles case when connected devices are not responding
+ * Description: Apoptosis - Handles case when connected devices are not responding
  * @priv  : link information
  * @data  : task data
  *
@@ -1738,8 +1742,8 @@ static int __cam_req_mgr_process_sof_freeze(void *priv, void *data)
 /**
  * __cam_req_mgr_sof_freeze()
  *
- * @brief : Callback function for timer timeout indicating SOF freeze
- * @data  : timer pointer
+ * Description: Callback function for timer timeout indicating SOF freeze
+ * @timer_data: timer pointer
  *
  */
 static void __cam_req_mgr_sof_freeze(struct timer_list *timer_data)
@@ -1775,11 +1779,11 @@ static void __cam_req_mgr_sof_freeze(struct timer_list *timer_data)
 /**
  * __cam_req_mgr_create_subdevs()
  *
- * @brief   : Create new crm  subdev to link with realtime devices
+ * Description: Create new crm  subdev to link with realtime devices
  * @l_dev   : list of subdevs internal to crm
  * @num_dev : num of subdevs to be created for link
  *
- * @return  : pointer to allocated list of devices
+ * Return: pointer to allocated list of devices
  */
 static int __cam_req_mgr_create_subdevs(
 	struct cam_req_mgr_connected_device **l_dev, int32_t num_dev)
@@ -1796,7 +1800,7 @@ static int __cam_req_mgr_create_subdevs(
 /**
  * __cam_req_mgr_destroy_subdev()
  *
- * @brief    : Cleans up the subdevs allocated by crm for link
+ * Description: Cleans up the subdevs allocated by crm for link
  * @l_device : pointer to list of subdevs crm created
  *
  */
@@ -1810,10 +1814,10 @@ static void __cam_req_mgr_destroy_subdev(
 /**
  * __cam_req_mgr_destroy_link_info()
  *
- * @brief    : Unlinks all devices on the link
+ * Description: Unlinks all devices on the link
  * @link     : pointer to link
  *
- * @return   : returns if unlink for any device was success or failure
+ * Return: returns if unlink for any device was success or failure
  */
 static int __cam_req_mgr_disconnect_link(struct cam_req_mgr_core_link *link)
 {
@@ -1853,7 +1857,7 @@ static int __cam_req_mgr_disconnect_link(struct cam_req_mgr_core_link *link)
 /**
  * __cam_req_mgr_destroy_link_info()
  *
- * @brief    : Cleans up the mem allocated while linking
+ * Description: Cleans up the mem allocated while linking
  * @link     : pointer to link, mem associated with this link is freed
  */
 static void __cam_req_mgr_destroy_link_info(struct cam_req_mgr_core_link *link)
@@ -1871,10 +1875,10 @@ static void __cam_req_mgr_destroy_link_info(struct cam_req_mgr_core_link *link)
 /**
  * __cam_req_mgr_reserve_link()
  *
- * @brief: Reserves one link data struct within session
+ * Description: Reserves one link data struct within session
  * @session: session identifier
  *
- * @return: pointer to link reserved
+ * Return: pointer to link reserved
  *
  */
 static struct cam_req_mgr_core_link *__cam_req_mgr_reserve_link(
@@ -1978,7 +1982,7 @@ static void __cam_req_mgr_free_link(struct cam_req_mgr_core_link *link)
 /**
  * __cam_req_mgr_unreserve_link()
  *
- * @brief  : Removes the link data struct from the session and frees it
+ * Description: Removes the link data struct from the session and frees it
  * @session: session identifier
  * @link   : link identifier
  *
@@ -2025,12 +2029,12 @@ static void __cam_req_mgr_unreserve_link(
 /**
  * cam_req_mgr_process_send_req()
  *
- * @brief: This runs in workque thread context. Call core funcs to send
+ * Description: This runs in workque thread context. Call core funcs to send
  *         apply request id to drivers.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 int cam_req_mgr_process_send_req(void *priv, void *data)
 {
@@ -2057,12 +2061,12 @@ end:
 /**
  * cam_req_mgr_process_flush_req()
  *
- * @brief: This runs in workque thread context. Call core funcs to check
+ * Description: This runs in workque thread context. Call core funcs to check
  *         which requests need to be removed/cancelled.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 int cam_req_mgr_process_flush_req(void *priv, void *data)
 {
@@ -2141,12 +2145,12 @@ end:
 /**
  * cam_req_mgr_process_sched_req()
  *
- * @brief: This runs in workque thread context. Call core funcs to check
+ * Description: This runs in workque thread context. Call core funcs to check
  *         which peding requests can be processed.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 int cam_req_mgr_process_sched_req(void *priv, void *data)
 {
@@ -2224,12 +2228,12 @@ end:
 /**
  * cam_req_mgr_process_add_req()
  *
- * @brief: This runs in workque thread context. Call core funcs to check
+ * Description: This runs in workque thread context. Call core funcs to check
  *         which peding requests can be processed.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 int cam_req_mgr_process_add_req(void *priv, void *data)
 {
@@ -2329,11 +2333,11 @@ end:
 /**
  * cam_req_mgr_process_error()
  *
- * @brief: This runs in workque thread context. bubble /err recovery.
+ * Description: This runs in workque thread context. bubble /err recovery.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 int cam_req_mgr_process_error(void *priv, void *data)
 {
@@ -2421,12 +2425,12 @@ end:
 /**
  * cam_req_mgr_process_trigger()
  *
- * @brief: This runs in workque thread context. Call core funcs to check
+ * Description: This runs in workque thread context. Call core funcs to check
  *         which peding requests can be processed.
  * @priv : link information.
  * @data : contains information about frame_id, link etc.
  *
- * @return: 0 on success.
+ * Return: 0 on success.
  */
 static int cam_req_mgr_process_trigger(void *priv, void *data)
 {
@@ -2499,10 +2503,10 @@ end:
 /**
  * __cam_req_mgr_dev_handle_to_name()
  *
- * @brief    : Finds device name based on the device handle
+ * Description: Finds device name based on the device handle
  * @dev_hdl  : Device handle whose name is to be found
  * @link     : Link on which the device is connected
- * @return   : String containing the device name
+ * Return: String containing the device name
  *
  */
 static const char *__cam_req_mgr_dev_handle_to_name(
@@ -2526,10 +2530,10 @@ static const char *__cam_req_mgr_dev_handle_to_name(
 /**
  * cam_req_mgr_cb_add_req()
  *
- * @brief    : Drivers call this function to notify new packet is available.
+ * Description: Drivers call this function to notify new packet is available.
  * @add_req  : Information about new request available at a device.
  *
- * @return   : 0 on success, negative in case of failure
+ * Return: 0 on success, negative in case of failure
  *
  */
 static int cam_req_mgr_cb_add_req(struct cam_req_mgr_add_request *add_req)
@@ -2603,10 +2607,10 @@ end:
 /**
  * cam_req_mgr_cb_notify_err()
  *
- * @brief    : Error received from device, sends bubble recovery
+ * Description: Error received from device, sends bubble recovery
  * @err_info : contains information about error occurred like bubble/overflow
  *
- * @return   : 0 on success, negative in case of failure
+ * Return: 0 on success, negative in case of failure
  *
  */
 static int cam_req_mgr_cb_notify_err(
@@ -2666,10 +2670,10 @@ end:
 /**
  * cam_req_mgr_cb_notify_timer()
  *
- * @brief      : Notify SOF timer to pause after flush
+ * Description: Notify SOF timer to pause after flush
  * @timer_data : contains information about frame_id, link etc.
  *
- * @return  : 0 on success
+ * Return: 0 on success
  *
  */
 static int cam_req_mgr_cb_notify_timer(
@@ -2712,10 +2716,10 @@ end:
 /**
  * cam_req_mgr_cb_notify_trigger()
  *
- * @brief   : SOF received from device, sends trigger through workqueue
- * @sof_data: contains information about frame_id, link etc.
+ * Description: SOF received from device, sends trigger through workqueue
+ * @trigger_data: contains information about frame_id, link etc.
  *
- * @return  : 0 on success
+ * Return: 0 on success
  *
  */
 static int cam_req_mgr_cb_notify_trigger(
@@ -2787,12 +2791,12 @@ static struct cam_req_mgr_crm_cb cam_req_mgr_ops = {
 /**
  * __cam_req_mgr_setup_link_info()
  *
- * @brief     : Sets up input queue, create pd based tables, communicate with
+ * Description: Sets up input queue, create pd based tables, communicate with
  *              devs connected on this link and setup communication.
  * @link      : pointer to link to setup
  * @link_info : link_info coming from CSL to prepare link
  *
- * @return    : 0 on success, negative in case of failure
+ * Return: 0 on success, negative in case of failure
  *
  */
 static int __cam_req_mgr_setup_link_info(struct cam_req_mgr_core_link *link,
@@ -3009,10 +3013,10 @@ end:
 /**
  * __cam_req_mgr_unlink()
  *
- * @brief : Unlink devices on a link structure from the session
+ * Description: Unlink devices on a link structure from the session
  * @link  : Pointer to the link structure
  *
- * @return: 0 for success, negative for failure
+ * Return: 0 for success, negative for failure
  *
  */
 static int __cam_req_mgr_unlink(struct cam_req_mgr_core_link *link)
@@ -3436,7 +3440,7 @@ end:
 /**
  * __cam_req_mgr_set_master_link()
  *
- * @brief    : Each links sets its max pd delay based on the devices on the
+ * Description: Each links sets its max pd delay based on the devices on the
  *             link. The link with higher pd is assigned master.
  * @link1    : One of the sync links
  * @link2    : The other sync link

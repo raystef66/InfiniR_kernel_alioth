@@ -407,6 +407,7 @@ static int32_t cam_eeprom_update_slaveInfo(struct cam_eeprom_ctrl_t *e_ctrl,
  * @cmd_length:       command buffer length
  * @num_map:          memory map size
  * @cmd_length_bytes: command length processed in this function
+ * @remain_buf_len: Bytes remaining in the command buffer
  *
  * Returns success or failure
  */

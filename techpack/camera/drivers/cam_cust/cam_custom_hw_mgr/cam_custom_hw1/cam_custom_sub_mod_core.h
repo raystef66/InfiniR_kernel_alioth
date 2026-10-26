@@ -30,6 +30,8 @@ struct cam_custom_device_hw_info {
 	uint32_t irq_clear;
 };
 
+extern struct cam_custom_device_hw_info cam_custom_hw_info;
+
 struct cam_custom_sub_mod_core_info {
 	uint32_t cpas_handle;
 	bool cpas_start;

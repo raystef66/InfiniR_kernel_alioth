@@ -8,7 +8,7 @@
 
 #include "../cam_csiphy_dev.h"
 
-struct csiphy_reg_parms_t csiphy_v1_1 = {
+static struct csiphy_reg_parms_t csiphy_v1_1 = {
 	.mipi_csiphy_interrupt_status0_addr = 0x8B0,
 	.mipi_csiphy_interrupt_clear0_addr = 0x858,
 	.mipi_csiphy_glbl_irq_cmd_addr = 0x828,
@@ -20,7 +20,7 @@ struct csiphy_reg_parms_t csiphy_v1_1 = {
 	.csiphy_2ph_combo_ck_ln = 0x10,
 };
 
-struct csiphy_reg_t csiphy_common_reg_1_1[] = {
+static struct csiphy_reg_t csiphy_common_reg_1_1[] = {
 	{0x0814, 0xd5, 0x00, CSIPHY_LANE_ENABLE},
 	{0x0818, 0x01, 0x00, CSIPHY_DEFAULT_PARAMS},
 	{0x081C, 0x02, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -28,7 +28,7 @@ struct csiphy_reg_t csiphy_common_reg_1_1[] = {
 	{0x0800, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 };
 
-struct csiphy_reg_t csiphy_reset_reg_1_1[] = {
+static struct csiphy_reg_t csiphy_reset_reg_1_1[] = {
 	{0x0814, 0x00, 0x05, CSIPHY_LANE_ENABLE},
 	{0x0818, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 	{0x081C, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -36,7 +36,7 @@ struct csiphy_reg_t csiphy_reset_reg_1_1[] = {
 	{0x0800, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 };
 
-struct csiphy_reg_t csiphy_irq_reg_1_1[] = {
+static struct csiphy_reg_t csiphy_irq_reg_1_1[] = {
 	{0x082c, 0xFF, 0x00, CSIPHY_DEFAULT_PARAMS},
 	{0x0830, 0xFF, 0x00, CSIPHY_DEFAULT_PARAMS},
 	{0x0834, 0xFB, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -50,7 +50,7 @@ struct csiphy_reg_t csiphy_irq_reg_1_1[] = {
 	{0x0854, 0xFF, 0x00, CSIPHY_DEFAULT_PARAMS},
 };
 
-struct
+static struct
 csiphy_reg_t csiphy_2ph_v1_1_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0004, 0x0C, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -134,7 +134,7 @@ csiphy_reg_t csiphy_2ph_v1_1_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	},
 };
 
-struct csiphy_reg_t
+static struct csiphy_reg_t
 	csiphy_2ph_v1_1_combo_mode_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0004, 0x0C, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -218,7 +218,7 @@ struct csiphy_reg_t
 	},
 };
 
-struct
+static struct
 csiphy_reg_t csiphy_3ph_v1_1_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0144, 0xB6, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -357,7 +357,7 @@ csiphy_reg_t csiphy_3ph_v1_1_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	},
 };
 
-struct csiphy_reg_t
+static struct csiphy_reg_t
 	csiphy_3ph_v1_1_combo_mode_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0144, 0xB6, 0x00, CSIPHY_DEFAULT_PARAMS},

@@ -45,6 +45,8 @@ struct cam_a5_device_hw_info {
 	uint32_t a5_status;
 };
 
+extern struct cam_a5_device_hw_info cam_a5_hw_info;
+
 /**
  * struct cam_a5_device_hw_info
  * @a5_hw_info: A5 hardware info

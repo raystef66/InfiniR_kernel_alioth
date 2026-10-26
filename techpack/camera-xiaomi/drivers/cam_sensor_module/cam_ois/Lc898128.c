@@ -16,7 +16,6 @@
 #include "cam_packet_util.h"
 #include "Lc898128.h"
 
-const uint8_t PACT1Tbl[] = { 0x20, 0xDF };	/* [ACT_02][ACT_01][ACT_03] */
 
 static void RamWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uint32_t delay)
 {

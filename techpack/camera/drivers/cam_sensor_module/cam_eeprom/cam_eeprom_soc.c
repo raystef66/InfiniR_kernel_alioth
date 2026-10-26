@@ -191,6 +191,7 @@ ERROR:
 }
 
 /**
+ * cam_eeprom_get_dt_data() - Parse EEPROM device-tree data
  * @e_ctrl: ctrl structure
  *
  * Parses eeprom dt
@@ -236,6 +237,7 @@ static int cam_eeprom_get_dt_data(struct cam_eeprom_ctrl_t *e_ctrl)
 }
 
 /**
+ * cam_eeprom_cmm_dts() - Parse EEPROM memory map metadata
  * @eb_info: eeprom private data structure
  * @of_node: eeprom device node
  *
@@ -274,6 +276,7 @@ static int cam_eeprom_cmm_dts(struct cam_eeprom_soc_private *eb_info,
 }
 
 /**
+ * cam_eeprom_parse_dt() - Initialize EEPROM device-tree configuration
  * @e_ctrl: ctrl structure
  *
  * This function is called from cam_eeprom_platform/i2c/spi_driver_probe

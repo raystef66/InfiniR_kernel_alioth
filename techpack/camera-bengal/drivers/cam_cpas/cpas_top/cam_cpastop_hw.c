@@ -27,7 +27,7 @@
 #include "cpastop_v545_110_518.h"
 #include "cam_req_mgr_workq.h"
 
-struct cam_camnoc_info *camnoc_info;
+static struct cam_camnoc_info *camnoc_info;
 
 #define CAMNOC_SLAVE_MAX_ERR_CODE 7
 static const char * const camnoc_salve_err_code[] = {

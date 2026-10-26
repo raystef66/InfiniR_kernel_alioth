@@ -17,6 +17,8 @@ struct a5_ubwc_cfg_ext {
 	uint32_t ubwc_bps_write_cfg[ICP_UBWC_MAX];
 };
 
+extern struct a5_soc_info cam_a5_soc_info;
+
 struct a5_soc_info {
 	char *fw_name;
 	bool ubwc_config_ext;

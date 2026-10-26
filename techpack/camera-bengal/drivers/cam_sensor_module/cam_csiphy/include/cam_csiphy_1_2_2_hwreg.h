@@ -32,7 +32,7 @@ struct csiphy_reg_t csiphy_common_reg_1_2_2[] = {
 	{0x0824, 0x72, 0x00, CSIPHY_2PH_REGS},
 };
 
-struct csiphy_reg_t
+static struct csiphy_reg_t
 csiphy_2ph_v1_2_2_combo_mode_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0030, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},

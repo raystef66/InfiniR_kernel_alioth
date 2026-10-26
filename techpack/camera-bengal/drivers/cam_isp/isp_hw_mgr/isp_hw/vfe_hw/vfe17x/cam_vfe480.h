@@ -267,7 +267,7 @@ static struct cam_vfe_camif_lite_ver3_reg_data vfe480_camif_pd_reg_data = {
 	.enable_diagnostic_hw       = 0x1,
 };
 
-struct cam_vfe_camif_lite_ver3_hw_info rdi_hw_info_arr[CAM_VFE_RDI_VER2_MAX] = {
+static struct cam_vfe_camif_lite_ver3_hw_info rdi_hw_info_arr[CAM_VFE_RDI_VER2_MAX] = {
 	{
 		.common_reg     = &vfe480_top_common_reg,
 		.camif_lite_reg = &vfe480_camif_rdi[0],
@@ -1362,7 +1362,7 @@ static struct cam_vfe_bus_rd_ver1_hw_info vfe480_bus_rd_hw_info = {
 	},
 };
 
-struct cam_vfe_hw_info cam_vfe480_hw_info = {
+static struct cam_vfe_hw_info cam_vfe480_hw_info = {
 	.irq_reg_info                  = &vfe480_top_irq_reg_info,
 
 	.bus_version                   = CAM_VFE_BUS_VER_3_0,

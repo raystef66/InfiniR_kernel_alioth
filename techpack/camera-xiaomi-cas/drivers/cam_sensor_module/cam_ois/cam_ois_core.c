@@ -540,14 +540,14 @@ release_firmware:
 }
 
 
-struct cam_sensor_i2c_reg_array ois_pm_add_array[]= {
+static struct cam_sensor_i2c_reg_array ois_pm_add_array[] = {
 	{0x30, 0x00, 0x0, 0x0},
 	{0x30, 0x10, 0x0, 0x0},
 	{0x30, 0x00, 0x0, 0x0},
 	{0x30, 0x00, 0x0, 0x0},
 };
 
-struct cam_sensor_i2c_reg_array ois_pm_length_array[]= {
+static struct cam_sensor_i2c_reg_array ois_pm_length_array[] = {
 	{0xF0, 0x0A, 0x0, 0x0},
 	{0xF0, 0x07, 0x0, 0x0},
 	{0xF0, 0x59, 0x0, 0x0},
@@ -1503,7 +1503,7 @@ void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 
 /**
  * cam_ois_driver_cmd - Handle ois cmds
- * @e_ctrl:     ctrl structure
+ * @o_ctrl:     ctrl structure
  * @arg:        Camera control command argument
  *
  * Returns success or failure

@@ -57,11 +57,11 @@ int cam_soc_util_get_clk_level(struct cam_hw_soc_info *soc_info,
 /**
  * cam_soc_util_get_string_from_level()
  *
- * @brief:     Returns the string for a given clk level
+ * Description:     Returns the string for a given clk level
  *
  * @level:     Clock level
  *
- * @return:    String corresponding to the clk level
+ * Return:    String corresponding to the clk level
  */
 static const char *cam_soc_util_get_string_from_level(
 	enum cam_vote_level level)
@@ -91,12 +91,12 @@ static const char *cam_soc_util_get_string_from_level(
 /**
  * cam_soc_util_get_supported_clk_levels()
  *
- * @brief:      Returns the string of all the supported clk levels for
+ * Description:      Returns the string of all the supported clk levels for
  *              the given device
  *
  * @soc_info:   Device soc information
  *
- * @return:     String containing all supported clk levels
+ * Return:     String containing all supported clk levels
  */
 static const char *cam_soc_util_get_supported_clk_levels(
 	struct cam_hw_soc_info *soc_info)
@@ -175,11 +175,11 @@ DEFINE_SIMPLE_ATTRIBUTE(cam_soc_util_clk_lvl_control,
 /**
  * cam_soc_util_create_clk_lvl_debugfs()
  *
- * @brief:      Creates debugfs files to view/control device clk rates
+ * Description:      Creates debugfs files to view/control device clk rates
  *
  * @soc_info:   Device soc information
  *
- * @return:     Success or failure
+ * Return:     Success or failure
  */
 static int cam_soc_util_create_clk_lvl_debugfs(
 	struct cam_hw_soc_info *soc_info)
@@ -231,7 +231,7 @@ err:
 /**
  * cam_soc_util_remove_clk_lvl_debugfs()
  *
- * @brief:      Removes the debugfs files used to view/control
+ * Description:      Removes the debugfs files used to view/control
  *              device clk rates
  *
  * @soc_info:   Device soc information
@@ -277,15 +277,15 @@ int cam_soc_util_get_level_from_string(const char *string,
 /**
  * cam_soc_util_get_clk_level_to_apply()
  *
- * @brief:              Get the clock level to apply. If the requested level
+ * Description:              Get the clock level to apply. If the requested level
  *                      is not valid, bump the level to next available valid
  *                      level. If no higher level found, return failure.
  *
  * @soc_info:           Device soc struct to be populated
  * @req_level:          Requested level
- * @apply_level         Level to apply
+ * @apply_level:        Level to apply
  *
- * @return:             success or failure
+ * Return:             success or failure
  */
 static int cam_soc_util_get_clk_level_to_apply(
 	struct cam_hw_soc_info *soc_info, enum cam_vote_level req_level,
@@ -371,13 +371,13 @@ long cam_soc_util_get_clk_round_rate(struct cam_hw_soc_info *soc_info,
 /**
  * cam_soc_util_set_clk_rate()
  *
- * @brief:          Sets the given rate for the clk requested for
+ * Description:          Sets the given rate for the clk requested for
  *
  * @clk:            Clock structure information for which rate is to be set
  * @clk_name:       Name of the clock for which rate is being set
- * @clk_rate        Clock rate to be set
+ * @clk_rate:       Clock rate to be set
  *
- * @return:         Success or failure
+ * Return:         Success or failure
  */
 static int cam_soc_util_set_clk_rate(struct clk *clk, const char *clk_name,
 	int64_t clk_rate)
@@ -629,13 +629,13 @@ int cam_soc_util_clk_disable(struct clk *clk, const char *clk_name)
 /**
  * cam_soc_util_clk_enable_default()
  *
- * @brief:              This function enables the default clocks present
+ * Description:              This function enables the default clocks present
  *                      in soc_info
  *
  * @soc_info:           Device soc struct to be populated
  * @clk_level:          Clk level to apply while enabling
  *
- * @return:             success or failure
+ * Return:             success or failure
  */
 int cam_soc_util_clk_enable_default(struct cam_hw_soc_info *soc_info,
 	enum cam_vote_level clk_level)
@@ -690,12 +690,12 @@ clk_disable:
 /**
  * cam_soc_util_clk_disable_default()
  *
- * @brief:              This function disables the default clocks present
+ * Description:              This function disables the default clocks present
  *                      in soc_info
  *
  * @soc_info:           device soc struct to be populated
  *
- * @return:             success or failure
+ * Return:             success or failure
  */
 void cam_soc_util_clk_disable_default(struct cam_hw_soc_info *soc_info)
 {
@@ -714,12 +714,12 @@ void cam_soc_util_clk_disable_default(struct cam_hw_soc_info *soc_info)
 /**
  * cam_soc_util_get_dt_clk_info()
  *
- * @brief:              Parse the DT and populate the Clock properties
+ * Description:              Parse the DT and populate the Clock properties
  *
  * @soc_info:           device soc struct to be populated
  * @src_clk_str         name of src clock that has rate control
  *
- * @return:             success or failure
+ * Return:             success or failure
  */
 static int cam_soc_util_get_dt_clk_info(struct cam_hw_soc_info *soc_info)
 {
@@ -1335,13 +1335,13 @@ int cam_soc_util_get_dt_properties(struct cam_hw_soc_info *soc_info)
 /**
  * cam_soc_util_get_regulator()
  *
- * @brief:              Get regulator resource named vdd
+ * Description:              Get regulator resource named vdd
  *
  * @dev:                Device associated with regulator
  * @reg:                Return pointer to be filled with regulator on success
  * @rgltr_name:         Name of regulator to get
  *
- * @return:             0 for Success, negative value for failure
+ * Return:             0 for Success, negative value for failure
  */
 static int cam_soc_util_get_regulator(struct device *dev,
 	struct regulator **reg, const char *rgltr_name)

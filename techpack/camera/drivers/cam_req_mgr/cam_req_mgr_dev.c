@@ -159,18 +159,18 @@ end:
 	return rc;
 }
 
-static unsigned int cam_req_mgr_poll(struct file *f,
+static __poll_t cam_req_mgr_poll(struct file *f,
 	struct poll_table_struct *pll_table)
 {
-	int rc = 0;
+	__poll_t rc = 0;
 	struct v4l2_fh *eventq = f->private_data;
 
 	if (!eventq)
-		return -EINVAL;
+		return EPOLLERR;
 
 	poll_wait(f, &eventq->wait, pll_table);
 	if (v4l2_event_pending(eventq))
-		rc = POLLPRI;
+		rc = EPOLLPRI;
 
 	return rc;
 }

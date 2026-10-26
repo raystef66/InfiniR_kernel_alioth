@@ -269,15 +269,14 @@ static int cam_sensor_handle_slave_info(
 }
 
 /**
- * Name : cam_sensor_i2c_command_parser
- * Description : Parse CSL CCI packet and apply register settings
- * Parameters :  s_ctrl  input/output    sub_device
- *              arg     input           cam_control
- * Description :
- * Handle multiple I2C RD/WR and WAIT cmd formats in one command
- * buffer, for example, a command buffer of m x RND_WR + 1 x HW_
- * WAIT + n x RND_WR with num_cmd_buf = 1. Do not exepect RD/WR
- * with different cmd_type and op_code in one command buffer.
+ * cam_sensor_i2c_command_parser() - Parse sensor I2C command buffers
+ * @io_master: I/O master used for sensor transfers
+ * @i2c_reg_settings: Parsed I2C settings grouped by operation
+ * @cmd_desc: Command buffer descriptors
+ * @num_cmd_buffers: Number of command buffer descriptors
+ *
+ * Handle I2C read, write and wait operations in each command buffer.
+ * Read/write operations within a buffer must use the same command and opcode.
  */
 int cam_sensor_i2c_command_parser(
 	struct camera_io_master *io_master,

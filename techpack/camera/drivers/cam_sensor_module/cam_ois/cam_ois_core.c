@@ -823,7 +823,7 @@ void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 
 /**
  * cam_ois_driver_cmd - Handle ois cmds
- * @e_ctrl:     ctrl structure
+ * @o_ctrl:     ctrl structure
  * @arg:        Camera control command argument
  *
  * Returns success or failure

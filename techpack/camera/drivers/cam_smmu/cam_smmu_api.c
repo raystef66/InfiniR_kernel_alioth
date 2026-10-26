@@ -51,7 +51,7 @@ struct firmware_alloc_info {
 	dma_addr_t fw_dma_hdl;
 };
 
-struct firmware_alloc_info icp_fw;
+static struct firmware_alloc_info icp_fw;
 
 struct cam_smmu_work_payload {
 	int idx;
@@ -788,7 +788,10 @@ static int cam_smmu_check_handle_unique(int hdl)
 }
 
 /**
- *  use low 2 bytes for handle cookie
+ * cam_smmu_create_iommu_handle() - Combine a context-bank index and cookie
+ * @idx: Context-bank index used to construct the handle
+ *
+ * Return: Handle with the random cookie in its low bytes.
  */
 static int cam_smmu_create_iommu_handle(int idx)
 {
@@ -1378,7 +1381,7 @@ int cam_smmu_dealloc_firmware(int32_t smmu_hdl)
 		icp_fw.fw_kva,
 		icp_fw.fw_dma_hdl);
 
-	icp_fw.fw_kva = 0;
+	icp_fw.fw_kva = NULL;
 	icp_fw.fw_dma_hdl = 0;
 
 	iommu_cb_set.cb_info[idx].is_fw_allocated = false;

@@ -141,7 +141,7 @@ end:
 	return 0;
 }
 
-const struct v4l2_subdev_internal_ops cam_icp_subdev_internal_ops = {
+static const struct v4l2_subdev_internal_ops cam_icp_subdev_internal_ops = {
 	.open = cam_icp_subdev_open,
 	.close = cam_icp_subdev_close,
 };

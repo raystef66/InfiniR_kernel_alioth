@@ -46,7 +46,7 @@ static int cam_spi_txfr_read(struct spi_device *spi, char *txbuf,
  * cam_set_addr() - helper function to set transfer address
  * @addr:	device address
  * @addr_len:	the addr field length of an instruction
- * @type:	type (i.e. byte-length) of @addr
+ * @addr_type:	type (i.e. byte-length) of @addr
  * @str:	shifted address output, must be zeroed when passed in
  *
  * This helper function sets @str based on the addr field length of an
@@ -83,8 +83,9 @@ static void cam_set_addr(uint32_t addr, uint8_t addr_len,
  * @addr:       device addr following the inst
  * @data:       output byte array (could be NULL)
  * @num_byte:   size of @data
- * @tx, rx:     optional transfer buffer.  It must be at least header
- *              + @num_byte long.
+ * @addr_type: Address width for this transfer
+ * @tx: Optional transmit buffer, at least header plus num_byte bytes
+ * @rx: Optional receive buffer, at least header plus num_byte bytes
  *
  * This is the core function for SPI transaction, except for writes.  It first
  * checks address type, then allocates required memory for tx/rx buffers.
@@ -386,6 +387,7 @@ static int32_t cam_spi_write_enable(struct camera_io_master *client,
  * @data: data to write
  * @len: size of data
  * @tx: tx buffer, size >= header + len
+ * @addr_type: Address width for the programmed transfer
  *
  * This function performs SPI write, and has no boundary check.  Writing range
  * should not cross page boundary, or data will be corrupted.  Transaction is

@@ -18,7 +18,7 @@ static void cam_tasklet_action(unsigned long data);
 
 /**
  * struct cam_tasklet_queue_cmd:
- * @Brief:                  Structure associated with each slot in the
+ * Description:                  Structure associated with each slot in the
  *                          tasklet queue
  *
  * @list:                   list_head member for each entry in queue
@@ -38,7 +38,7 @@ struct cam_tasklet_queue_cmd {
 
 /**
  * struct cam_tasklet_info:
- * @Brief:                  Tasklet private structure
+ * Description:                  Tasklet private structure
  *
  * @list:                   list_head member for each tasklet
  * @index:                  Instance id for the tasklet
@@ -138,18 +138,11 @@ void cam_tasklet_put_cmd(
 }
 
 /**
- * cam_tasklet_dequeue_cmd()
+ * cam_tasklet_dequeue_cmd() - Remove a command from the tasklet queue
+ * @tasklet: Tasklet whose queue is inspected
+ * @tasklet_cmd: Receives the dequeued command, or NULL if none is available
  *
- * @brief:              Initialize the tasklet info structure
- *
- * @hw_mgr_ctx:         Private Ctx data that will be passed to the handler
- *                      function
- * @idx:                Index of tasklet used as identity
- * @tasklet_action:     Tasklet callback function that will be called
- *                      when tasklet runs on CPU
- *
- * @return:             0: Success
- *                      Negative: Failure
+ * Return: 0 if a command was dequeued, or a negative error code.
  */
 static int cam_tasklet_dequeue_cmd(
 	struct cam_tasklet_info        *tasklet,

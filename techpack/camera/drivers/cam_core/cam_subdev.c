@@ -10,7 +10,7 @@
 /**
  * cam_subdev_subscribe_event()
  *
- * @brief: function to subscribe to v4l2 events
+ * Description: function to subscribe to v4l2 events
  *
  * @sd:                    Pointer to struct v4l2_subdev.
  * @fh:                    Pointer to struct v4l2_fh.
@@ -26,7 +26,7 @@ static int cam_subdev_subscribe_event(struct v4l2_subdev *sd,
 /**
  * cam_subdev_unsubscribe_event()
  *
- * @brief: function to unsubscribe from v4l2 events
+ * Description: function to unsubscribe from v4l2 events
  *
  * @sd:                    Pointer to struct v4l2_subdev.
  * @fh:                    Pointer to struct v4l2_fh.
@@ -95,7 +95,7 @@ static long cam_subdev_compat_ioctl(struct v4l2_subdev *sd,
 }
 #endif
 
-const struct v4l2_subdev_core_ops cam_subdev_core_ops = {
+static const struct v4l2_subdev_core_ops cam_subdev_core_ops = {
 	.ioctl = cam_subdev_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl32 = cam_subdev_compat_ioctl,

@@ -37,7 +37,6 @@
 #define HFI_POLL_TRY_SLEEP 1
 
 static struct hfi_info *g_hfi;
-unsigned int g_icp_mmu_hdl;
 static DEFINE_MUTEX(hfi_cmd_q_mutex);
 static DEFINE_MUTEX(hfi_msg_q_mutex);
 

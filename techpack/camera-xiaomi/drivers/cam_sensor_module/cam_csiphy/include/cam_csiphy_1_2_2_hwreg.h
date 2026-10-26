@@ -8,7 +8,7 @@
 
 #include "../cam_csiphy_dev.h"
 
-struct csiphy_reg_t
+static struct csiphy_reg_t
 csiphy_2ph_v1_2_2_combo_mode_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 	{
 		{0x0030, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
