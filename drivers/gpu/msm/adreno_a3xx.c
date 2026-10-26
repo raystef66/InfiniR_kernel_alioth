@@ -1070,7 +1070,7 @@ static void a3xx_perfcounter_init(struct adreno_device *adreno_dev)
 	}
 }
 
-struct {
+static struct {
 	u32 reg;
 	u32 base;
 	u32 count;
