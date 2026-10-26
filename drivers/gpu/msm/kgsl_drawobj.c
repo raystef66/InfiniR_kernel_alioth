@@ -399,7 +399,7 @@ static void cmdobj_destroy(struct kgsl_drawobj *drawobj)
 
 /**
  * kgsl_drawobj_destroy() - Destroy a kgsl object structure
- * @obj: Pointer to the kgsl object to destroy
+ * @drawobj: Pointer to the kgsl object to destroy
  *
  * Start the process of destroying a command batch.  Cancel any pending events
  * and decrement the refcount.  Asynchronous events can still signal after
@@ -763,6 +763,7 @@ static void add_profiling_buffer(struct kgsl_device *device,
 /**
  * kgsl_drawobj_cmd_add_ibdesc() - Add a legacy ibdesc to a command
  * batch
+ * @device: KGSL device that owns the command
  * @cmdobj: Pointer to the ib
  * @ibdesc: Pointer to the user-specified struct defining the memory or IB
  *

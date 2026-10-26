@@ -1337,7 +1337,7 @@ struct kgsl_gpuobj_alloc {
  */
 struct kgsl_gpuobj_free {
 	uint64_t flags;
-	uint64_t __user priv;
+	uint64_t priv;
 	unsigned int id;
 	unsigned int type;
 	unsigned int len;
@@ -1400,7 +1400,7 @@ struct kgsl_gpuobj_info {
  * @id: Returns the ID of the new GPU object
  */
 struct kgsl_gpuobj_import {
-	uint64_t __user priv;
+	uint64_t priv;
 	uint64_t priv_len;
 	uint64_t flags;
 	unsigned int type;
@@ -1449,7 +1449,7 @@ struct kgsl_gpuobj_sync_obj {
  */
 
 struct kgsl_gpuobj_sync {
-	uint64_t __user objs;
+	uint64_t objs;
 	unsigned int obj_len;
 	unsigned int count;
 };
@@ -1480,7 +1480,7 @@ struct kgsl_command_object {
  * @type: type of sync point defined here
  */
 struct kgsl_command_syncpoint {
-	uint64_t __user priv;
+	uint64_t priv;
 	uint64_t size;
 	unsigned int type;
 };
@@ -1502,13 +1502,13 @@ struct kgsl_command_syncpoint {
  */
 struct kgsl_gpu_command {
 	uint64_t flags;
-	uint64_t __user cmdlist;
+	uint64_t cmdlist;
 	unsigned int cmdsize;
 	unsigned int numcmds;
-	uint64_t __user objlist;
+	uint64_t objlist;
 	unsigned int objsize;
 	unsigned int numobjs;
-	uint64_t __user synclist;
+	uint64_t synclist;
 	unsigned int syncsize;
 	unsigned int numsyncs;
 	unsigned int context_id;
@@ -1536,7 +1536,7 @@ struct kgsl_gpu_command {
  * returned back.
  */
 struct kgsl_preemption_counters_query {
-	uint64_t __user counters;
+	uint64_t counters;
 	unsigned int size_user;
 	unsigned int size_priority_level;
 	unsigned int max_priority_level;
@@ -1653,7 +1653,7 @@ struct kgsl_sparse_binding_object {
  *
  */
 struct kgsl_sparse_bind {
-	uint64_t __user list;
+	uint64_t list;
 	unsigned int id;
 	unsigned int size;
 	unsigned int count;
@@ -1678,8 +1678,8 @@ struct kgsl_sparse_bind {
  */
 struct kgsl_gpu_sparse_command {
 	uint64_t flags;
-	uint64_t __user sparselist;
-	uint64_t __user synclist;
+	uint64_t sparselist;
+	uint64_t synclist;
 	unsigned int sparsesize;
 	unsigned int numsparse;
 	unsigned int syncsize;

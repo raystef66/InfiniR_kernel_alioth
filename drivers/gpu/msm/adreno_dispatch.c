@@ -1183,7 +1183,7 @@ static inline int _verify_cmdobj(struct kgsl_device_private *dev_priv,
 }
 
 static inline int _wait_for_room_in_context_queue(
-	struct adreno_context *drawctxt)
+	struct adreno_context *drawctxt) __must_hold(&drawctxt->lock)
 {
 	int ret = 0;
 

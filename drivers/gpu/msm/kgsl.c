@@ -536,7 +536,6 @@ static void kgsl_mem_entry_detach_process(struct kgsl_mem_entry *entry)
 
 /**
  * kgsl_context_dump() - dump information about a draw context
- * @device: KGSL device that owns the context
  * @context: KGSL context to dump information about
  *
  * Dump specific information about the context to the kernel log.  Used for
@@ -959,7 +958,7 @@ kgsl_process_private_put(struct kgsl_process_private *private)
 /**
  * kgsl_process_private_find() - Find the process associated with the specified
  * name
- * @name: pid_t of the process to search for
+ * @pid: Process ID to search for
  * Return the process struct for the given ID.
  */
 struct kgsl_process_private *kgsl_process_private_find(pid_t pid)
@@ -1399,7 +1398,7 @@ kgsl_sharedmem_find_id(struct kgsl_process_private *process, unsigned int id)
 
 /**
  * kgsl_mem_entry_unset_pend() - Unset the pending free flag of an entry
- * @entry - The memory entry
+ * @entry: The memory entry
  */
 static inline void kgsl_mem_entry_unset_pend(struct kgsl_mem_entry *entry)
 {
@@ -1439,7 +1438,7 @@ struct msm_bus_scale_pdata *kgsl_get_bus_scale_table(struct kgsl_device *device)
 
 /**
  * kgsl_mem_entry_set_pend() - Set the pending free flag of a memory entry
- * @entry - The memory entry
+ * @entry: The memory entry
  *
  * @returns - true if pending flag was 0 else false
  *
@@ -4664,9 +4663,9 @@ long kgsl_ioctl_gpuobj_set_info(struct kgsl_device_private *dev_priv,
 
 /**
  * kgsl_ioctl_timestamp_event - Register a new timestamp event from userspace
- * @dev_priv - pointer to the private device structure
- * @cmd - the ioctl cmd passed from kgsl_ioctl
- * @data - the user data buffer from kgsl_ioctl
+ * @dev_priv: pointer to the private device structure
+ * @cmd: the ioctl cmd passed from kgsl_ioctl
+ * @data: the user data buffer from kgsl_ioctl
  * @returns 0 on success or error code on failure
  */
 
