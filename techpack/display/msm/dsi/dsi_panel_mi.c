@@ -908,13 +908,17 @@ int dsi_panel_update_elvss_dimming(struct dsi_panel *panel)
 		pr_info("elvss dimming read result %x\n", elvss_dimming_read.rbuf[0]);
 		cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_HBM_FOD_ON].cmds;
 		count = priv_info->cmd_sets[DSI_CMD_SET_MI_HBM_FOD_ON].count;
-		if (cmds && count >= mi_cfg->update_hbm_fod_on_index) {
+		if (cmds && count > mi_cfg->update_hbm_fod_on_index &&
+		    cmds[mi_cfg->update_hbm_fod_on_index].msg.tx_buf &&
+		    cmds[mi_cfg->update_hbm_fod_on_index].msg.tx_len >= 2) {
 			tx_buf = (u8 *)cmds[mi_cfg->update_hbm_fod_on_index].msg.tx_buf;
 			tx_buf[1] = elvss_dimming_read.rbuf[0] & 0x7F;
 		}
 		cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_HBM_FOD_OFF].cmds;
 		count = priv_info->cmd_sets[DSI_CMD_SET_MI_HBM_FOD_OFF].count;
-		if (cmds && count >= mi_cfg->update_hbm_fod_off_index) {
+		if (cmds && count > mi_cfg->update_hbm_fod_off_index &&
+		    cmds[mi_cfg->update_hbm_fod_off_index].msg.tx_buf &&
+		    cmds[mi_cfg->update_hbm_fod_off_index].msg.tx_len >= 2) {
 			tx_buf = (u8 *)cmds[mi_cfg->update_hbm_fod_off_index].msg.tx_buf;
 			tx_buf[1] = elvss_dimming_read.rbuf[0] & 0x7F;
 		}
@@ -940,6 +944,9 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 	struct dsi_display_mode_priv_info *priv_info;
 	struct dsi_read_config greenish_gamma_read;
 	u8 *tx_buf;
+	u8 staged[6][3];
+	u32 indices[6];
+	bool key_enabled = false;
 
 	if (!panel || !panel->cur_mode || !panel->cur_mode->priv_info) {
 		pr_err("invalid params\n");
@@ -958,6 +965,34 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 	mutex_lock(&panel->panel_lock);
 
 	priv_info = panel->cur_mode->priv_info;
+	greenish_gamma_cfg->gamma_update_done = false;
+
+	/* Validate the complete update before reading or changing panel state. */
+	if (mi_cfg->greenish_gamma_read_len < 2 ||
+	    mi_cfg->greenish_gamma_read_len > sizeof(greenish_gamma_read.rbuf) ||
+	    greenish_gamma_cfg->greenish_gamma_update_param_count < 1 ||
+	    greenish_gamma_cfg->greenish_gamma_update_param_count > 6) {
+		retval = -EINVAL;
+		goto error;
+	}
+	param_count = greenish_gamma_cfg->greenish_gamma_update_param_count;
+	indices[0] = greenish_gamma_cfg->index_1st_param;
+	indices[1] = greenish_gamma_cfg->index_2nd_param;
+	indices[2] = greenish_gamma_cfg->index_3rd_param;
+	indices[3] = greenish_gamma_cfg->index_4th_param;
+	indices[4] = greenish_gamma_cfg->index_5th_param;
+	indices[5] = greenish_gamma_cfg->index_6th_param;
+	cmd_set = &priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7];
+	for (i = 0; i < param_count; i++) {
+		u32 index = indices[i];
+
+		if (!cmd_set->cmds || index >= cmd_set->count ||
+		    !cmd_set->cmds[index].msg.tx_buf ||
+		    cmd_set->cmds[index].msg.tx_len < 3) {
+			retval = -EINVAL;
+			goto error;
+		}
+	}
 
 	/* level2-key-enable */
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_LEVEL2_KEY_ENABLE);
@@ -966,6 +1001,8 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 		retval = -EAGAIN;
 		goto error;
 	}
+
+	key_enabled = true;
 
 	/* pre read command */
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_GAMMA_PRE_READ);
@@ -977,7 +1014,6 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 
 	/* read 1st~6th param */
 	offset = greenish_gamma_cfg->greenish_gamma_update_offset;
-	param_count = greenish_gamma_cfg->greenish_gamma_update_param_count;
 	for(i = 1; i <= param_count; i++) {
 		switch (i) {
 		case 1:
@@ -994,22 +1030,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 1st greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 1st para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_1st_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_1st_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_1st_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 1st para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1030,22 +1069,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 2nd greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 2nd para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_2nd_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_2nd_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_2nd_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 2nd para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1066,22 +1108,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 3rd greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 3rd para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_3rd_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_3rd_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_3rd_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 3rd para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1102,22 +1147,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 4th greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 4th para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_4th_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_4th_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_4th_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 4th para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1138,22 +1186,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 5th greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 5th para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_5th_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_5th_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_5th_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 5th para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1174,22 +1225,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 			greenish_gamma_read.is_read = 1;
 
 			rc = dsi_panel_read_cmd_set(panel, &greenish_gamma_read);
-			if (rc <= 0) {
+			if (rc < 2) {
 				pr_err("[%s]failed to read 6th greenish_gamma, rc=%d\n", panel->name, rc);
 				retval = -EAGAIN;
+				goto error;
 			} else {
 				pr_info("greenish gamma read result 6th para %x, %x\n",
 					greenish_gamma_read.rbuf[0], greenish_gamma_read.rbuf[1]);
 				cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
 				count = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
-				if (cmds && count >= greenish_gamma_cfg->index_6th_param) {
-					tx_buf = (u8 *)cmds[greenish_gamma_cfg->index_6th_param].msg.tx_buf;
+				if (cmds && count > greenish_gamma_cfg->index_6th_param) {
+					tx_buf = staged[i - 1];
 					if (greenish_gamma_read.rbuf[1] >= (u8)offset) {
 						tx_buf[1] = greenish_gamma_read.rbuf[0];
-						tx_buf[2] = greenish_gamma_read.rbuf[1] - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					} else {
 						tx_buf[1] = greenish_gamma_read.rbuf[0] - (u8)0x1;
-						tx_buf[2] = greenish_gamma_read.rbuf[1] + (u8)0x100 - (u8)offset;
+						tx_buf[2] = greenish_gamma_read.rbuf[1] -
+							(u8)offset;
 					}
 					pr_info("greenish gamma set result 6th para %x, %x\n", tx_buf[1], tx_buf[2]);
 				}
@@ -1201,17 +1255,25 @@ int dsi_panel_read_greenish_gamma_setting(struct dsi_panel *panel)
 		}
 	}
 
-	/* level2-key-disable */
-	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_LEVEL2_KEY_DISABLE);
-	if (rc) {
-		pr_err("Failed to send DSI_CMD_SET_MI_LEVEL2_KEY_DISABLE command\n");
-		retval = -EAGAIN;
-		goto error;
-	} else {
-		greenish_gamma_cfg->gamma_update_done = true;
-	}
 
 error:
+	if (key_enabled) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_LEVEL2_KEY_DISABLE);
+		if (rc) {
+			pr_err("Failed to send DSI_CMD_SET_MI_LEVEL2_KEY_DISABLE command\n");
+			if (!retval)
+				retval = -EAGAIN;
+		}
+	}
+	if (!retval) {
+		cmds = priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].cmds;
+		for (i = 0; i < param_count; i++) {
+			tx_buf = (u8 *)cmds[indices[i]].msg.tx_buf;
+			tx_buf[1] = staged[i][1];
+			tx_buf[2] = staged[i][2];
+		}
+		greenish_gamma_cfg->gamma_update_done = true;
+	}
 	mutex_unlock(&panel->panel_lock);
 	return retval;
 }
@@ -1251,7 +1313,11 @@ int dsi_panel_update_greenish_gamma_setting(struct dsi_panel *panel)
 		goto error;
 	} else {
 		pr_info("greenish gamma DSI_CMD_SET_MI_GAMMA_B7 set is\n");
-		for (i = 0; i <= 15; i++) {
+		for (i = 0; cmds &&
+		     i < priv_info->cmd_sets[DSI_CMD_SET_MI_GAMMA_B7].count;
+		     i++) {
+			if (!cmds[i].msg.tx_buf || cmds[i].msg.tx_len < 2)
+				continue;
 			tx_buf = (u8 *)cmds[i].msg.tx_buf;
 			pr_info("DSI_CMD_SET_MI_GAMMA_B7 %d line tx_buf %x %x\n", i,
 				tx_buf[0], tx_buf[1]);
@@ -2706,6 +2772,13 @@ int dsi_panel_read_cmd_set(struct dsi_panel *panel,
 	u32 flags = 0;
 
 	if (panel == NULL || read_config == NULL)
+		return -EINVAL;
+
+	if (!read_config->cmds_rlen ||
+	    read_config->cmds_rlen > sizeof(read_config->rbuf))
+		return -EINVAL;
+
+	if (!read_config->read_cmd.count || !read_config->read_cmd.cmds)
 		return -EINVAL;
 
 	host = panel->host;

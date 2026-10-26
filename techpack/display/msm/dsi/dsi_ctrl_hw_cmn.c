@@ -357,6 +357,7 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
  * @mode:              Pointer to mode information.
  * @h_stride:          Horizontal stride in bytes.
  * @vc_id:             stream_id
+ * @roi:               Command stream region of interest.
  *
  * Setup parameters for command mode pixel stream size.
  */
