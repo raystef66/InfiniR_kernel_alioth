@@ -86,7 +86,7 @@
 		},						\
 		.alpha_enable = 0
 
-#define FMT_YUV_COMMON(fmt)					\
+#define FMT_YUV_COMMON_PACKING(fmt, tight, msb)					\
 		.format = (fmt),				\
 		.is_yuv = 1,					\
 		.bits = {					\
@@ -95,8 +95,10 @@
 			[C1_B_Cb] = SDE_COLOR_8BIT,		\
 		},						\
 		.alpha_enable = 0,				\
-		.unpack_tight = 1,				\
-		.unpack_align_msb = 0
+		.unpack_tight = (tight),				\
+		.unpack_align_msb = (msb)
+
+#define FMT_YUV_COMMON(fmt) FMT_YUV_COMMON_PACKING(fmt, 1, 0)
 
 #define FMT_YUV_PSEUDO(fmt, desc, frame_fmt, samp, pixel_type,	\
 		flag_arg, e0, e1, isubwc)			\
@@ -287,7 +289,7 @@ static struct sde_mdp_format_params_ubwc sde_mdp_format_ubwc_map[] = {
 	},
 	{
 		.mdp_format = {
-			FMT_YUV_COMMON(SDE_PIX_FMT_Y_CBCR_H2V2_P010_UBWC),
+			FMT_YUV_COMMON_PACKING(SDE_PIX_FMT_Y_CBCR_H2V2_P010_UBWC, 0, 1),
 			.description = "SDE/Y_CBCR_H2V2_P010_UBWC",
 			.flag = 0,
 			.fetch_planes = SDE_MDP_PLANE_PSEUDO_PLANAR,
@@ -297,8 +299,6 @@ static struct sde_mdp_format_params_ubwc sde_mdp_format_ubwc_map[] = {
 			.frame_format = SDE_MDP_FMT_TILE_A5X,
 			.pixel_mode = SDE_MDP_PIXEL_10BIT,
 			.element = { C1_B_Cb, C2_R_Cr },
-			.unpack_tight = 0,
-			.unpack_align_msb = 1,
 			.is_ubwc = SDE_MDP_COMPRESS_UBWC
 		},
 		.micro = {
@@ -542,7 +542,7 @@ static struct sde_mdp_format_params_ubwc sde_mdp_format_ubwc_map[] = {
 	},
 	{
 		.mdp_format = {
-			FMT_YUV_COMMON(SDE_PIX_FMT_Y_CBCR_H2V2_P010_TILE),
+			FMT_YUV_COMMON_PACKING(SDE_PIX_FMT_Y_CBCR_H2V2_P010_TILE, 0, 1),
 			.description = "SDE/Y_CBCR_H2V2_P010_TILE",
 			.flag = SDE_MDP_FORMAT_FLAG_PRIVATE,
 			.fetch_planes = SDE_MDP_PLANE_PSEUDO_PLANAR,
@@ -552,8 +552,6 @@ static struct sde_mdp_format_params_ubwc sde_mdp_format_ubwc_map[] = {
 			.frame_format = SDE_MDP_FMT_TILE_A5X,
 			.pixel_mode = SDE_MDP_PIXEL_10BIT,
 			.element = { C1_B_Cb, C2_R_Cr },
-			.unpack_tight = 0,
-			.unpack_align_msb = 1,
 			.is_ubwc = SDE_MDP_COMPRESS_NONE,
 		},
 		.micro = {
@@ -675,7 +673,7 @@ static struct sde_mdp_format_params sde_mdp_format_map[] = {
 		.is_ubwc = SDE_MDP_COMPRESS_NONE,
 	},
 	{
-		FMT_YUV_COMMON(SDE_PIX_FMT_Y_CBCR_H2V2_TP10),
+		FMT_YUV_COMMON_PACKING(SDE_PIX_FMT_Y_CBCR_H2V2_TP10, 1, 0),
 		.description = "SDE/Y_CBCR_H2V2_TP10",
 		.flag = 0,
 		.fetch_planes = SDE_MDP_PLANE_PSEUDO_PLANAR,
@@ -685,8 +683,6 @@ static struct sde_mdp_format_params sde_mdp_format_map[] = {
 		.frame_format = SDE_MDP_FMT_TILE_A5X,
 		.pixel_mode = SDE_MDP_PIXEL_10BIT,
 		.element = { C1_B_Cb, C2_R_Cr },
-		.unpack_tight = 1,
-		.unpack_align_msb = 0,
 		.is_ubwc = SDE_MDP_COMPRESS_NONE,
 	},
 
