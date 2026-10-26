@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 ccflags-y += -I$(srctree)/techpack/camera-xiaomi/include/uapi
-ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/isp/isp_hw/include
+ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_isp/isp_hw_mgr/isp_hw/include
 ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_icp/icp_hw/include
-ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/isp/isp_hw/hw_utils/include
-ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/isp/isp_hw/isp_hw_mgr/
+ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_isp/isp_hw_mgr/hw_utils/include
+ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_isp/isp_hw_mgr/
 ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_icp/icp_hw/icp_hw_mgr/
 ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_icp/fw_inc/
 ccflags-y += -I$(srctree)/techpack/camera-xiaomi/drivers/cam_smmu/
