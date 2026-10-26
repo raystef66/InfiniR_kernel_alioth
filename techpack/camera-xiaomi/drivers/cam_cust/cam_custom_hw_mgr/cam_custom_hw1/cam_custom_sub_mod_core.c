@@ -135,16 +135,12 @@ int cam_custom_hw_sub_mod_deinit_hw(void *hw_priv,
 int cam_custom_hw_sub_mod_reset(void *hw_priv,
 	void *reserve_args, uint32_t arg_size)
 {
-	struct cam_hw_info                *custom_hw  = hw_priv;
-	struct cam_hw_soc_info            *soc_info = NULL;
 	int rc = 0;
 
 	if (!hw_priv) {
 		CAM_ERR(CAM_CUSTOM, "Invalid input arguments");
 		return -EINVAL;
 	}
-
-	soc_info = &custom_hw->soc_info;
 	/* Do Reset of HW */
 	return rc;
 }
@@ -231,7 +227,7 @@ int cam_custom_hw_sub_mod_write(void *hw_priv,
 	return -EPERM;
 }
 
-int cam_custom_hw_submit_req(void *hw_priv, void *hw_submit_args,
+static int cam_custom_hw_submit_req(void *hw_priv, void *hw_submit_args,
 	uint32_t arg_size)
 {
 	struct cam_hw_info			         *custom_dev = hw_priv;
@@ -298,7 +294,6 @@ int cam_custom_hw_sub_mod_process_cmd(void *hw_priv, uint32_t cmd_type,
 	void *cmd_args, uint32_t arg_size)
 {
 	struct cam_hw_info                  *hw = hw_priv;
-	struct cam_hw_soc_info              *soc_info = NULL;
 	struct cam_custom_sub_mod_core_info *core_info = NULL;
 	unsigned long flag = 0;
 	int rc = 0;
@@ -307,8 +302,6 @@ int cam_custom_hw_sub_mod_process_cmd(void *hw_priv, uint32_t cmd_type,
 		CAM_ERR(CAM_CUSTOM, "Invalid arguments");
 		return -EINVAL;
 	}
-
-	soc_info = &hw->soc_info;
 	core_info = hw->core_info;
 	/* Handle any custom process cmds */
 

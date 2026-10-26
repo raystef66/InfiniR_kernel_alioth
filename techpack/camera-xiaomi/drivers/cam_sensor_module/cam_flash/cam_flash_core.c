@@ -954,7 +954,6 @@ int cam_flash_i2c_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
 	struct cam_cmd_buf_desc *cmd_desc = NULL;
 	struct cam_config_dev_cmd config;
 	struct cam_req_mgr_add_request add_req;
-	struct i2c_data_settings *i2c_data = NULL;
 	struct i2c_settings_array *i2c_reg_settings = NULL;
 	struct cam_sensor_power_ctrl_t *power_info = NULL;
 
@@ -1107,7 +1106,6 @@ int cam_flash_i2c_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
 			default:
 				CAM_DBG(CAM_FLASH,
 					"Received initSettings");
-				i2c_data = &(fctrl->i2c_data);
 				i2c_reg_settings =
 					&fctrl->i2c_data.init_settings;
 

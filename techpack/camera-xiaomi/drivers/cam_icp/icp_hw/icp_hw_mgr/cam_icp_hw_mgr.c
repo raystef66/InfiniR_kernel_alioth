@@ -1901,14 +1901,12 @@ static int cam_icp_mgr_process_cmd(void *priv, void *data)
 {
 	int rc;
 	struct hfi_cmd_work_data *task_data = NULL;
-	struct cam_icp_hw_mgr *hw_mgr;
 
 	if (!data || !priv) {
 		CAM_ERR(CAM_ICP, "Invalid params%pK %pK", data, priv);
 		return -EINVAL;
 	}
 
-	hw_mgr = priv;
 	task_data = (struct hfi_cmd_work_data *)data;
 
 	rc = hfi_write_cmd(task_data->data);
@@ -2216,7 +2214,6 @@ static int cam_icp_mgr_process_direct_ack_msg(uint32_t *msg_ptr)
 	struct cam_icp_hw_ctx_data *ctx_data = NULL;
 	struct hfi_msg_ipebps_async_ack *ioconfig_ack = NULL;
 	struct cam_hw_intf *a5_dev_intf = NULL;
-	struct cam_hw_info *a5_dev = NULL;
 	int rc = 0;
 
 	a5_dev_intf = icp_hw_mgr.a5_dev_intf;
@@ -2224,7 +2221,6 @@ static int cam_icp_mgr_process_direct_ack_msg(uint32_t *msg_ptr)
 		CAM_ERR(CAM_ICP, "a5_dev_intf is invalid");
 		return -EINVAL;
 	}
-	a5_dev = (struct cam_hw_info *)a5_dev_intf->hw_priv;
 	switch (msg_ptr[ICP_PACKET_OPCODE]) {
 	case HFI_IPEBPS_CMD_OPCODE_IPE_ABORT:
 	case HFI_IPEBPS_CMD_OPCODE_BPS_ABORT:
@@ -2531,7 +2527,7 @@ static int32_t cam_icp_mgr_process_msg(void *priv, void *data)
 	return rc;
 }
 
-int32_t cam_icp_hw_mgr_cb(uint32_t irq_status, void *data)
+static int32_t cam_icp_hw_mgr_cb(uint32_t irq_status, void *data)
 {
 	int32_t rc = 0;
 	unsigned long flags;
@@ -3757,7 +3753,6 @@ static int cam_icp_mgr_enqueue_config(struct cam_icp_hw_mgr *hw_mgr,
 	uint64_t request_id = 0;
 	struct crm_workq_task *task;
 	struct hfi_cmd_work_data *task_data;
-	struct hfi_cmd_ipebps_async *hfi_cmd;
 	struct cam_hw_update_entry *hw_update_entries;
 	struct icp_frame_info *frame_info = NULL;
 
@@ -3774,7 +3769,6 @@ static int cam_icp_mgr_enqueue_config(struct cam_icp_hw_mgr *hw_mgr,
 
 	task_data = (struct hfi_cmd_work_data *)task->payload;
 	task_data->data = (void *)hw_update_entries->addr;
-	hfi_cmd = (struct hfi_cmd_ipebps_async *)hw_update_entries->addr;
 	task_data->request_id = request_id;
 	task_data->type = ICP_WORKQ_TASK_CMD_TYPE;
 	task->process_cb = cam_icp_mgr_process_cmd;
@@ -4085,7 +4079,7 @@ static int cam_icp_mgr_process_cmd_desc(struct cam_icp_hw_mgr *hw_mgr,
 				((len - cmd_desc[i].offset) <
 				cmd_desc[i].size)){
 				CAM_ERR(CAM_ICP,
-					"Invalid offset, i: %d offset: %u len: %zu size: %zu",
+					"Invalid offset, i: %d offset: %u len: %zu size: %u",
 					i, cmd_desc[i].offset,
 					len, cmd_desc[i].size);
 				return -EINVAL;

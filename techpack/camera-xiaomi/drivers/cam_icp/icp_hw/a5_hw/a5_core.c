@@ -177,9 +177,7 @@ static int32_t cam_a5_download_fw(void *device_priv)
 	struct cam_hw_info *a5_dev = device_priv;
 	struct cam_hw_soc_info *soc_info = NULL;
 	struct cam_a5_device_core_info *core_info = NULL;
-	struct cam_a5_device_hw_info *hw_info = NULL;
 	struct platform_device         *pdev = NULL;
-	struct a5_soc_info *cam_a5_soc_info = NULL;
 
 	if (!device_priv) {
 		CAM_ERR(CAM_ICP, "Invalid cam_dev_info");
@@ -188,9 +186,7 @@ static int32_t cam_a5_download_fw(void *device_priv)
 
 	soc_info = &a5_dev->soc_info;
 	core_info = (struct cam_a5_device_core_info *)a5_dev->core_info;
-	hw_info = core_info->a5_hw_info;
 	pdev = soc_info->pdev;
-	cam_a5_soc_info = soc_info->soc_private;
 
 	rc = request_firmware(&core_info->fw_elf, "CAMERA_ICP.elf", &pdev->dev);
 	if (rc) {
@@ -346,7 +342,6 @@ irqreturn_t cam_a5_irq(int irq_num, void *data)
 	struct cam_hw_info *a5_dev = data;
 	struct cam_hw_soc_info *soc_info = NULL;
 	struct cam_a5_device_core_info *core_info = NULL;
-	struct cam_a5_device_hw_info *hw_info = NULL;
 	uint32_t irq_status = 0;
 
 	if (!data) {
@@ -356,7 +351,6 @@ irqreturn_t cam_a5_irq(int irq_num, void *data)
 
 	soc_info = &a5_dev->soc_info;
 	core_info = (struct cam_a5_device_core_info *)a5_dev->core_info;
-	hw_info = core_info->a5_hw_info;
 
 	irq_status = cam_io_r_mb(soc_info->reg_map[A5_SIERRA_BASE].mem_base +
 				core_info->a5_hw_info->a5_host_int_status);
@@ -385,7 +379,6 @@ int cam_a5_process_cmd(void *device_priv, uint32_t cmd_type,
 	struct cam_hw_info *a5_dev = device_priv;
 	struct cam_hw_soc_info *soc_info = NULL;
 	struct cam_a5_device_core_info *core_info = NULL;
-	struct cam_a5_device_hw_info *hw_info = NULL;
 	struct a5_soc_info *a5_soc = NULL;
 	unsigned long flags;
 	uint32_t ubwc_ipe_cfg[ICP_UBWC_MAX] = {0};
@@ -405,7 +398,6 @@ int cam_a5_process_cmd(void *device_priv, uint32_t cmd_type,
 
 	soc_info = &a5_dev->soc_info;
 	core_info = (struct cam_a5_device_core_info *)a5_dev->core_info;
-	hw_info = core_info->a5_hw_info;
 
 	switch (cmd_type) {
 	case CAM_ICP_A5_CMD_FW_DOWNLOAD:

@@ -18,7 +18,7 @@
 
 const uint8_t PACT1Tbl[] = { 0x20, 0xDF };	/* [ACT_02][ACT_01][ACT_03] */
 
-void RamWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uint32_t delay)
+static void RamWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uint32_t delay)
 {
 	struct cam_sensor_i2c_reg_setting i2c_reg_settings = {0};
 	struct cam_sensor_i2c_reg_array i2c_reg_array = {0};
@@ -46,7 +46,7 @@ void RamWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, ui
 	CAM_DBG(CAM_OIS, "[OISDEBUG] write addr 0x%08x = 0x%08x", addr, data);
 }
 
-void IOWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uint32_t delay)
+static void IOWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uint32_t delay)
 {
 	if (!o_ctrl) {
 		CAM_ERR(CAM_OIS, "Invalid Args");
@@ -58,7 +58,7 @@ void IOWrite32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t data, uin
 //	CAM_DBG(CAM_OIS, "OIS %s :  write addr 0x%08x = 0x%08x", o_ctrl->ois_name, addr, data);
 }
 
-void RamRead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t* data)
+static void RamRead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t *data)
 {
 	uint32_t read_val = 0;
 	int32_t rc = 0;
@@ -80,7 +80,7 @@ void RamRead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t* data)
 	CAM_DBG(CAM_OIS, "[OISDEBUG] read addr 0x%04x = 0x%08x", addr, *data);
 }
 
-void IORead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t* data)
+static void IORead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t *data)
 {
 	uint32_t read_val = 0;
 	int32_t rc = 0;
@@ -103,7 +103,7 @@ void IORead32A(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t* data)
 	CAM_DBG(CAM_OIS, "[OISDEBUG] read addr 0x%04x = 0x%08x", addr, *data);
 }
 
-void CntWrt(struct cam_ois_ctrl_t *o_ctrl, uint8_t *data, uint32_t length, uint32_t delay)
+static void CntWrt(struct cam_ois_ctrl_t *o_ctrl, uint8_t *data, uint32_t length, uint32_t delay)
 {
 	static struct cam_sensor_i2c_reg_array w_data[256] = { {0} };
 	struct cam_sensor_i2c_reg_setting write_setting;
@@ -138,7 +138,7 @@ void CntWrt(struct cam_ois_ctrl_t *o_ctrl, uint8_t *data, uint32_t length, uint3
 	}
 }
 
-void CntRd(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint8_t *data, uint32_t length)
+static void CntRd(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint8_t *data, uint32_t length)
 {
 	int32_t rc = 0;
 	int32_t i = 0;
@@ -165,7 +165,7 @@ void CntRd(struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint8_t *data, uint32_t
 // Unit of erase	: informaton mat  128 Byte
 //			: user mat         4k Byte
 //********************************************************************************
-uint8_t FlashBlockErase(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat , uint32_t SetAddress)
+static uint8_t FlashBlockErase(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t SetAddress)
 {
 	uint32_t UlReadVal, UlCnt;
 	uint8_t ans = 0;
@@ -223,27 +223,6 @@ uint8_t FlashBlockErase(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat , uint32_t
 // Explanation		: <Flash Memory> Flash Single Read( 4 Byte read )
 // History			: First edition
 //********************************************************************************
-uint8_t FlashSingleRead(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t UlAddress, uint32_t *PulData)
-{
-	// fail safe
-	// reject irregular mat
-	if( SelMat != USER_MAT && SelMat != INF_MAT0 && SelMat != INF_MAT1 && SelMat != INF_MAT2  )
-		return 10;	// INF_MAT2‚àAccess‚µ‚È‚¢
-	// reject command if address inner NVR3
-	if( UlAddress > 0x000003FF )											return 9;
-
-	IOWrite32A(o_ctrl, FLASHROM_ACSCNT, 0x00000000, 0);
-	IOWrite32A(o_ctrl, FLASHROM_FLA_ADR, ((uint32_t)SelMat << 16) | ( UlAddress & 0x00003FFF ), 0);
-
-	IOWrite32A(o_ctrl, FLASHROM_FLAMODE, 0x00000000, 0);
-	IOWrite32A(o_ctrl, FLASHROM_CMD, 0x00000001, 0);
-
-	IORead32A(o_ctrl, FLASHROM_FLA_RDAT, PulData) ;
-	IOWrite32A(o_ctrl, FLASHROM_FLAMODE , 0x00000002, 0);
-
-	return 0;
-}
-
 //********************************************************************************
 // Function Name 	: FlashMultiRead
 // Retun Value		: NON
@@ -251,7 +230,8 @@ uint8_t FlashSingleRead(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t 
 // Explanation		: <Flash Memory> Flash Multi Read( 4 Byte * length  max read : 128byte)
 // History			: First edition
 //********************************************************************************
-uint8_t FlashMultiRead(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t UlAddress, uint32_t *PulData , uint8_t UcLength)
+static uint8_t FlashMultiRead(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat,
+	uint32_t UlAddress, uint32_t *PulData, uint8_t UcLength)
 {
 	uint8_t i;
 
@@ -286,7 +266,8 @@ uint8_t FlashMultiRead(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t U
 // Unit of erase	: informaton mat   64 Byte
 //					: user mat         64 Byte
 //********************************************************************************
-uint8_t FlashBlockWrite(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat, uint32_t SetAddress, uint32_t *PulData)
+static uint8_t FlashBlockWrite(struct cam_ois_ctrl_t *o_ctrl, uint8_t SelMat,
+	uint32_t SetAddress, uint32_t *PulData)
 {
 	uint32_t UlReadVal, UlCnt;
 	uint8_t ans = 0;

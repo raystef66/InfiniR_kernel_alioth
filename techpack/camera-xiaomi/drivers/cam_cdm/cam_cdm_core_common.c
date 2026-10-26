@@ -141,7 +141,7 @@ int cam_cdm_get_caps(void *hw_priv,
 	return -EINVAL;
 }
 
-int cam_cdm_find_free_client_slot(struct cam_cdm *hw)
+static int cam_cdm_find_free_client_slot(struct cam_cdm *hw)
 {
 	int i;
 
@@ -407,15 +407,12 @@ int cam_cdm_process_cmd(void *hw_priv,
 	uint32_t cmd, void *cmd_args, uint32_t arg_size)
 {
 	struct cam_hw_info *cdm_hw = hw_priv;
-	struct cam_hw_soc_info *soc_data = NULL;
 	struct cam_cdm *core = NULL;
 	int rc = -EINVAL;
 
 	if ((!hw_priv) || (!cmd_args) ||
 		(cmd >= CAM_CDM_HW_INTF_CMD_INVALID))
 		return rc;
-
-	soc_data = &cdm_hw->soc_info;
 	core = (struct cam_cdm *)cdm_hw->core_info;
 	switch (cmd) {
 	case CAM_CDM_HW_INTF_CMD_SUBMIT_BL: {

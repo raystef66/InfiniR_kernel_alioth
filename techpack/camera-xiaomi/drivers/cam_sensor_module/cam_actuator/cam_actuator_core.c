@@ -204,7 +204,7 @@ static int32_t cam_actuator_i2c_modes_util(
 	return rc;
 }
 
-int32_t cam_actuator_slaveInfo_pkt_parser(struct cam_actuator_ctrl_t *a_ctrl,
+static int32_t cam_actuator_slaveInfo_pkt_parser(struct cam_actuator_ctrl_t *a_ctrl,
 	uint32_t *cmd_buf, size_t len)
 {
 	int32_t rc = 0;
@@ -237,7 +237,7 @@ int32_t cam_actuator_slaveInfo_pkt_parser(struct cam_actuator_ctrl_t *a_ctrl,
 	return rc;
 }
 
-int32_t cam_actuator_apply_settings(struct cam_actuator_ctrl_t *a_ctrl,
+static int32_t cam_actuator_apply_settings(struct cam_actuator_ctrl_t *a_ctrl,
 	struct i2c_settings_array *i2c_set)
 {
 	struct i2c_settings_list *i2c_list;
@@ -397,7 +397,7 @@ int32_t cam_actuator_publish_dev_info(struct cam_req_mgr_device_info *info)
 	return 0;
 }
 
-int32_t cam_actuator_i2c_pkt_parse(struct cam_actuator_ctrl_t *a_ctrl,
+static int32_t cam_actuator_i2c_pkt_parse(struct cam_actuator_ctrl_t *a_ctrl,
 	void *arg)
 {
 	int32_t  rc = 0;

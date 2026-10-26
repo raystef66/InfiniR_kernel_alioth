@@ -443,7 +443,7 @@ int cam_cpas_register_client(
 }
 EXPORT_SYMBOL(cam_cpas_register_client);
 
-int cam_cpas_subdev_cmd(struct cam_cpas_intf *cpas_intf,
+static int cam_cpas_subdev_cmd(struct cam_cpas_intf *cpas_intf,
 	struct cam_control *cmd)
 {
 	int rc = 0;

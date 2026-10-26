@@ -599,6 +599,9 @@ int cam_node_shutdown(struct cam_node *node)
 				"Node [%s] invoking shutdown on context [%d]",
 				node->name, i);
 			rc = cam_context_shutdown(&(node->ctx_list[i]));
+			if (rc)
+				CAM_ERR(CAM_CORE, "Context %d shutdown failed: %d",
+					i, rc);
 		}
 	}
 

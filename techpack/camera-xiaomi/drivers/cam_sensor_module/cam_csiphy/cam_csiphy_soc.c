@@ -77,13 +77,13 @@ int32_t cam_csiphy_mem_dmp(struct cam_hw_soc_info *soc_info)
 	return rc;
 }
 
-enum cam_vote_level get_clk_vote_default(struct csiphy_device *csiphy_dev)
+static enum cam_vote_level get_clk_vote_default(struct csiphy_device *csiphy_dev)
 {
 	CAM_DBG(CAM_CSIPHY, "voting for SVS");
 	return CAM_SVS_VOTE;
 }
 
-enum cam_vote_level get_clk_voting_dynamic(struct csiphy_device *csiphy_dev)
+static enum cam_vote_level get_clk_voting_dynamic(struct csiphy_device *csiphy_dev)
 {
 	uint32_t cam_vote_level = 0;
 	uint32_t last_valid_vote = 0;

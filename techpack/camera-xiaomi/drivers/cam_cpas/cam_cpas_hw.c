@@ -495,7 +495,7 @@ static int cam_cpas_util_translate_client_paths(
 			*path_data_type %= CAM_CPAS_MAX_GRAN_PATHS_PER_CLIENT;
 
 		if (*path_data_type >= CAM_CPAS_PATH_DATA_MAX) {
-			CAM_ERR(CAM_CPAS, "index Invalid: %d", path_data_type);
+			CAM_ERR(CAM_CPAS, "index Invalid: %u", *path_data_type);
 			return -EINVAL;
 		}
 	}
@@ -1065,7 +1065,6 @@ static int cam_cpas_hw_start(void *hw_priv, void *start_args,
 	struct cam_axi_vote axi_vote = {0};
 	enum cam_vote_level applied_level = CAM_SVS_VOTE;
 	int rc, i = 0;
-	struct cam_cpas_private_soc *soc_private = NULL;
 	bool invalid_start = true;
 
 	if (!hw_priv || !start_args) {
@@ -1082,8 +1081,6 @@ static int cam_cpas_hw_start(void *hw_priv, void *start_args,
 
 	cpas_hw = (struct cam_hw_info *)hw_priv;
 	cpas_core = (struct cam_cpas *) cpas_hw->core_info;
-	soc_private = (struct cam_cpas_private_soc *)
-		cpas_hw->soc_info.soc_private;
 	cmd_hw_start = (struct cam_cpas_hw_cmd_start *)start_args;
 	client_indx = CAM_CPAS_GET_CLIENT_IDX(cmd_hw_start->client_handle);
 	ahb_vote = cmd_hw_start->ahb_vote;
@@ -1228,7 +1225,6 @@ static int cam_cpas_hw_stop(void *hw_priv, void *stop_args,
 	struct cam_cpas_client *cpas_client;
 	struct cam_ahb_vote ahb_vote;
 	struct cam_axi_vote axi_vote = {0};
-	struct cam_cpas_private_soc *soc_private = NULL;
 	int rc = 0;
 	long result;
 
@@ -1246,8 +1242,6 @@ static int cam_cpas_hw_stop(void *hw_priv, void *stop_args,
 
 	cpas_hw = (struct cam_hw_info *)hw_priv;
 	cpas_core = (struct cam_cpas *) cpas_hw->core_info;
-	soc_private = (struct cam_cpas_private_soc *)
-		cpas_hw->soc_info.soc_private;
 	cmd_hw_stop = (struct cam_cpas_hw_cmd_stop *)stop_args;
 	client_indx = CAM_CPAS_GET_CLIENT_IDX(cmd_hw_stop->client_handle);
 

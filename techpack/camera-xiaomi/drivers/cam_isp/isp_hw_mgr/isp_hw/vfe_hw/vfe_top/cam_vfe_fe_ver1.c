@@ -396,7 +396,6 @@ static int cam_vfe_fe_resource_stop(
 	struct cam_isp_resource_node        *fe_res)
 {
 	struct cam_vfe_mux_fe_data       *fe_priv;
-	struct cam_vfe_fe_ver1_reg       *fe_reg;
 	int rc = 0;
 	uint32_t val = 0;
 
@@ -410,7 +409,6 @@ static int cam_vfe_fe_resource_stop(
 		return 0;
 
 	fe_priv = (struct cam_vfe_mux_fe_data *)fe_res->res_priv;
-	fe_reg = fe_priv->fe_reg;
 
 	if ((fe_priv->dsp_mode >= CAM_ISP_DSP_MODE_ONE_WAY) &&
 		(fe_priv->dsp_mode <= CAM_ISP_DSP_MODE_ROUND)) {

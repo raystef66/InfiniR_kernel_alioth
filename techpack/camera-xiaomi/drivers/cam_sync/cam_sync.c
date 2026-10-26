@@ -38,7 +38,7 @@ static void cam_sync_print_fence_table(void)
 			sync_dev->sync_table[idx].name,
 			sync_dev->sync_table[idx].type,
 			sync_dev->sync_table[idx].state,
-			sync_dev->sync_table[idx].ref_cnt);
+			atomic_read(&sync_dev->sync_table[idx].ref_cnt));
 		spin_unlock_bh(&sync_dev->row_spinlocks[idx]);
 	}
 }
@@ -53,7 +53,7 @@ int cam_sync_create(int32_t *sync_obj, const char *name)
 		idx = find_first_zero_bit(sync_dev->bitmap, CAM_SYNC_MAX_OBJS);
 		if (idx >= CAM_SYNC_MAX_OBJS) {
 			CAM_ERR(CAM_SYNC,
-				"Error: Unable to create sync idx = %d reached max!",
+				"Error: Unable to create sync idx = %ld reached max!",
 				idx);
 			cam_sync_print_fence_table();
 			return -ENOMEM;
@@ -890,14 +890,14 @@ static struct v4l2_subscribed_event_ops cam_sync_v4l2_ops = {
 	.merge = cam_sync_event_queue_notify_error,
 };
 
-int cam_sync_subscribe_event(struct v4l2_fh *fh,
+static int cam_sync_subscribe_event(struct v4l2_fh *fh,
 		const struct v4l2_event_subscription *sub)
 {
 	return v4l2_event_subscribe(fh, sub, CAM_SYNC_MAX_V4L2_EVENTS,
 		&cam_sync_v4l2_ops);
 }
 
-int cam_sync_unsubscribe_event(struct v4l2_fh *fh,
+static int cam_sync_unsubscribe_event(struct v4l2_fh *fh,
 		const struct v4l2_event_subscription *sub)
 {
 	return v4l2_event_unsubscribe(fh, sub);

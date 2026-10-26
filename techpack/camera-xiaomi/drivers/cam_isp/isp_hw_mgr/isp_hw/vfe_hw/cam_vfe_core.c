@@ -60,7 +60,7 @@ int cam_vfe_get_hw_caps(void *hw_priv, void *get_hw_cap_args, uint32_t arg_size)
 	return rc;
 }
 
-int cam_vfe_reset_irq_top_half(uint32_t    evt_id,
+static int cam_vfe_reset_irq_top_half(uint32_t    evt_id,
 	struct cam_irq_th_payload         *th_payload)
 {
 	int32_t                            rc = -EINVAL;
@@ -469,7 +469,6 @@ int cam_vfe_start(void *hw_priv, void *start_args, uint32_t arg_size)
 	struct cam_vfe_hw_core_info       *core_info = NULL;
 	struct cam_hw_info                *vfe_hw  = hw_priv;
 	struct cam_isp_resource_node      *isp_res;
-	struct cam_hw_soc_info            *soc_info = NULL;
 	int                                rc = 0;
 
 	if (!hw_priv || !start_args ||
@@ -478,7 +477,6 @@ int cam_vfe_start(void *hw_priv, void *start_args, uint32_t arg_size)
 		return -EINVAL;
 	}
 
-	soc_info = &vfe_hw->soc_info;
 	core_info = (struct cam_vfe_hw_core_info *)vfe_hw->core_info;
 	isp_res = (struct cam_isp_resource_node  *)start_args;
 	core_info->tasklet_info = isp_res->tasklet_info;
@@ -571,9 +569,7 @@ int cam_vfe_process_cmd(void *hw_priv, uint32_t cmd_type,
 	void *cmd_args, uint32_t arg_size)
 {
 	struct cam_hw_info                *vfe_hw = hw_priv;
-	struct cam_hw_soc_info            *soc_info = NULL;
 	struct cam_vfe_hw_core_info       *core_info = NULL;
-	struct cam_vfe_hw_info            *hw_info = NULL;
 	int rc = 0;
 
 	if (!hw_priv) {
@@ -581,9 +577,7 @@ int cam_vfe_process_cmd(void *hw_priv, uint32_t cmd_type,
 		return -EINVAL;
 	}
 
-	soc_info = &vfe_hw->soc_info;
 	core_info = (struct cam_vfe_hw_core_info *)vfe_hw->core_info;
-	hw_info = core_info->vfe_hw_info;
 
 	switch (cmd_type) {
 	case CAM_ISP_HW_CMD_GET_CHANGE_BASE:

@@ -39,7 +39,7 @@ int cam_custom_hw_sub_mod_init(struct cam_hw_intf **custom_hw, uint32_t hw_idx)
 	return rc;
 }
 
-int cam_custom_hw_sub_mod_probe(struct platform_device *pdev)
+static int cam_custom_hw_sub_mod_probe(struct platform_device *pdev)
 {
 	struct cam_hw_info                  *hw = NULL;
 	struct cam_hw_intf                  *hw_intf = NULL;

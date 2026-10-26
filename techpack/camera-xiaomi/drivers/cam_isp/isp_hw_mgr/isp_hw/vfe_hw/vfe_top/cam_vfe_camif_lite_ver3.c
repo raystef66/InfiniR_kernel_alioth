@@ -99,7 +99,6 @@ static int cam_vfe_camif_lite_err_irq_top_half(
 	struct cam_vfe_mux_camif_lite_data    *camif_lite_priv;
 	struct cam_vfe_top_irq_evt_payload    *evt_payload;
 	struct cam_vfe_soc_private            *soc_private = NULL;
-	bool                                   error_flag = false;
 
 	camif_lite_node = th_payload->handler_priv;
 	camif_lite_priv = camif_lite_node->res_priv;
@@ -129,7 +128,6 @@ static int cam_vfe_camif_lite_err_irq_top_half(
 			camif_lite_priv->irq_err_handle);
 		cam_irq_controller_clear_and_mask(evt_id,
 			camif_lite_priv->vfe_irq_controller);
-		error_flag = true;
 	}
 
 	rc  = cam_vfe_camif_lite_get_evt_payload(camif_lite_priv, &evt_payload);

@@ -69,12 +69,9 @@ static void cam_req_mgr_workq_put_task(struct crm_workq_task *task)
  */
 static int cam_req_mgr_process_task(struct crm_workq_task *task)
 {
-	struct cam_req_mgr_core_workq *workq = NULL;
-
 	if (!task)
 		return -EINVAL;
 
-	workq = (struct cam_req_mgr_core_workq *)task->parent;
 	if (task->process_cb)
 		task->process_cb(task->priv, task->payload);
 	else
@@ -88,7 +85,7 @@ static int cam_req_mgr_process_task(struct crm_workq_task *task)
  * cam_req_mgr_process_workq() - main loop handling
  * @w: workqueue task pointer
  */
-void cam_req_mgr_process_workq(struct work_struct *w)
+static void cam_req_mgr_process_workq(struct work_struct *w)
 {
 	struct cam_req_mgr_core_workq *workq = NULL;
 	struct crm_workq_task         *task;

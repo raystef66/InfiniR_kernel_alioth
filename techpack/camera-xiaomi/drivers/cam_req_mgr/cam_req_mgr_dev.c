@@ -594,7 +594,7 @@ int cam_req_mgr_notify_message(struct cam_req_mgr_message *msg,
 }
 EXPORT_SYMBOL(cam_req_mgr_notify_message);
 
-void cam_video_device_cleanup(void)
+static void cam_video_device_cleanup(void)
 {
 	video_unregister_device(g_dev.video);
 	video_device_release(g_dev.video);
@@ -767,7 +767,7 @@ static struct platform_driver cam_req_mgr_driver = {
 	},
 };
 
-int cam_dev_mgr_create_subdev_nodes(void)
+static int cam_dev_mgr_create_subdev_nodes(void)
 {
 	int rc;
 	struct v4l2_subdev *sd;

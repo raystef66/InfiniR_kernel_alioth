@@ -11,6 +11,7 @@
 
 #include "cam_soc_util.h"
 #include "cam_debug_util.h"
+#include "cam_cx_ipeak.h"
 
 static struct cx_ipeak_client *cam_cx_ipeak;
 static int cx_ipeak_level = CAM_NOMINAL_VOTE;

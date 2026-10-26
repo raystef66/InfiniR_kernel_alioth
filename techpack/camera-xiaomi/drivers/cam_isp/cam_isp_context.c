@@ -4265,8 +4265,6 @@ static int cam_isp_context_dump_active_request(void *data, unsigned long iova,
 	struct cam_context *ctx = (struct cam_context *)data;
 	struct cam_ctx_request *req = NULL;
 	struct cam_ctx_request *req_temp = NULL;
-	struct cam_isp_ctx_req *req_isp  = NULL;
-	struct cam_isp_prepare_hw_update_data *hw_update_data = NULL;
 	struct cam_hw_mgr_dump_pf_data *pf_dbg_entry = NULL;
 	bool mem_found = false;
 	int rc = 0;
@@ -4284,8 +4282,6 @@ static int cam_isp_context_dump_active_request(void *data, unsigned long iova,
 
 	list_for_each_entry_safe(req, req_temp,
 		&ctx->active_req_list, list) {
-		req_isp = (struct cam_isp_ctx_req *) req->req_priv;
-		hw_update_data = &req_isp->hw_update_data;
 		pf_dbg_entry = &(req->pf_data);
 		CAM_INFO(CAM_ISP, "req_id : %lld ", req->request_id);
 
@@ -4304,8 +4300,6 @@ static int cam_isp_context_dump_active_request(void *data, unsigned long iova,
 
 	list_for_each_entry_safe(req, req_temp,
 		&ctx->wait_req_list, list) {
-		req_isp = (struct cam_isp_ctx_req *) req->req_priv;
-		hw_update_data = &req_isp->hw_update_data;
 		pf_dbg_entry = &(req->pf_data);
 		CAM_INFO(CAM_ISP, "req_id : %lld ", req->request_id);
 
@@ -4334,8 +4328,6 @@ static int cam_isp_context_dump_active_request(void *data, unsigned long iova,
 
 	list_for_each_entry_safe(req, req_temp,
 		&ctx->pending_req_list, list) {
-		req_isp = (struct cam_isp_ctx_req *) req->req_priv;
-		hw_update_data = &req_isp->hw_update_data;
 		pf_dbg_entry = &(req->pf_data);
 		CAM_INFO(CAM_ISP, "req_id : %lld ", req->request_id);
 

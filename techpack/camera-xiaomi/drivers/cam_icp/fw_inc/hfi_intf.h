@@ -78,7 +78,7 @@ int hfi_read_message(uint32_t *pmsg, uint8_t q_id, uint32_t *words_read);
  * Returns success(zero)/failure(non zero)
  */
 int cam_hfi_init(uint8_t event_driven_mode, struct hfi_mem_info *hfi_mem,
-	void *__iomem icp_base, bool debug);
+	void __iomem *icp_base, bool debug);
 
 /**
  * hfi_get_hw_caps() - hardware capabilities from firmware

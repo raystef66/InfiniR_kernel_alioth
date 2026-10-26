@@ -1466,12 +1466,10 @@ static void cam_cci_write_async_helper(struct work_struct *work)
 	struct cci_device *cci_dev;
 	struct cci_write_async *write_async =
 		container_of(work, struct cci_write_async, work);
-	struct cam_sensor_i2c_reg_setting *i2c_msg;
 	enum cci_i2c_master_t master;
 	struct cam_cci_master_info *cci_master_info;
 
 	cci_dev = write_async->cci_dev;
-	i2c_msg = &write_async->c_ctrl.cfg.cci_i2c_write_cfg;
 	master = write_async->c_ctrl.cci_info->cci_i2c_master;
 	cci_master_info = &cci_dev->cci_master_info[master];
 

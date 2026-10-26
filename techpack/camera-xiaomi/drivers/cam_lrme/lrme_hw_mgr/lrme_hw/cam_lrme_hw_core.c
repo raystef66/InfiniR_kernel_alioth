@@ -1237,14 +1237,12 @@ int cam_lrme_hw_process_cmd(void *hw_priv, uint32_t cmd_type,
 
 	case CAM_LRME_HW_CMD_REGISTER_CB: {
 		struct cam_lrme_hw_cmd_set_cb *cb_args;
-		struct cam_lrme_device *hw_device;
 		struct cam_lrme_core *lrme_core =
 			(struct cam_lrme_core *)lrme_hw->core_info;
 		cb_args = (struct cam_lrme_hw_cmd_set_cb *)cmd_args;
 		lrme_core->hw_mgr_cb.cam_lrme_hw_mgr_cb =
 			cb_args->cam_lrme_hw_mgr_cb;
 		lrme_core->hw_mgr_cb.data = cb_args->data;
-		hw_device = cb_args->data;
 		rc = 0;
 		break;
 	}

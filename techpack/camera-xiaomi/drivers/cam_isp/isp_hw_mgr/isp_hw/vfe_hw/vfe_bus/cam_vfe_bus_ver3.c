@@ -3002,7 +3002,6 @@ static int cam_vfe_bus_ver3_update_wm(void *priv, void *cmd_args,
 	struct cam_buf_io_cfg                    *io_cfg;
 	struct cam_vfe_bus_ver3_vfe_out_data     *vfe_out_data = NULL;
 	struct cam_vfe_bus_ver3_wm_resource_data *wm_data = NULL;
-	struct cam_vfe_bus_ver3_reg_offset_ubwc_client *ubwc_client = NULL;
 	uint32_t *reg_val_pair;
 	uint32_t  i, j, k, size = 0;
 	uint32_t  frame_inc = 0, val;
@@ -3038,7 +3037,6 @@ static int cam_vfe_bus_ver3_update_wm(void *priv, void *cmd_args,
 		}
 
 		wm_data = vfe_out_data->wm_res[i]->res_priv;
-		ubwc_client = wm_data->hw_regs->ubwc_regs;
 
 		CAM_VFE_ADD_REG_VAL_PAIR(reg_val_pair, j,
 			wm_data->hw_regs->cfg, wm_data->en_cfg);
@@ -3414,14 +3412,11 @@ end:
 static int cam_vfe_bus_ver3_update_stripe_cfg(void *priv, void *cmd_args,
 	uint32_t arg_size)
 {
-	struct cam_vfe_bus_ver3_priv                *bus_priv;
 	struct cam_isp_hw_dual_isp_update_args      *stripe_args;
 	struct cam_vfe_bus_ver3_vfe_out_data        *vfe_out_data = NULL;
 	struct cam_vfe_bus_ver3_wm_resource_data    *wm_data = NULL;
 	struct cam_isp_dual_stripe_config           *stripe_config;
 	uint32_t outport_id, ports_plane_idx, i;
-
-	bus_priv = (struct cam_vfe_bus_ver3_priv  *) priv;
 	stripe_args = (struct cam_isp_hw_dual_isp_update_args *)cmd_args;
 
 	vfe_out_data = (struct cam_vfe_bus_ver3_vfe_out_data *)

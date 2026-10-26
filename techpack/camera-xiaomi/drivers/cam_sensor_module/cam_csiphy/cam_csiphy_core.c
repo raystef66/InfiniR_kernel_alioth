@@ -49,7 +49,7 @@ static int cam_csiphy_notify_secure_mode(struct csiphy_device *csiphy_dev,
 	return 0;
 }
 
-int32_t cam_csiphy_get_instance_offset(
+static int32_t cam_csiphy_get_instance_offset(
 	struct csiphy_device *csiphy_dev,
 	int32_t dev_handle)
 {
@@ -70,7 +70,7 @@ int32_t cam_csiphy_get_instance_offset(
 	return i;
 }
 
-void cam_csiphy_query_cap(struct csiphy_device *csiphy_dev,
+static void cam_csiphy_query_cap(struct csiphy_device *csiphy_dev,
 	struct cam_csiphy_query_cap *csiphy_cap)
 {
 	struct cam_hw_soc_info *soc_info = &csiphy_dev->soc_info;
@@ -102,7 +102,7 @@ void cam_csiphy_reset(struct csiphy_device *csiphy_dev)
 	}
 }
 
-int32_t cam_csiphy_update_secure_info(
+static int32_t cam_csiphy_update_secure_info(
 	struct csiphy_device *csiphy_dev,
 	struct cam_csiphy_info  *cam_cmd_csiphy_info,
 	struct cam_config_dev_cmd *cfg_dev)
@@ -150,7 +150,7 @@ int32_t cam_csiphy_update_secure_info(
 	return 0;
 }
 
-int32_t cam_cmd_buf_parser(struct csiphy_device *csiphy_dev,
+static int32_t cam_cmd_buf_parser(struct csiphy_device *csiphy_dev,
 	struct cam_config_dev_cmd *cfg_dev)
 {
 	int32_t                 rc = 0;
@@ -259,7 +259,7 @@ void cam_csiphy_cphy_irq_config(struct csiphy_device *csiphy_dev)
 			csiphy_dev->ctrl_reg->csiphy_irq_reg[i].reg_addr);
 }
 
-void cam_csiphy_cphy_data_rate_config(struct csiphy_device *csiphy_device)
+static void cam_csiphy_cphy_data_rate_config(struct csiphy_device *csiphy_device)
 {
 	int i = 0, j = 0;
 	uint64_t phy_data_rate = 0;
@@ -318,17 +318,6 @@ void cam_csiphy_cphy_data_rate_config(struct csiphy_device *csiphy_device)
 	}
 }
 
-void cam_csiphy_cphy_irq_disable(struct csiphy_device *csiphy_dev)
-{
-	int32_t i;
-	void __iomem *csiphybase =
-		csiphy_dev->soc_info.reg_map[0].mem_base;
-
-	for (i = 0; i < csiphy_dev->num_irq_registers; i++)
-		cam_io_w_mb(0x0, csiphybase +
-			csiphy_dev->ctrl_reg->csiphy_irq_reg[i].reg_addr);
-}
-
 irqreturn_t cam_csiphy_irq(int irq_num, void *data)
 {
 	uint32_t irq;
@@ -368,19 +357,17 @@ irqreturn_t cam_csiphy_irq(int irq_num, void *data)
 	return IRQ_HANDLED;
 }
 
-int32_t cam_csiphy_config_dev(struct csiphy_device *csiphy_dev)
+static int32_t cam_csiphy_config_dev(struct csiphy_device *csiphy_dev)
 {
 	int32_t      rc = 0;
 	uint32_t     lane_enable = 0, mask = 1, size = 0;
 	uint16_t     lane_mask = 0, i = 0, cfg_size = 0, temp = 0;
-	uint8_t      lane_cnt, lane_pos = 0;
+	uint8_t      lane_pos = 0;
 	uint16_t     settle_cnt = 0;
 	uint64_t     intermediate_var;
 	void __iomem *csiphybase;
 	struct csiphy_reg_t *csiphy_common_reg = NULL;
 	struct csiphy_reg_t (*reg_array)[MAX_SETTINGS_PER_LANE];
-
-	lane_cnt = csiphy_dev->csiphy_info.lane_cnt;
 	csiphybase = csiphy_dev->soc_info.reg_map[0].mem_base;
 
 	if (!csiphybase) {

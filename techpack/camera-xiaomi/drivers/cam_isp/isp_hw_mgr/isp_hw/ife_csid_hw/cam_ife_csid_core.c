@@ -16,6 +16,7 @@
 #include "cam_io_util.h"
 #include "cam_debug_util.h"
 #include "cam_cpas_api.h"
+#include "cam_ife_csid_dev.h"
 
 /* Timeout value in msec */
 #define IFE_CSID_TIMEOUT                               1000
@@ -957,7 +958,7 @@ int cam_ife_csid_path_reserve(struct cam_ife_csid_hw *csid_hw,
 	/* CSID  CSI2 v2.0 supports 31 vc */
 	if (reserve->sync_mode >= CAM_ISP_HW_SYNC_MAX) {
 		CAM_ERR(CAM_ISP, "CSID: %d Sync Mode: %d",
-			reserve->sync_mode);
+			csid_hw->hw_intf->hw_idx, reserve->sync_mode);
 		return -EINVAL;
 	}
 
@@ -966,7 +967,7 @@ int cam_ife_csid_path_reserve(struct cam_ife_csid_hw *csid_hw,
 			reserve->in_port->vc[i] > 0x1f) {
 			CAM_ERR(CAM_ISP, "CSID:%d Invalid vc:%d dt %d",
 				csid_hw->hw_intf->hw_idx,
-				reserve->in_port->vc, reserve->in_port->dt);
+				reserve->in_port->vc[i], reserve->in_port->dt[i]);
 			rc = -EINVAL;
 			goto end;
 		}
@@ -1204,7 +1205,7 @@ static int cam_ife_csid_enable_hw(struct cam_ife_csid_hw  *csid_hw)
 	rc = cam_soc_util_get_clk_level(soc_info, csid_hw->clk_rate,
 		soc_info->src_clk_idx, &clk_lvl);
 	if (rc) {
-		CAM_ERR(CAM_ISP, "Failed to get clk level for rate %d",
+		CAM_ERR(CAM_ISP, "Failed to get clk level for rate %llu",
 			csid_hw->clk_rate);
 		goto err;
 	}
@@ -3028,7 +3029,7 @@ static int cam_ife_csid_set_csid_debug(struct cam_ife_csid_hw   *csid_hw,
 	return 0;
 }
 
-int cam_ife_csid_get_hw_caps(void *hw_priv,
+static int cam_ife_csid_get_hw_caps(void *hw_priv,
 	void *get_hw_cap_args, uint32_t arg_size)
 {
 	int rc = 0;
@@ -3063,7 +3064,7 @@ int cam_ife_csid_get_hw_caps(void *hw_priv,
 	return rc;
 }
 
-int cam_ife_csid_reset(void *hw_priv,
+static int cam_ife_csid_reset(void *hw_priv,
 	void *reset_args, uint32_t arg_size)
 {
 	struct cam_ife_csid_hw          *csid_hw;
@@ -3100,7 +3101,7 @@ int cam_ife_csid_reset(void *hw_priv,
 	return rc;
 }
 
-int cam_ife_csid_reserve(void *hw_priv,
+static int cam_ife_csid_reserve(void *hw_priv,
 	void *reserve_args, uint32_t arg_size)
 {
 	int rc = 0;
@@ -3139,7 +3140,7 @@ int cam_ife_csid_reserve(void *hw_priv,
 	return rc;
 }
 
-int cam_ife_csid_release(void *hw_priv,
+static int cam_ife_csid_release(void *hw_priv,
 	void *release_args, uint32_t arg_size)
 {
 	int rc = 0;
@@ -3305,14 +3306,13 @@ end:
 	return rc;
 }
 
-int cam_ife_csid_init_hw(void *hw_priv,
+static int cam_ife_csid_init_hw(void *hw_priv,
 	void *init_args, uint32_t arg_size)
 {
 	int rc = 0;
 	struct cam_ife_csid_hw                 *csid_hw;
 	struct cam_hw_info                     *csid_hw_info;
 	struct cam_isp_resource_node           *res;
-	const struct cam_ife_csid_reg_offset   *csid_reg;
 
 	if (!hw_priv || !init_args ||
 		(arg_size != sizeof(struct cam_isp_resource_node))) {
@@ -3323,7 +3323,6 @@ int cam_ife_csid_init_hw(void *hw_priv,
 	csid_hw_info = (struct cam_hw_info  *)hw_priv;
 	csid_hw = (struct cam_ife_csid_hw   *)csid_hw_info->core_info;
 	res      = (struct cam_isp_resource_node *)init_args;
-	csid_reg = csid_hw->csid_info->csid_reg;
 
 	mutex_lock(&csid_hw->hw_info->hw_mutex);
 	if ((res->res_type == CAM_ISP_RESOURCE_CID &&
@@ -3398,7 +3397,7 @@ end:
 	return rc;
 }
 
-int cam_ife_csid_deinit_hw(void *hw_priv,
+static int cam_ife_csid_deinit_hw(void *hw_priv,
 	void *deinit_args, uint32_t arg_size)
 {
 	int rc = 0;
@@ -3468,14 +3467,13 @@ end:
 	return rc;
 }
 
-int cam_ife_csid_start(void *hw_priv, void *start_args,
+static int cam_ife_csid_start(void *hw_priv, void *start_args,
 			uint32_t arg_size)
 {
 	int rc = 0;
 	struct cam_ife_csid_hw                 *csid_hw;
 	struct cam_hw_info                     *csid_hw_info;
 	struct cam_isp_resource_node           *res;
-	const struct cam_ife_csid_reg_offset   *csid_reg;
 	unsigned long                           flags;
 
 	if (!hw_priv || !start_args ||
@@ -3487,7 +3485,6 @@ int cam_ife_csid_start(void *hw_priv, void *start_args,
 	csid_hw_info = (struct cam_hw_info  *)hw_priv;
 	csid_hw = (struct cam_ife_csid_hw   *)csid_hw_info->core_info;
 	res = (struct cam_isp_resource_node *)start_args;
-	csid_reg = csid_hw->csid_info->csid_reg;
 
 	if ((res->res_type == CAM_ISP_RESOURCE_CID &&
 		res->res_id >= CAM_IFE_CSID_CID_MAX) ||
@@ -3546,7 +3543,7 @@ end:
 	return rc;
 }
 
-int cam_ife_csid_stop(void *hw_priv,
+static int cam_ife_csid_stop(void *hw_priv,
 	void *stop_args, uint32_t arg_size)
 {
 	int rc = 0;
@@ -3637,7 +3634,7 @@ int cam_ife_csid_stop(void *hw_priv,
 
 }
 
-int cam_ife_csid_read(void *hw_priv,
+static int cam_ife_csid_read(void *hw_priv,
 	void *read_args, uint32_t arg_size)
 {
 	CAM_ERR(CAM_ISP, "CSID: un supported");
@@ -3645,7 +3642,7 @@ int cam_ife_csid_read(void *hw_priv,
 	return -EINVAL;
 }
 
-int cam_ife_csid_write(void *hw_priv,
+static int cam_ife_csid_write(void *hw_priv,
 	void *write_args, uint32_t arg_size)
 {
 	CAM_ERR(CAM_ISP, "CSID: un supported");

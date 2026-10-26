@@ -301,17 +301,14 @@ static int cam_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 	uint32_t                           prog_addr;
 	uint32_t                           coeff_addr;
 	uint32_t                           mem_addr;
-	uint32_t                           pheripheral_addr;
 	const struct firmware             *fw = NULL;
 	const struct firmware             *fw_xm = NULL;
 	const char                        *fw_name_prog = NULL;
 	const char                        *fw_name_coeff = NULL;
 	const char                        *fw_name_mem = NULL;
-	const char                        *fw_name_ph = NULL;
 	char                               name_prog[32] = {0};
 	char                               name_coeff[32] = {0};
 	char                               name_mem[32] = {0};
-	char                               name_ph[32] = {0};
 	struct device                     *dev = &(o_ctrl->pdev->dev);
 	struct cam_sensor_i2c_reg_setting  i2c_reg_setting;
 	struct page                       *page = NULL;
@@ -325,7 +322,6 @@ static int cam_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 	prog_addr = o_ctrl->opcode.prog;
 	coeff_addr = o_ctrl->opcode.coeff;
 	mem_addr = o_ctrl->opcode.memory;
-	pheripheral_addr = o_ctrl->opcode.pheripheral;
 
 	snprintf(name_coeff, 32, "%s.coeff", o_ctrl->ois_name);
 
@@ -333,13 +329,11 @@ static int cam_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 
 	snprintf(name_mem, 32, "%s.mem", o_ctrl->ois_name);
 
-	snprintf(name_ph, 32, "%s.ph", o_ctrl->ois_name);
 
 	/* cast pointer as const pointer*/
 	fw_name_prog = name_prog;
 	fw_name_coeff = name_coeff;
 	fw_name_mem = name_mem;
-	fw_name_ph = name_ph;
 	/* Load FW */
 	rc = request_firmware(&fw, fw_name_prog, dev);
 	if (rc) {

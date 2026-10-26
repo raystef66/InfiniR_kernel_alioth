@@ -1870,15 +1870,11 @@ static int cam_ife_hw_mgr_acquire_res_ife_csid_pxl(
 	int rc = -1;
 	int i;
 	int master_idx = -1;
-
-	struct cam_ife_hw_mgr                    *ife_hw_mgr;
 	struct cam_ife_hw_mgr_res                *csid_res;
 	struct cam_ife_hw_mgr_res                *cid_res;
 	struct cam_hw_intf                       *hw_intf;
 	struct cam_csid_hw_reserve_resource_args  csid_acquire;
 	enum cam_ife_pix_path_res_id              path_res_id;
-
-	ife_hw_mgr = ife_ctx->hw_mgr;
 	/* get cid resource */
 	if (is_ipp)
 		path_res_id = CAM_IFE_PIX_PATH_RES_IPP;
@@ -2010,16 +2006,12 @@ static int cam_ife_hw_mgr_acquire_res_ife_csid_rdi(
 {
 	int rc = -EINVAL;
 	int i;
-
-	struct cam_ife_hw_mgr                *ife_hw_mgr;
 	struct cam_ife_hw_mgr_res            *csid_res;
 	struct cam_ife_hw_mgr_res            *cid_res;
 	struct cam_hw_intf                   *hw_intf;
 	struct cam_isp_out_port_generic_info *out_port;
 	struct cam_csid_hw_reserve_resource_args  csid_acquire;
 	enum cam_ife_pix_path_res_id         path_res_id;
-
-	ife_hw_mgr = ife_ctx->hw_mgr;
 
 	for (i = 0; i < in_port->num_out_res; i++) {
 		out_port = &in_port->data[i];
@@ -2222,13 +2214,12 @@ static int cam_ife_mgr_check_and_update_fe(
 	struct cam_ife_hw_mgr_ctx         *ife_ctx,
 	struct cam_isp_acquire_hw_info    *acquire_hw_info)
 {
-	uint32_t major_ver = 0, minor_ver = 0;
+	uint32_t major_ver = 0;
 
 	if (acquire_hw_info == NULL || ife_ctx == NULL)
 		return -EINVAL;
 
 	major_ver = (acquire_hw_info->common_info_version >> 12) & 0xF;
-	minor_ver = (acquire_hw_info->common_info_version) & 0xFFF;
 
 	switch (major_ver) {
 	case 1:
@@ -2262,9 +2253,6 @@ static int cam_ife_hw_mgr_preprocess_port(
 	int lcr_num        = 0;
 	uint32_t i;
 	struct cam_isp_out_port_generic_info *out_port;
-	struct cam_ife_hw_mgr *ife_hw_mgr;
-
-	ife_hw_mgr = ife_ctx->hw_mgr;
 
 	if (in_port->res_type == CAM_ISP_IFE_IN_RES_RD) {
 		ife_rd_num++;
@@ -2304,15 +2292,12 @@ static int cam_ife_mgr_acquire_hw_for_ctx(
 	uint32_t *acquired_hw_id, uint32_t *acquired_hw_path)
 {
 	int rc                                    = -1;
-	int is_dual_vfe                           = 0;
 	int ipp_count                             = 0;
 	int rdi_count                             = 0;
 	int ppp_count                             = 0;
 	int ife_rd_count                          = 0;
 	int lcr_count                             = 0;
 	bool crop_enable                          = true;
-
-	is_dual_vfe = in_port->usage_type;
 
 	/* get root node resource */
 	rc = cam_ife_hw_mgr_acquire_res_root(ife_ctx, in_port);
@@ -2418,7 +2403,7 @@ err:
 	return rc;
 }
 
-void cam_ife_cam_cdm_callback(uint32_t handle, void *userdata,
+static void cam_ife_cam_cdm_callback(uint32_t handle, void *userdata,
 	enum cam_cdm_cb_status status, uint64_t cookie)
 {
 	struct cam_isp_prepare_hw_update_data *hw_update_data = NULL;
@@ -2647,13 +2632,12 @@ static int cam_ife_mgr_acquire_get_unified_structure(
 	uint32_t offset, uint32_t *input_size,
 	struct cam_isp_in_port_generic_info **in_port)
 {
-	uint32_t major_ver = 0, minor_ver = 0;
+	uint32_t major_ver = 0;
 
 	if (acquire_hw_info == NULL || input_size == NULL)
 		return -EINVAL;
 
 	major_ver = (acquire_hw_info->common_info_version >> 12) & 0xF;
-	minor_ver = (acquire_hw_info->common_info_version) & 0xFFF;
 
 	switch (major_ver) {
 	case 1:
@@ -2816,7 +2800,7 @@ err:
 	return rc;
 }
 
-void cam_ife_mgr_acquire_get_unified_dev_str(struct cam_isp_in_port_info *in,
+static void cam_ife_mgr_acquire_get_unified_dev_str(struct cam_isp_in_port_info *in,
 	struct cam_isp_in_port_generic_info *gen_port_info)
 {
 	int i;
@@ -4761,7 +4745,6 @@ static int cam_isp_blob_core_cfg_update(
 	struct cam_ife_hw_mgr_ctx             *ctx = NULL;
 	struct cam_ife_hw_mgr_res             *hw_mgr_res;
 	struct cam_hw_intf                    *hw_intf;
-	uint64_t                               clk_rate = 0;
 	int                                    rc = 0, i;
 	struct cam_vfe_core_config_args        vfe_core_config;
 
@@ -4769,7 +4752,6 @@ static int cam_isp_blob_core_cfg_update(
 
 	list_for_each_entry(hw_mgr_res, &ctx->res_list_ife_src, list) {
 		for (i = 0; i < CAM_ISP_HW_SPLIT_MAX; i++) {
-			clk_rate = 0;
 			if (!hw_mgr_res->hw_res[i] ||
 				hw_mgr_res->res_id != CAM_ISP_HW_VFE_IN_CAMIF)
 				continue;
@@ -5375,7 +5357,7 @@ static int cam_isp_packet_generic_blob_handler(void *user_data,
 
 		if (blob_size < sizeof(struct cam_isp_csid_qcfa_config)) {
 			CAM_ERR(CAM_ISP,
-				"Invalid qcfa blob size %u expected %u",
+				"Invalid qcfa blob size %u expected %lu",
 				blob_size,
 				sizeof(struct cam_isp_csid_qcfa_config));
 			return -EINVAL;
@@ -5428,7 +5410,7 @@ static int cam_isp_packet_generic_blob_handler(void *user_data,
 		struct cam_isp_vfe_out_config *vfe_out_config;
 
 		if (blob_size < sizeof(struct cam_isp_vfe_out_config)) {
-			CAM_ERR(CAM_ISP, "Invalid blob size %u",
+			CAM_ERR(CAM_ISP, "Invalid blob size %u expected %zu",
 				blob_size,
 				sizeof(struct cam_isp_vfe_out_config));
 			return -EINVAL;
@@ -5439,7 +5421,7 @@ static int cam_isp_packet_generic_blob_handler(void *user_data,
 		if (vfe_out_config->num_ports > CAM_IFE_HW_OUT_RES_MAX ||
 			vfe_out_config->num_ports == 0) {
 			CAM_ERR(CAM_ISP,
-				"Invalid num_ports:%u in vfe out config",
+				"Invalid num_ports:%u in vfe out config, max:%u",
 				vfe_out_config->num_ports,
 				CAM_IFE_HW_OUT_RES_MAX);
 			return -EINVAL;

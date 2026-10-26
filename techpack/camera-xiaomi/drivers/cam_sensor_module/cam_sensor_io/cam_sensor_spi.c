@@ -547,8 +547,6 @@ int cam_spi_write_table(struct camera_io_master *client,
 	int i;
 	int rc = -EFAULT;
 	struct cam_sensor_i2c_reg_array *reg_setting;
-	uint16_t client_addr_type;
-	enum camera_sensor_i2c_type addr_type;
 
 	if (!client || !write_setting)
 		return rc;
@@ -560,8 +558,6 @@ int cam_spi_write_table(struct camera_io_master *client,
 		return rc;
 
 	reg_setting = write_setting->reg_setting;
-	client_addr_type = write_setting->addr_type;
-	addr_type = write_setting->addr_type;
 	for (i = 0; i < write_setting->size; i++) {
 		CAM_DBG(CAM_SENSOR, "addr %x data %x",
 			reg_setting->reg_addr, reg_setting->reg_data);
@@ -578,7 +574,6 @@ int cam_spi_write_table(struct camera_io_master *client,
 			usleep_range(write_setting->delay * 1000,
 			(write_setting->delay
 			* 1000) + 1000);
-	addr_type = client_addr_type;
 	return rc;
 }
 

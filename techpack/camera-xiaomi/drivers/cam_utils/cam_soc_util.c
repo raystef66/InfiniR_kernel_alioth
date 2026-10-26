@@ -1847,7 +1847,7 @@ static int cam_soc_util_dump_cont_reg_range(
 	if (!soc_info || !dump_out_buf || !reg_read || !cmd_buf_end) {
 		CAM_ERR(CAM_UTIL,
 			"Invalid input args soc_info: %pK, dump_out_buffer: %pK reg_read: %pK cmd_buf_end: %pK",
-			soc_info, dump_out_buf, reg_read, cmd_buf_end);
+			soc_info, dump_out_buf, reg_read, (void *)cmd_buf_end);
 		rc = -EINVAL;
 		goto end;
 	}
@@ -1870,8 +1870,8 @@ static int cam_soc_util_dump_cont_reg_range(
 		(reg_read->num_values * 2 * sizeof(uint32_t)))) {
 		CAM_ERR(CAM_UTIL,
 			"Insufficient space in out buffer num_values: [%d] cmd_buf_end: %pK dump_out_buf: %pK",
-			reg_read->num_values, cmd_buf_end,
-			(uintptr_t)dump_out_buf);
+			reg_read->num_values, (void *)cmd_buf_end,
+			dump_out_buf);
 		rc = -EINVAL;
 		goto end;
 	}
@@ -1881,7 +1881,7 @@ static int cam_soc_util_dump_cont_reg_range(
 		if ((reg_read->offset + (i * sizeof(uint32_t))) >
 			(uint32_t)soc_info->reg_map[base_idx].size) {
 			CAM_ERR(CAM_UTIL,
-				"Reg offset out of range, offset: 0x%X reg_map size: 0x%X",
+				"Reg offset out of range, offset: 0x%zX reg_map size: 0x%X",
 				(reg_read->offset + (i * sizeof(uint32_t))),
 				(uint32_t)soc_info->reg_map[base_idx].size);
 			rc = -EINVAL;
@@ -1952,8 +1952,8 @@ static int cam_soc_util_dump_dmi_reg_range(
 		CAM_ERR(CAM_UTIL,
 			"Insufficient space in out buffer num_read_val: [%d] num_write_val: [%d] cmd_buf_end: %pK dump_out_buf: %pK",
 			dmi_read->dmi_data_read.num_values,
-			dmi_read->num_pre_writes, cmd_buf_end,
-			(uintptr_t)dump_out_buf);
+			dmi_read->num_pre_writes, (void *)cmd_buf_end,
+			dump_out_buf);
 		rc = -EINVAL;
 		goto end;
 	}
@@ -2121,9 +2121,9 @@ int cam_soc_util_reg_dump_to_cmd_buf(void *ctx,
 		if ((cmd_in_data_end - cmd_buf_start) <= (uintptr_t)
 			reg_input_info->dump_set_offsets[i]) {
 			CAM_ERR(CAM_UTIL,
-				"Invalid dump set offset: [%pK], cmd_buf_start: [%pK] cmd_in_data_end: [%pK]",
+				"Invalid dump set offset: [%lu], cmd_buf_start: [%pK] cmd_in_data_end: [%pK]",
 				(uintptr_t)reg_input_info->dump_set_offsets[i],
-				cmd_buf_start, cmd_in_data_end);
+				(void *)cmd_buf_start, (void *)cmd_in_data_end);
 			rc = -EINVAL;
 			goto end;
 		}
@@ -2158,9 +2158,9 @@ int cam_soc_util_reg_dump_to_cmd_buf(void *ctx,
 			(reg_dump_desc->dump_buffer_offset +
 			sizeof(struct cam_reg_dump_out_buffer))) {
 			CAM_ERR(CAM_UTIL,
-				"Invalid out buffer offset: [%pK],  cmd_buf_start: [%pK] cmd_buf_end: [%pK]",
+				"Invalid out buffer offset: [%lu],  cmd_buf_start: [%pK] cmd_buf_end: [%pK]",
 				(uintptr_t)reg_dump_desc->dump_buffer_offset,
-				cmd_buf_start, cmd_buf_end);
+				(void *)cmd_buf_start, (void *)cmd_buf_end);
 			rc = -EINVAL;
 			goto end;
 		}

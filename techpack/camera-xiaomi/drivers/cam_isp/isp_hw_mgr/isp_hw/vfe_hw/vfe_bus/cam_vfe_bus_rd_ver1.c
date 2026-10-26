@@ -599,7 +599,6 @@ static int cam_vfe_bus_start_vfe_bus_rd(
 {
 	int rc = 0, i;
 	struct cam_vfe_bus_rd_ver1_vfe_bus_rd_data  *rsrc_data = NULL;
-	struct cam_vfe_bus_rd_ver1_common_data   *common_data = NULL;
 
 	if (!vfe_out) {
 		CAM_ERR(CAM_ISP, "Invalid input");
@@ -607,7 +606,6 @@ static int cam_vfe_bus_start_vfe_bus_rd(
 	}
 
 	rsrc_data = vfe_out->res_priv;
-	common_data = rsrc_data->common_data;
 
 	CAM_DBG(CAM_ISP, "Start resource type: %x", rsrc_data->bus_rd_type);
 
@@ -740,9 +738,6 @@ static int cam_vfe_bus_deinit_vfe_bus_rd_resource(
 static int cam_vfe_bus_rd_ver1_handle_irq(uint32_t    evt_id,
 	struct cam_irq_th_payload                 *th_payload)
 {
-	struct cam_vfe_bus_rd_ver1_priv          *bus_priv;
-
-	bus_priv     = th_payload->handler_priv;
 	CAM_DBG(CAM_ISP, "BUS READ IRQ Received");
 	return 0;
 }
@@ -750,7 +745,6 @@ static int cam_vfe_bus_rd_ver1_handle_irq(uint32_t    evt_id,
 static int cam_vfe_bus_rd_update_rm(void *priv, void *cmd_args,
 	uint32_t arg_size)
 {
-	struct cam_vfe_bus_rd_ver1_priv          *bus_priv;
 	struct cam_isp_hw_get_cmd_update         *update_buf;
 	struct cam_buf_io_cfg                    *io_cfg;
 	struct cam_vfe_bus_rd_ver1_vfe_bus_rd_data     *vfe_bus_rd_data = NULL;
@@ -759,8 +753,6 @@ static int cam_vfe_bus_rd_update_rm(void *priv, void *cmd_args,
 	uint32_t  i, j, size = 0;
 	uint32_t  val;
 	uint32_t buf_size = 0;
-
-	bus_priv = (struct cam_vfe_bus_rd_ver1_priv  *) priv;
 	update_buf =  (struct cam_isp_hw_get_cmd_update *) cmd_args;
 
 	vfe_bus_rd_data = (struct cam_vfe_bus_rd_ver1_vfe_bus_rd_data *)
@@ -865,7 +857,6 @@ static int cam_vfe_bus_rd_update_fs_cfg(void *priv, void *cmd_args,
 	struct cam_vfe_bus_rd_ver1_rm_resource_data  *rm_data = NULL;
 	struct cam_vfe_fe_update_args                *fe_upd_args;
 	struct cam_fe_config                         *fe_cfg;
-	struct cam_vfe_bus_rd_ver1_common_data        *common_data;
 	int i = 0;
 
 	bus_priv = (struct cam_vfe_bus_rd_ver1_priv  *) priv;
@@ -884,7 +875,6 @@ static int cam_vfe_bus_rd_update_fs_cfg(void *priv, void *cmd_args,
 	for (i = 0; i < vfe_bus_rd_data->num_rm; i++) {
 
 		rm_data = vfe_bus_rd_data->rm_res[i]->res_priv;
-		common_data = rm_data->common_data;
 
 		rm_data->format = fe_cfg->format;
 		CAM_DBG(CAM_ISP, "format: 0x%x", rm_data->format);

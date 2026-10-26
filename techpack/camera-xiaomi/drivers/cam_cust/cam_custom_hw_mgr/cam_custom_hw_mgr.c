@@ -30,13 +30,6 @@ static int cam_custom_mgr_get_hw_caps(void *hw_mgr_priv,
 	struct cam_custom_hw_mgr          *hw_mgr = hw_mgr_priv;
 	struct cam_query_cap_cmd          *query = hw_caps_args;
 	struct cam_custom_query_cap_cmd    custom_hw_cap;
-	struct cam_hw_info                *cam_custom_hw;
-	struct cam_hw_soc_info            *soc_info_hw;
-
-	cam_custom_hw = (struct cam_hw_info *)
-		g_custom_hw_mgr.custom_hw[0]->hw_priv;
-	if (cam_custom_hw)
-		soc_info_hw = &cam_custom_hw->soc_info;
 
 	CAM_DBG(CAM_CUSTOM, "enter");
 
@@ -561,7 +554,6 @@ static int cam_custom_hw_mgr_acquire_cid_res(
 	struct cam_custom_hw_mgr_res         *cid_res_temp;
 	struct cam_csid_hw_reserve_resource_args  csid_acquire;
 	struct cam_isp_resource_node          *isp_rsrc_node;
-	struct cam_isp_out_port_generic_info *out_port = NULL;
 
 	custom_hw_mgr = custom_ctx->hw_mgr;
 	*cid_res = NULL;
@@ -581,8 +573,6 @@ static int cam_custom_hw_mgr_acquire_cid_res(
 	csid_acquire.node_res = NULL;
 	CAM_DBG(CAM_CUSTOM, "path_res_id %d", path_res_id);
 
-	if (in_port->num_out_res)
-		out_port = &(in_port->data[0]);
 
 	for (i = 0; i < CAM_CUSTOM_CSID_HW_MAX; i++) {
 		if (!custom_hw_mgr->csid_devices[i])
@@ -632,7 +622,6 @@ static int cam_custom_hw_mgr_acquire_csid_res(
 	struct cam_isp_in_port_generic_info *in_port_info)
 {
 	int rc = 0, i = 0;
-	struct cam_custom_hw_mgr                *custom_hw_mgr;
 	struct cam_isp_out_port_generic_info    *out_port;
 	struct cam_custom_hw_mgr_res            *custom_csid_res;
 	struct cam_custom_hw_mgr_res            *custom_cid_res;
@@ -641,8 +630,6 @@ static int cam_custom_hw_mgr_acquire_csid_res(
 	enum cam_ife_pix_path_res_id             path_res_id;
 	struct cam_isp_resource_node            *isp_rsrc_node;
 	struct cam_isp_resource_node            *cid_rsrc_node = NULL;
-
-	custom_hw_mgr = custom_ctx->hw_mgr;
 
 	for (i = 0; i < in_port_info->num_out_res; i++) {
 		out_port = &in_port_info->data[i];
@@ -863,7 +850,7 @@ static int cam_custom_mgr_acquire_hw_for_ctx(
 	/* Acquire custom csid */
 	rc = cam_custom_hw_mgr_acquire_csid_res(custom_ctx, in_port_info);
 	if (rc) {
-		CAM_ERR(CAM_CUSTOM, "Custom csid acquire failed rc %d");
+		CAM_ERR(CAM_CUSTOM, "Custom csid acquire failed rc %d", rc);
 		goto err;
 	}
 
@@ -1112,7 +1099,6 @@ static int cam_custom_mgr_prepare_hw_update(void *hw_mgr_priv,
 	struct cam_cmd_buf_desc                  *cmd_desc = NULL;
 	struct cam_custom_prepare_hw_update_data *prepare_hw_data;
 	struct cam_custom_hw_mgr                 *hw_mgr;
-	struct cam_custom_hw_mgr_ctx             *ctx = NULL;
 	uint32_t                                 *ptr;
 	size_t                                    len;
 	struct cam_custom_cmd_buf_type_1         *custom_buf_type1;
@@ -1134,7 +1120,6 @@ static int cam_custom_mgr_prepare_hw_update(void *hw_mgr_priv,
 		(struct cam_custom_prepare_hw_update_data *)prepare->priv;
 	prepare_hw_data->packet_opcode_type =
 		(prepare->packet->header.op_code & 0xFFF);
-	ctx = (struct cam_custom_hw_mgr_ctx *) prepare->ctxt_to_hw_map;
 
 	/* Test purposes-check the data in cmd buffer */
 	cmd_desc = (struct cam_cmd_buf_desc *)
@@ -1231,7 +1216,6 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 {
 	int rc = 0;
 	int i, j;
-	struct cam_custom_hw_mgr_ctx *ctx_pool;
 	struct cam_custom_sub_mod_set_irq_cb irq_cb_args;
 	struct cam_hw_intf *hw_intf = NULL;
 
@@ -1243,6 +1227,8 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 		/* Initialize sub modules */
 		rc = cam_custom_hw_sub_mod_init(
 				&g_custom_hw_mgr.custom_hw[i], i);
+		if (rc && rc != -ENODEV)
+			CAM_WARN(CAM_CUSTOM, "Custom HW %d init failed: %d", i, rc);
 
 		/* handle in case init fails */
 		if (g_custom_hw_mgr.custom_hw[i]) {
@@ -1263,6 +1249,8 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 		/* Initialize csid custom modules */
 		rc = cam_custom_csid_hw_init(
 			&g_custom_hw_mgr.csid_devices[i], i);
+		if (rc && rc != -ENODEV)
+			CAM_WARN(CAM_CUSTOM, "Custom CSID %d init failed: %d", i, rc);
 	}
 
 	INIT_LIST_HEAD(&g_custom_hw_mgr.free_ctx_list);
@@ -1285,8 +1273,6 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 		memset(&g_custom_hw_mgr.ctx_pool[i], 0,
 			sizeof(g_custom_hw_mgr.ctx_pool[i]));
 		INIT_LIST_HEAD(&g_custom_hw_mgr.ctx_pool[i].list);
-
-		ctx_pool = &g_custom_hw_mgr.ctx_pool[i];
 
 		/* init context pool */
 		INIT_LIST_HEAD(&g_custom_hw_mgr.ctx_pool[i].free_res_list);

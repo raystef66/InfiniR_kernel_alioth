@@ -62,7 +62,7 @@ static bool cam_bps_cpas_cb(uint32_t client_handle, void *userdata,
 	return error_handled;
 }
 
-int cam_bps_register_cpas(struct cam_hw_soc_info *soc_info,
+static int cam_bps_register_cpas(struct cam_hw_soc_info *soc_info,
 			struct cam_bps_device_core_info *core_info,
 			uint32_t hw_idx)
 {
@@ -85,7 +85,7 @@ int cam_bps_register_cpas(struct cam_hw_soc_info *soc_info,
 	return rc;
 }
 
-int cam_bps_probe(struct platform_device *pdev)
+static int cam_bps_probe(struct platform_device *pdev)
 {
 	struct cam_hw_info            *bps_dev = NULL;
 	struct cam_hw_intf            *bps_dev_intf = NULL;

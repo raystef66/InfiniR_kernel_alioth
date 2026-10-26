@@ -324,7 +324,7 @@ static int32_t cam_sensor_i2c_modes_util(
 	return rc;
 }
 
-int32_t cam_sensor_update_i2c_info(struct cam_cmd_i2c_info *i2c_info,
+static int32_t cam_sensor_update_i2c_info(struct cam_cmd_i2c_info *i2c_info,
 	struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int32_t rc = 0;
@@ -352,7 +352,7 @@ int32_t cam_sensor_update_i2c_info(struct cam_cmd_i2c_info *i2c_info,
 	return rc;
 }
 
-int32_t cam_sensor_update_slave_info(struct cam_cmd_probe *probe_info,
+static int32_t cam_sensor_update_slave_info(struct cam_cmd_probe *probe_info,
 	struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int32_t rc = 0;
@@ -378,7 +378,7 @@ int32_t cam_sensor_update_slave_info(struct cam_cmd_probe *probe_info,
 	return rc;
 }
 
-int32_t cam_handle_cmd_buffers_for_probe(void *cmd_buf,
+static int32_t cam_handle_cmd_buffers_for_probe(void *cmd_buf,
 	struct cam_sensor_ctrl_t *s_ctrl,
 	int32_t cmd_buf_num, uint32_t cmd_buf_length, size_t remain_len)
 {
@@ -430,7 +430,7 @@ int32_t cam_handle_cmd_buffers_for_probe(void *cmd_buf,
 	return rc;
 }
 
-int32_t cam_handle_mem_ptr(uint64_t handle, struct cam_sensor_ctrl_t *s_ctrl)
+static int32_t cam_handle_mem_ptr(uint64_t handle, struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0, i;
 	uint32_t *cmd_buf;
@@ -517,7 +517,7 @@ end:
 	return rc;
 }
 
-void cam_sensor_query_cap(struct cam_sensor_ctrl_t *s_ctrl,
+static void cam_sensor_query_cap(struct cam_sensor_ctrl_t *s_ctrl,
 	struct  cam_sensor_query_cap *query_cap)
 {
 	query_cap->pos_roll = s_ctrl->sensordata->pos_roll;
@@ -596,7 +596,7 @@ void cam_sensor_shutdown(struct cam_sensor_ctrl_t *s_ctrl)
 	s_ctrl->sensor_state = CAM_SENSOR_INIT;
 }
 
-int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
+static int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0;
 	uint32_t chipid = 0;

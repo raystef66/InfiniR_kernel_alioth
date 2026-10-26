@@ -110,7 +110,7 @@ static int cam_vfe_top_ver3_set_hw_clk_rate(
 			soc_info->src_clk_idx, &clk_lvl);
 		if (rc) {
 			CAM_WARN(CAM_ISP,
-				"Failed to get clk level for %s with clk_rate %llu src_idx %d rc %d",
+				"Failed to get clk level for %s with clk_rate %lu src_idx %d rc %d",
 				soc_info->dev_name, max_clk_rate,
 				soc_info->src_clk_idx, rc);
 			rc = 0;
@@ -212,13 +212,13 @@ static int cam_vfe_top_ver3_mux_get_reg_update(
 	return -EINVAL;
 }
 
-int cam_vfe_top_ver3_get_hw_caps(void *device_priv,
+static int cam_vfe_top_ver3_get_hw_caps(void *device_priv,
 	void *get_hw_cap_args, uint32_t arg_size)
 {
 	return -EPERM;
 }
 
-int cam_vfe_top_ver3_init_hw(void *device_priv,
+static int cam_vfe_top_ver3_init_hw(void *device_priv,
 	void *init_hw_args, uint32_t arg_size)
 {
 	struct cam_vfe_top_ver3_priv   *top_priv = device_priv;
@@ -228,7 +228,7 @@ int cam_vfe_top_ver3_init_hw(void *device_priv,
 	return 0;
 }
 
-int cam_vfe_top_ver3_reset(void *device_priv,
+static int cam_vfe_top_ver3_reset(void *device_priv,
 	void *reset_core_args, uint32_t arg_size)
 {
 	struct cam_vfe_top_ver3_priv   *top_priv = device_priv;
@@ -293,7 +293,7 @@ int cam_vfe_top_ver3_reset(void *device_priv,
 	return 0;
 }
 
-int cam_vfe_top_ver3_reserve(void *device_priv,
+static int cam_vfe_top_ver3_reserve(void *device_priv,
 	void *reserve_args, uint32_t arg_size)
 {
 	struct cam_vfe_top_ver3_priv            *top_priv;
@@ -363,10 +363,9 @@ int cam_vfe_top_ver3_reserve(void *device_priv,
 
 }
 
-int cam_vfe_top_ver3_release(void *device_priv,
+static int cam_vfe_top_ver3_release(void *device_priv,
 	void *release_args, uint32_t arg_size)
 {
-	struct cam_vfe_top_ver3_priv            *top_priv;
 	struct cam_isp_resource_node            *mux_res;
 
 	if (!device_priv || !release_args) {
@@ -374,7 +373,6 @@ int cam_vfe_top_ver3_release(void *device_priv,
 		return -EINVAL;
 	}
 
-	top_priv = (struct cam_vfe_top_ver3_priv   *)device_priv;
 	mux_res = (struct cam_isp_resource_node *)release_args;
 
 	CAM_DBG(CAM_ISP, "Resource in state %d", mux_res->res_state);
@@ -388,7 +386,7 @@ int cam_vfe_top_ver3_release(void *device_priv,
 	return 0;
 }
 
-int cam_vfe_top_ver3_start(void *device_priv,
+static int cam_vfe_top_ver3_start(void *device_priv,
 	void *start_args, uint32_t arg_size)
 {
 	struct cam_vfe_top_ver3_priv            *top_priv;
@@ -445,12 +443,11 @@ int cam_vfe_top_ver3_start(void *device_priv,
 	return rc;
 }
 
-int cam_vfe_top_ver3_stop(void *device_priv,
+static int cam_vfe_top_ver3_stop(void *device_priv,
 	void *stop_args, uint32_t arg_size)
 {
 	struct cam_vfe_top_ver3_priv            *top_priv;
 	struct cam_isp_resource_node            *mux_res;
-	struct cam_hw_info                      *hw_info = NULL;
 	int i, rc = 0;
 
 	if (!device_priv || !stop_args) {
@@ -460,7 +457,6 @@ int cam_vfe_top_ver3_stop(void *device_priv,
 
 	top_priv = (struct cam_vfe_top_ver3_priv   *)device_priv;
 	mux_res = (struct cam_isp_resource_node *)stop_args;
-	hw_info = (struct cam_hw_info  *)mux_res->hw_intf->hw_priv;
 
 	if (mux_res->res_id < CAM_ISP_HW_VFE_IN_MAX) {
 		rc = mux_res->stop(mux_res);
@@ -486,19 +482,19 @@ int cam_vfe_top_ver3_stop(void *device_priv,
 	return rc;
 }
 
-int cam_vfe_top_ver3_read(void *device_priv,
+static int cam_vfe_top_ver3_read(void *device_priv,
 	void *read_args, uint32_t arg_size)
 {
 	return -EPERM;
 }
 
-int cam_vfe_top_ver3_write(void *device_priv,
+static int cam_vfe_top_ver3_write(void *device_priv,
 	void *write_args, uint32_t arg_size)
 {
 	return -EPERM;
 }
 
-int cam_vfe_top_ver3_process_cmd(void *device_priv, uint32_t cmd_type,
+static int cam_vfe_top_ver3_process_cmd(void *device_priv, uint32_t cmd_type,
 	void *cmd_args, uint32_t arg_size)
 {
 	int rc = 0;

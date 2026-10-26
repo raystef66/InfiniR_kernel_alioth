@@ -127,7 +127,7 @@ static int cam_cpas_util_path_type_to_idx(uint32_t *path_data_type)
 		*path_data_type %= CAM_CPAS_MAX_GRAN_PATHS_PER_CLIENT;
 
 	if (*path_data_type >= CAM_CPAS_PATH_DATA_MAX) {
-		CAM_ERR(CAM_CPAS, "index Invalid: %d", path_data_type);
+		CAM_ERR(CAM_CPAS, "index Invalid: %u", *path_data_type);
 		return -EINVAL;
 	}
 
@@ -350,7 +350,7 @@ static int cam_cpas_parse_node_tree(struct cam_cpas *cpas_core,
 }
 
 
-int cam_cpas_get_hw_features(struct platform_device *pdev,
+static int cam_cpas_get_hw_features(struct platform_device *pdev,
 	struct cam_cpas_private_soc *soc_private)
 {
 	struct device_node *of_node;
@@ -388,7 +388,7 @@ int cam_cpas_get_hw_features(struct platform_device *pdev,
 	return 0;
 }
 
-int cam_cpas_get_custom_dt_info(struct cam_hw_info *cpas_hw,
+static int cam_cpas_get_custom_dt_info(struct cam_hw_info *cpas_hw,
 	struct platform_device *pdev, struct cam_cpas_private_soc *soc_private)
 {
 	struct device_node *of_node;

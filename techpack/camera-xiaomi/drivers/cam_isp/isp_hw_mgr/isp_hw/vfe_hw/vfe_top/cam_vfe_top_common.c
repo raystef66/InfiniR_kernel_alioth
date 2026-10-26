@@ -242,8 +242,6 @@ int cam_vfe_top_bw_update(struct cam_vfe_soc_private *soc_private,
 	int                                   rc = 0;
 	int                                   i;
 	struct cam_axi_vote                  *mux_axi_vote;
-	bool                                  vid_exists = false;
-	bool                                  rdi_exists = false;
 
 	bw_update = (struct cam_vfe_bw_update_args *)cmd_args;
 	res = bw_update->node_res;
@@ -300,17 +298,6 @@ int cam_vfe_top_bw_update(struct cam_vfe_soc_private *soc_private,
 			top_common->axi_vote_control[i] =
 				CAM_VFE_BW_CONTROL_INCLUDE;
 			break;
-		}
-
-		if (mux_axi_vote->num_paths == 1) {
-			if (mux_axi_vote->axi_path[0].path_data_type ==
-				CAM_AXI_PATH_DATA_IFE_VID)
-				vid_exists = true;
-			else if ((mux_axi_vote->axi_path[0].path_data_type >=
-				CAM_AXI_PATH_DATA_IFE_RDI0) &&
-				(mux_axi_vote->axi_path[0].path_data_type <=
-				CAM_AXI_PATH_DATA_IFE_RDI3))
-				rdi_exists = true;
 		}
 	}
 
