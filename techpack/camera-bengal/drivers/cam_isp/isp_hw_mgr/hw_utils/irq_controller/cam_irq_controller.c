@@ -14,7 +14,8 @@
 
 /**
  * struct cam_irq_evt_handler:
- * @Brief:                  Event handler information
+ * Description:                  Event handler information
+ * @index: Subscription handle assigned by the controller
  *
  * @priority:               Priority level of this event
  * @evt_bit_mask_arr:       evt_bit_mask that has the bits set for IRQs to
@@ -25,7 +26,7 @@
  * @bottom_half_handler:    Bottom half Handler callback function
  * @bottom_half:            Pointer to bottom_half implementation on which to
  *                          enqueue the event for further handling
- * @bottom_half_enqueue_func:
+ * @irq_bh_api:
  *                          Function used to enqueue the bottom_half event
  * @list_node:              list_head struct used for overall handler List
  * @th_list_node:           list_head struct used for top half handler List
@@ -45,7 +46,7 @@ struct cam_irq_evt_handler {
 
 /**
  * struct cam_irq_register_obj:
- * @Brief:                  Structure containing information related to
+ * Description:                  Structure containing information related to
  *                          a particular register Set
  *
  * @index:                  Index of set in Array
@@ -67,8 +68,9 @@ struct cam_irq_register_obj {
 
 /**
  * struct cam_irq_controller:
+ * @th_payload: Payload passed to the current top-half callback
  *
- * @brief:                  IRQ Controller structure.
+ * Description:                  IRQ Controller structure.
  *
  * @name:                   Name of IRQ Controller block
  * @mem_base:               Mapped base address of register space to which
@@ -231,6 +233,44 @@ reg_alloc_error:
 	return rc;
 }
 
+/* Called with the controller serialized by its process wrapper or IRQ dispatch. */
+static int cam_irq_controller_subscribe_irq_locked(
+	struct cam_irq_controller *controller,
+	struct cam_irq_evt_handler *evt_handler)
+{
+	uint32_t *evt_bit_mask_arr = evt_handler->evt_bit_mask_arr;
+	enum cam_irq_priority_level priority = evt_handler->priority;
+	uint32_t irq_mask;
+	int i;
+
+	evt_handler->index                    = controller->hdl_idx++;
+	/* Avoid rollover to negative values */
+	if (controller->hdl_idx > 0x3FFFFFFF)
+		controller->hdl_idx = 1;
+
+	for (i = 0; i < controller->num_registers; i++) {
+		controller->irq_register_arr[i].top_half_enable_mask[priority]
+			|= evt_bit_mask_arr[i];
+
+		controller->irq_register_arr[i].pclear_mask
+			|= evt_bit_mask_arr[i];
+
+		irq_mask = cam_io_r_mb(controller->mem_base +
+			controller->irq_register_arr[i].mask_reg_offset);
+		irq_mask |= evt_bit_mask_arr[i];
+
+		cam_io_w_mb(irq_mask, controller->mem_base +
+			controller->irq_register_arr[i].mask_reg_offset);
+	}
+
+	list_add_tail(&evt_handler->list_node,
+		&controller->evt_handler_list_head);
+	list_add_tail(&evt_handler->th_list_node,
+		&controller->th_list_head[priority]);
+
+	return evt_handler->index;
+}
+
 int cam_irq_controller_subscribe_irq(void *irq_controller,
 	enum cam_irq_priority_level        priority,
 	uint32_t                          *evt_bit_mask_arr,
@@ -244,9 +284,7 @@ int cam_irq_controller_subscribe_irq(void *irq_controller,
 	struct cam_irq_evt_handler *evt_handler = NULL;
 	int                         i;
 	int                         rc = 0;
-	uint32_t                    irq_mask;
 	unsigned long               flags = 0;
-	bool                        need_lock;
 
 	if (!controller || !handler_priv || !evt_bit_mask_arr) {
 		CAM_ERR(CAM_IRQ_CTRL,
@@ -313,42 +351,18 @@ int cam_irq_controller_subscribe_irq(void *irq_controller,
 	evt_handler->top_half_handler         = top_half_handler;
 	evt_handler->bottom_half_handler      = bottom_half_handler;
 	evt_handler->bottom_half              = bottom_half;
-	evt_handler->index                    = controller->hdl_idx++;
 
 	if (irq_bh_api)
 		evt_handler->irq_bh_api       = *irq_bh_api;
 
-	/* Avoid rollover to negative values */
-	if (controller->hdl_idx > 0x3FFFFFFF)
-		controller->hdl_idx = 1;
+	if (in_irq())
+		return cam_irq_controller_subscribe_irq_locked(controller,
+			evt_handler);
 
-	need_lock = !in_irq();
-	if (need_lock)
-		spin_lock_irqsave(&controller->lock, flags);
-	for (i = 0; i < controller->num_registers; i++) {
-		controller->irq_register_arr[i].top_half_enable_mask[priority]
-			|= evt_bit_mask_arr[i];
-
-		controller->irq_register_arr[i].pclear_mask
-			|= evt_bit_mask_arr[i];
-
-		irq_mask = cam_io_r_mb(controller->mem_base +
-			controller->irq_register_arr[i].mask_reg_offset);
-		irq_mask |= evt_bit_mask_arr[i];
-
-		cam_io_w_mb(irq_mask, controller->mem_base +
-			controller->irq_register_arr[i].mask_reg_offset);
-	}
-
-	list_add_tail(&evt_handler->list_node,
-		&controller->evt_handler_list_head);
-	list_add_tail(&evt_handler->th_list_node,
-		&controller->th_list_head[priority]);
-
-	if (need_lock)
-		spin_unlock_irqrestore(&controller->lock, flags);
-
-	return evt_handler->index;
+	spin_lock_irqsave(&controller->lock, flags);
+	rc = cam_irq_controller_subscribe_irq_locked(controller, evt_handler);
+	spin_unlock_irqrestore(&controller->lock, flags);
+	return rc;
 
 free_evt_handler:
 	kfree(evt_handler);
@@ -357,26 +371,17 @@ free_evt_handler:
 	return rc;
 }
 
-int cam_irq_controller_enable_irq(void *irq_controller, uint32_t handle)
+static int cam_irq_controller_enable_irq_locked(
+	struct cam_irq_controller *controller, uint32_t handle)
 {
-	struct cam_irq_controller   *controller  = irq_controller;
 	struct cam_irq_evt_handler  *evt_handler = NULL;
 	struct cam_irq_evt_handler  *evt_handler_temp;
 	struct cam_irq_register_obj *irq_register = NULL;
 	enum cam_irq_priority_level priority;
-	unsigned long               flags = 0;
 	unsigned int                i;
 	uint32_t                    irq_mask;
 	uint32_t                    found = 0;
 	int                         rc = -EINVAL;
-	bool                        need_lock;
-
-	if (!controller)
-		return rc;
-
-	need_lock = !in_irq();
-	if (need_lock)
-		spin_lock_irqsave(&controller->lock, flags);
 
 	list_for_each_entry_safe(evt_handler, evt_handler_temp,
 		&controller->evt_handler_list_head, list_node) {
@@ -389,8 +394,6 @@ int cam_irq_controller_enable_irq(void *irq_controller, uint32_t handle)
 	}
 
 	if (!found) {
-		if (need_lock)
-			spin_unlock_irqrestore(&controller->lock, flags);
 		return rc;
 	}
 
@@ -407,32 +410,40 @@ int cam_irq_controller_enable_irq(void *irq_controller, uint32_t handle)
 		cam_io_w_mb(irq_mask, controller->mem_base +
 		controller->irq_register_arr[i].mask_reg_offset);
 	}
-	if (need_lock)
-		spin_unlock_irqrestore(&controller->lock, flags);
 
 	return rc;
 }
 
-int cam_irq_controller_disable_irq(void *irq_controller, uint32_t handle)
+int cam_irq_controller_enable_irq(void *irq_controller, uint32_t handle)
 {
-	struct cam_irq_controller   *controller  = irq_controller;
+	struct cam_irq_controller *controller = irq_controller;
+	unsigned long flags;
+	int rc;
+
+	if (!controller)
+		return -EINVAL;
+
+	/* Top-half callbacks run under the controller's IRQ dispatch lock. */
+	if (in_irq())
+		return cam_irq_controller_enable_irq_locked(controller, handle);
+
+	spin_lock_irqsave(&controller->lock, flags);
+	rc = cam_irq_controller_enable_irq_locked(controller, handle);
+	spin_unlock_irqrestore(&controller->lock, flags);
+	return rc;
+}
+
+static int cam_irq_controller_disable_irq_locked(
+	struct cam_irq_controller *controller, uint32_t handle)
+{
 	struct cam_irq_evt_handler  *evt_handler = NULL;
 	struct cam_irq_evt_handler  *evt_handler_temp;
 	struct cam_irq_register_obj *irq_register;
 	enum cam_irq_priority_level priority;
-	unsigned long               flags = 0;
 	unsigned int                i;
 	uint32_t                    irq_mask;
 	uint32_t                    found = 0;
 	int                         rc = -EINVAL;
-	bool                        need_lock;
-
-	if (!controller)
-		return rc;
-
-	need_lock = !in_irq();
-	if (need_lock)
-		spin_lock_irqsave(&controller->lock, flags);
 
 	list_for_each_entry_safe(evt_handler, evt_handler_temp,
 		&controller->evt_handler_list_head, list_node) {
@@ -445,8 +456,6 @@ int cam_irq_controller_disable_irq(void *irq_controller, uint32_t handle)
 	}
 
 	if (!found) {
-		if (need_lock)
-			spin_unlock_irqrestore(&controller->lock, flags);
 		return rc;
 	}
 
@@ -478,16 +487,32 @@ int cam_irq_controller_disable_irq(void *irq_controller, uint32_t handle)
 				controller->mem_base +
 				controller->global_clear_offset);
 	}
-	if (need_lock)
-		spin_unlock_irqrestore(&controller->lock, flags);
 
 	return rc;
 }
 
-int cam_irq_controller_unsubscribe_irq(void *irq_controller,
-	uint32_t handle)
+int cam_irq_controller_disable_irq(void *irq_controller, uint32_t handle)
 {
-	struct cam_irq_controller   *controller  = irq_controller;
+	struct cam_irq_controller *controller = irq_controller;
+	unsigned long flags;
+	int rc;
+
+	if (!controller)
+		return -EINVAL;
+
+	/* Top-half callbacks run under the controller's IRQ dispatch lock. */
+	if (in_irq())
+		return cam_irq_controller_disable_irq_locked(controller, handle);
+
+	spin_lock_irqsave(&controller->lock, flags);
+	rc = cam_irq_controller_disable_irq_locked(controller, handle);
+	spin_unlock_irqrestore(&controller->lock, flags);
+	return rc;
+}
+
+static int cam_irq_controller_unsubscribe_irq_locked(
+	struct cam_irq_controller *controller, uint32_t handle)
+{
 	struct cam_irq_evt_handler  *evt_handler = NULL;
 	struct cam_irq_evt_handler  *evt_handler_temp;
 	struct cam_irq_register_obj *irq_register;
@@ -495,13 +520,7 @@ int cam_irq_controller_unsubscribe_irq(void *irq_controller,
 	uint32_t                    i;
 	uint32_t                    found = 0;
 	uint32_t                    irq_mask;
-	unsigned long               flags = 0;
 	int                         rc = -EINVAL;
-	bool                        need_lock;
-
-	need_lock = !in_irq();
-	if (need_lock)
-		spin_lock_irqsave(&controller->lock, flags);
 
 	list_for_each_entry_safe(evt_handler, evt_handler_temp,
 		&controller->evt_handler_list_head, list_node) {
@@ -544,23 +563,40 @@ int cam_irq_controller_unsubscribe_irq(void *irq_controller,
 		kfree(evt_handler);
 	}
 
-	if (need_lock)
-		spin_unlock_irqrestore(&controller->lock, flags);
 
+	return rc;
+}
+
+int cam_irq_controller_unsubscribe_irq(void *irq_controller, uint32_t handle)
+{
+	struct cam_irq_controller *controller = irq_controller;
+	unsigned long flags;
+	int rc;
+
+	if (!controller)
+		return -EINVAL;
+
+	/* Top-half callbacks run under the controller's IRQ dispatch lock. */
+	if (in_irq())
+		return cam_irq_controller_unsubscribe_irq_locked(controller, handle);
+
+	spin_lock_irqsave(&controller->lock, flags);
+	rc = cam_irq_controller_unsubscribe_irq_locked(controller, handle);
+	spin_unlock_irqrestore(&controller->lock, flags);
 	return rc;
 }
 
 /**
  * cam_irq_controller_match_bit_mask()
  *
- * @Brief:                This function checks if any of the enabled IRQ bits
+ * Description:                This function checks if any of the enabled IRQ bits
  *                        for a certain handler is Set in the Status values
  *                        of the controller.
  *
  * @controller:           IRQ Controller structure
  * @evt_handler:          Event handler structure
  *
- * @Return:               True: If any interested IRQ Bit is Set
+ * Return:               True: If any interested IRQ Bit is Set
  *                        False: Otherwise
  */
 static bool cam_irq_controller_match_bit_mask(
