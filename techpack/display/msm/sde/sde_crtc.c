@@ -18,6 +18,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/syscalls.h>
 #include <linux/sort.h>
 #include <linux/debugfs.h>
 #include <linux/ktime.h>
@@ -5752,7 +5753,7 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 					&fence_user_fd, sizeof(uint64_t));
 			if (ret) {
 				SDE_ERROR("copy to user failed rc:%d\n", ret);
-				put_unused_fd(fence_user_fd);
+				ksys_close(fence_user_fd);
 				ret = -EFAULT;
 				goto exit;
 			}

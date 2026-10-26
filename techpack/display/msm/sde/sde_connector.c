@@ -5,6 +5,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/syscalls.h>
 #include "msm_drv.h"
 #include "sde_dbg.h"
 
@@ -1864,7 +1865,7 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 				 * fence will be released with timeline
 				 * update
 				 */
-				put_unused_fd(fence_user_fd);
+				ksys_close(fence_user_fd);
 				rc = -EFAULT;
 				goto end;
 			}
