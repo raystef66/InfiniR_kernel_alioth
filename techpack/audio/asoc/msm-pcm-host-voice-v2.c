@@ -452,19 +452,19 @@ static void hpcm_free_allocated_mem(struct hpcm_drv *prtd)
 		msm_audio_ion_free(sess->tp_mem_table.dma_buf);
 		sess->tp_mem_table.dma_buf = NULL;
 		sess->sess_paddr = 0;
-		sess->sess_kvaddr = 0;
+		sess->sess_kvaddr = NULL;
 
 		txtp->capture_dai_data.vocpcm_ion_buffer.paddr = 0;
-		txtp->capture_dai_data.vocpcm_ion_buffer.kvaddr = 0;
+		txtp->capture_dai_data.vocpcm_ion_buffer.kvaddr = NULL;
 
 		txtp->playback_dai_data.vocpcm_ion_buffer.paddr = 0;
-		txtp->playback_dai_data.vocpcm_ion_buffer.kvaddr = 0;
+		txtp->playback_dai_data.vocpcm_ion_buffer.kvaddr = NULL;
 
 		rxtp->capture_dai_data.vocpcm_ion_buffer.paddr = 0;
-		rxtp->capture_dai_data.vocpcm_ion_buffer.kvaddr = 0;
+		rxtp->capture_dai_data.vocpcm_ion_buffer.kvaddr = NULL;
 
 		rxtp->playback_dai_data.vocpcm_ion_buffer.paddr = 0;
-		rxtp->playback_dai_data.vocpcm_ion_buffer.kvaddr = 0;
+		rxtp->playback_dai_data.vocpcm_ion_buffer.kvaddr = NULL;
 	} else {
 		pr_debug("%s, paddr = 0, nothing to free\n", __func__);
 	}
@@ -528,7 +528,7 @@ static int hpcm_allocate_shared_memory(struct hpcm_drv *prtd)
 		pr_err("%s: msm_audio_ion_alloc error, rc = %d\n",
 			__func__, result);
 		sess->sess_paddr = 0;
-		sess->sess_kvaddr = 0;
+		sess->sess_kvaddr = NULL;
 		ret = -ENOMEM;
 		goto done;
 	}
@@ -547,7 +547,7 @@ static int hpcm_allocate_shared_memory(struct hpcm_drv *prtd)
 		msm_audio_ion_free(sess->dma_buf);
 		sess->dma_buf = NULL;
 		sess->sess_paddr = 0;
-		sess->sess_kvaddr = 0;
+		sess->sess_kvaddr = NULL;
 		ret = -ENOMEM;
 		goto done;
 	}
@@ -667,6 +667,10 @@ static void hpcm_copy_playback_data_from_queue(struct dai_data *dai_data,
 		if (*len > HPCM_MAX_VOC_PKT_SIZE) {
 			pr_err("%s: Playback data len %d overflow\n",
 					__func__, *len);
+			list_add_tail(&buf_node->list, &dai_data->free_queue);
+			*len = 0;
+			spin_unlock_irqrestore(&dai_data->dsp_lock, dsp_flags);
+			wake_up(&dai_data->queue_wait);
 			return;
 		}
 		memcpy((u8 *)dai_data->vocpcm_ion_buffer.kvaddr,
