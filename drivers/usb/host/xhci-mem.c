@@ -353,7 +353,13 @@ static int xhci_alloc_segments_for_ring(struct xhci_hcd *xhci,
 }
 
 /**
- * Create a new ring with zero or more segments.
+ * xhci_ring_alloc - create a new ring with zero or more segments
+ * @xhci: host controller owning the ring
+ * @num_segs: number of segments to allocate
+ * @cycle_state: initial producer cycle state
+ * @type: type of ring to allocate
+ * @max_packet: endpoint maximum packet size for bounce buffers
+ * @flags: memory allocation flags
  *
  * Link each segment together into a ring.
  * Set the end flag and the cycle toggle bit on the last segment.
@@ -942,7 +948,7 @@ void xhci_free_virt_device(struct xhci_hcd *xhci, struct xhci_virt_device *dev,
  * that tt_info, then free the child first. Recursive.
  * We can't rely on udev at this point to find child-parent relationships.
  */
-void xhci_free_virt_devices_depth_first(struct xhci_hcd *xhci, int slot_id)
+static void xhci_free_virt_devices_depth_first(struct xhci_hcd *xhci, int slot_id)
 {
 	struct xhci_virt_device *vdev;
 	struct list_head *tt_list_head;
@@ -1850,7 +1856,7 @@ void xhci_free_erst(struct xhci_hcd *xhci, struct xhci_erst *erst)
 	erst->entries = NULL;
 }
 
-void xhci_handle_sec_intr_events(struct xhci_hcd *xhci, int intr_num)
+static void xhci_handle_sec_intr_events(struct xhci_hcd *xhci, int intr_num)
 {
 	union xhci_trb *erdp_trb, *current_trb;
 	struct xhci_segment	*seg;
@@ -1890,7 +1896,7 @@ void xhci_handle_sec_intr_events(struct xhci_hcd *xhci, int intr_num)
 
 	/* read cycle state of the last acked trb to find out CCS */
 	xhci->sec_event_ring[intr_num]->cycle_state =
-				(current_trb->event_cmd.flags & TRB_CYCLE);
+				(le32_to_cpu(current_trb->event_cmd.flags) & TRB_CYCLE);
 
 	while (1) {
 		/* last trb of the event ring: toggle cycle state */
@@ -1957,7 +1963,7 @@ int xhci_sec_event_ring_cleanup(struct usb_hcd *hcd, unsigned int intr_num)
 	return 0;
 }
 
-void xhci_event_ring_cleanup(struct xhci_hcd *xhci)
+static void xhci_event_ring_cleanup(struct xhci_hcd *xhci)
 {
 	unsigned int i;
 
@@ -2506,9 +2512,10 @@ static int xhci_setup_port_arrays(struct xhci_hcd *xhci, gfp_t flags)
 	return 0;
 }
 
-int xhci_event_ring_setup(struct xhci_hcd *xhci, struct xhci_ring **er,
-	struct xhci_intr_reg __iomem *ir_set, struct xhci_erst *erst,
-	unsigned int intr_num, gfp_t flags)
+static int xhci_event_ring_setup(struct xhci_hcd *xhci, struct xhci_ring **er,
+				 struct xhci_intr_reg __iomem *ir_set,
+				 struct xhci_erst *erst, unsigned int intr_num,
+				 gfp_t flags)
 {
 	dma_addr_t deq;
 	u64 val_64;
@@ -2610,7 +2617,7 @@ done:
 	return 0;
 }
 
-int xhci_event_ring_init(struct xhci_hcd *xhci, gfp_t flags)
+static int xhci_event_ring_init(struct xhci_hcd *xhci, gfp_t flags)
 {
 	int ret = 0;
 
