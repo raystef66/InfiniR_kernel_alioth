@@ -37,80 +37,80 @@
 /* Each index tells us the number of iterations it took us to find a recycled
  * skb
  */
-unsigned long int
+static unsigned long
 rmnet_perf_core_skb_recycle_iterations[RMNET_PERF_NUM_64K_BUFFS + 1];
-module_param_array(rmnet_perf_core_skb_recycle_iterations, ulong, 0, 0444);
+module_param_array(rmnet_perf_core_skb_recycle_iterations, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_core_skb_recycle_iterations,
 		 "Skb recycle statistics");
 
 /* Number of SKBs we are allowed to accumulate from HW before we must flush
  * everything
  */
-unsigned long int rmnet_perf_core_num_skbs_max = 300;
+static unsigned long rmnet_perf_core_num_skbs_max = 300;
 module_param(rmnet_perf_core_num_skbs_max, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_core_num_skbs_max, "Num skbs max held from HW");
 
 /* Toggle to flush all coalesced packets when physical device is out of
  * packets
  */
-unsigned long int rmnet_perf_core_bm_flush_on = 1;
+static unsigned long rmnet_perf_core_bm_flush_on = 1;
 module_param(rmnet_perf_core_bm_flush_on, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_core_bm_flush_on, "turn on bm flushing");
 
 /* Number of non-ip packets coming into rmnet_perf */
-unsigned long int rmnet_perf_core_non_ip_count;
+static unsigned long rmnet_perf_core_non_ip_count;
 module_param(rmnet_perf_core_non_ip_count, ulong, 0444);
 MODULE_PARM_DESC(rmnet_perf_core_non_ip_count,
 		 "Number of non-ip packets entering rmnet_perf");
 
 /* Number of ip packets coming into rmnet from physical device */
-unsigned long int rmnet_perf_core_pre_ip_count;
+static unsigned long rmnet_perf_core_pre_ip_count;
 module_param(rmnet_perf_core_pre_ip_count, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_core_pre_ip_count,
 		 "Number of ip packets from physical device");
 
 /* Number of ip packets leaving rmnet */
-unsigned long int rmnet_perf_core_post_ip_count;
+static unsigned long rmnet_perf_core_post_ip_count;
 module_param(rmnet_perf_core_post_ip_count, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_core_post_ip_count,
 		 "Number of ip packets leaving rmnet");
 
 /* Stat which shows what distribution of coalescing we are getting */
-unsigned long int rmnet_perf_core_pkt_size[RMNET_PERF_CORE_DEBUG_BUCKETS_MAX];
-module_param_array(rmnet_perf_core_pkt_size, ulong, 0, 0444);
+static unsigned long rmnet_perf_core_pkt_size[RMNET_PERF_CORE_DEBUG_BUCKETS_MAX];
+module_param_array(rmnet_perf_core_pkt_size, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_core_pkt_size,
 		 "rmnet perf coalescing size statistics");
 
 /* Stat showing reason for flushes of flow nodes */
-unsigned long int
+static unsigned long
 rmnet_perf_core_flush_reason_cnt[RMNET_PERF_CORE_NUM_CONDITIONS];
-module_param_array(rmnet_perf_core_flush_reason_cnt, ulong, 0, 0444);
+module_param_array(rmnet_perf_core_flush_reason_cnt, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_core_flush_reason_cnt,
 		 "Reasons for flushing statistics");
 
-unsigned long int rmnet_perf_core_chain_count[50];
-module_param_array(rmnet_perf_core_chain_count, ulong, 0, 0444);
+static unsigned long rmnet_perf_core_chain_count[50];
+module_param_array(rmnet_perf_core_chain_count, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_core_chain_count,
 		 "Number of chained SKBs we process");
 
-unsigned long int enable_packet_dropper;
+static unsigned long enable_packet_dropper;
 module_param(enable_packet_dropper, ulong, 0644);
 MODULE_PARM_DESC(enable_packet_dropper, "enable_packet_dropper");
 
-unsigned long int packet_dropper_time = 1;
+static unsigned long packet_dropper_time = 1;
 module_param(packet_dropper_time, ulong, 0644);
 MODULE_PARM_DESC(packet_dropper_time, "packet_dropper_time");
 
-unsigned long int rmnet_perf_flush_shs = 0;
+static unsigned long rmnet_perf_flush_shs;
 module_param(rmnet_perf_flush_shs, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_flush_shs, "rmnet_perf_flush_shs");
 
-unsigned long int rmnet_perf_frag_flush = 0;
+static unsigned long rmnet_perf_frag_flush;
 module_param(rmnet_perf_frag_flush, ulong, 0444);
 MODULE_PARM_DESC(rmnet_perf_frag_flush,
 		 "Number of packet fragments flushed to stack");
 
-unsigned long int rmnet_perf_qmap_size_mismatch = 0;
+static unsigned long rmnet_perf_qmap_size_mismatch;
 module_param(rmnet_perf_qmap_size_mismatch, ulong, 0444);
 MODULE_PARM_DESC(rmnet_perf_qmap_size_mismatch,
 		 "Number of mismatches b/w QMAP and IP lengths");
@@ -128,11 +128,13 @@ MODULE_PARM_DESC(rmnet_perf_ingress_deag,
 static DEFINE_SPINLOCK(rmnet_perf_core_lock);
 
 void rmnet_perf_core_grab_lock(void)
+	__acquires(&rmnet_perf_core_lock)
 {
 	spin_lock_bh(&rmnet_perf_core_lock);
 }
 
 void rmnet_perf_core_release_lock(void)
+	__releases(&rmnet_perf_core_lock)
 {
 	spin_unlock_bh(&rmnet_perf_core_lock);
 }
@@ -289,20 +291,20 @@ u32 rmnet_perf_core_compute_flow_hash(struct rmnet_perf_pkt_info *pkt_info)
 	u32 hash_key;
 	struct udphdr *up;
 	u32 hash_five_tuple[11];
-	__be16 src = 0, dest = 0;
+	u16 src = 0, dest = 0;
 
 	if (pkt_info->trans_proto == IPPROTO_TCP ||
 	    pkt_info->trans_proto == IPPROTO_UDP) {
 		up = pkt_info->trans_hdr.up;
-		src = up->source;
-		dest = up->dest;
+		memcpy(&src, &up->source, sizeof(src));
+		memcpy(&dest, &up->dest, sizeof(dest));
 	}
 
 	if (pkt_info->ip_proto == 0x04) {
 		struct iphdr *ip4h = pkt_info->ip_hdr.v4hdr;
 
-		hash_five_tuple[0] = ip4h->daddr;
-		hash_five_tuple[1] = ip4h->saddr;
+		memcpy(&hash_five_tuple[0], &ip4h->daddr, sizeof(ip4h->daddr));
+		memcpy(&hash_five_tuple[1], &ip4h->saddr, sizeof(ip4h->saddr));
 		hash_five_tuple[2] = ip4h->protocol;
 		hash_five_tuple[3] = dest;
 		hash_five_tuple[4] = src;
@@ -492,15 +494,11 @@ rmnet_perf_core_handle_map_control_start_v2(struct rmnet_map_dl_ind_hdr *dlhdr,
 	rmnet_perf_core_handle_map_control_start(dlhdr);
 }
 
-void
-rmnet_perf_core_handle_map_control_start(struct rmnet_map_dl_ind_hdr *dlhdr)
+static void
+rmnet_perf_core_handle_map_control_start_locked(struct rmnet_map_dl_ind_hdr *dlhdr)
 {
 	struct rmnet_perf *perf = rmnet_perf_config_get_perf();
 	struct rmnet_perf_core_burst_marker_state *bm_state;
-
-	/* If handling deaggregation, we're already locked */
-	if (!rmnet_perf_core_is_deag_mode())
-		rmnet_perf_core_grab_lock();
 
 	bm_state = perf->core_meta->bm_state;
 	/* if we get two starts in a row, without an end, then we flush
@@ -520,9 +518,18 @@ rmnet_perf_core_handle_map_control_start(struct rmnet_map_dl_ind_hdr *dlhdr)
 	trace_rmnet_perf_low(RMNET_PERF_MODULE, RMNET_PERF_START_DL_MRK,
 			     bm_state->expect_packets, 0xDEF, 0xDEF, 0xDEF,
 			     NULL, NULL);
+}
 
-	if (!rmnet_perf_core_is_deag_mode())
+void rmnet_perf_core_handle_map_control_start(struct rmnet_map_dl_ind_hdr *dlhdr)
+{
+	/* Deaggregation already holds the flow lock. */
+	if (rmnet_perf_core_is_deag_mode()) {
+		rmnet_perf_core_handle_map_control_start_locked(dlhdr);
+	} else {
+		rmnet_perf_core_grab_lock();
+		rmnet_perf_core_handle_map_control_start_locked(dlhdr);
 		rmnet_perf_core_release_lock();
+	}
 }
 
 void rmnet_perf_core_handle_map_control_end_v2(struct rmnet_map_dl_ind_trl *dltrl,
@@ -531,14 +538,11 @@ void rmnet_perf_core_handle_map_control_end_v2(struct rmnet_map_dl_ind_trl *dltr
 	rmnet_perf_core_handle_map_control_end(dltrl);
 }
 
-void rmnet_perf_core_handle_map_control_end(struct rmnet_map_dl_ind_trl *dltrl)
+static void
+rmnet_perf_core_handle_map_control_end_locked(struct rmnet_map_dl_ind_trl *dltrl)
 {
 	struct rmnet_perf *perf = rmnet_perf_config_get_perf();
 	struct rmnet_perf_core_burst_marker_state *bm_state;
-
-	/* If handling deaggregation, we're already locked */
-	if (!rmnet_perf_core_is_deag_mode())
-		rmnet_perf_core_grab_lock();
 
 	bm_state = perf->core_meta->bm_state;
 	rmnet_perf_opt_flush_all_flow_nodes();
@@ -548,9 +552,18 @@ void rmnet_perf_core_handle_map_control_end(struct rmnet_map_dl_ind_trl *dltrl)
 	bm_state->expect_packets = 0;
 	trace_rmnet_perf_low(RMNET_PERF_MODULE, RMNET_PERF_END_DL_MRK, 0xDEF,
 			     0xDEF, 0xDEF, 0xDEF, NULL, NULL);
+}
 
-	if (!rmnet_perf_core_is_deag_mode())
+void rmnet_perf_core_handle_map_control_end(struct rmnet_map_dl_ind_trl *dltrl)
+{
+	/* Deaggregation already holds the flow lock. */
+	if (rmnet_perf_core_is_deag_mode()) {
+		rmnet_perf_core_handle_map_control_end_locked(dltrl);
+	} else {
+		rmnet_perf_core_grab_lock();
+		rmnet_perf_core_handle_map_control_end_locked(dltrl);
 		rmnet_perf_core_release_lock();
+	}
 }
 
 static int rmnet_perf_core_validate_pkt_csum(struct sk_buff *skb,

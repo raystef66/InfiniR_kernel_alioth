@@ -136,7 +136,9 @@ enum rmnet_perf_trace_evt {
 };
 
 
+__acquires(&rmnet_perf_core_lock)
 void rmnet_perf_core_grab_lock(void);
+__releases(&rmnet_perf_core_lock)
 void rmnet_perf_core_release_lock(void);
 void rmnet_perf_core_ps_on(void *port);
 void rmnet_perf_core_ps_off(void *port);

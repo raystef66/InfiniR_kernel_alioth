@@ -36,7 +36,7 @@ MODULE_LICENSE("GPL v2");
 #define FORCE_CLEAN 1
 
 /* Local Definitions and Declarations */
-unsigned int rmnet_shs_cpu_prio_dur __read_mostly = 3;
+static unsigned int rmnet_shs_cpu_prio_dur __read_mostly = 3;
 module_param(rmnet_shs_cpu_prio_dur, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_prio_dur, "Priority ignore duration (wq intervals)");
 
@@ -44,17 +44,17 @@ MODULE_PARM_DESC(rmnet_shs_cpu_prio_dur, "Priority ignore duration (wq intervals
 
 #define RMNET_SHS_SEGS_PER_SKB_DEFAULT (2)
 
-unsigned int rmnet_shs_wq_interval_ms __read_mostly = RMNET_SHS_WQ_INTERVAL_MS;
+static unsigned int rmnet_shs_wq_interval_ms __read_mostly = RMNET_SHS_WQ_INTERVAL_MS;
 module_param(rmnet_shs_wq_interval_ms, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_wq_interval_ms, "Interval between wq runs (ms)");
 
-unsigned long rmnet_shs_max_flow_inactivity_sec __read_mostly =
+static unsigned long rmnet_shs_max_flow_inactivity_sec __read_mostly =
 						RMNET_SHS_MAX_SKB_INACTIVE_TSEC;
 module_param(rmnet_shs_max_flow_inactivity_sec, ulong, 0644);
 MODULE_PARM_DESC(rmnet_shs_max_flow_inactivity_sec,
 		 "Max flow inactive time before clean up");
 
-unsigned int rmnet_shs_wq_tuning __read_mostly = 80;
+static unsigned int rmnet_shs_wq_tuning __read_mostly = 80;
 module_param(rmnet_shs_wq_tuning, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_wq_tuning, "moving average weightage");
 
@@ -68,7 +68,7 @@ unsigned long long rmnet_shs_cpu_rx_max_pps_thresh[MAX_CPUS]__read_mostly = {
 			 RMNET_SHS_UDP_PPS_PERF_CPU_UTHRESH,
 			 RMNET_SHS_UDP_PPS_PERF_CPU_UTHRESH
 			};
-module_param_array(rmnet_shs_cpu_rx_max_pps_thresh, ullong, 0, 0644);
+module_param_array(rmnet_shs_cpu_rx_max_pps_thresh, ullong, NULL, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_max_pps_thresh, "Max pkts core can handle");
 
 unsigned long long rmnet_shs_cpu_rx_min_pps_thresh[MAX_CPUS]__read_mostly = {
@@ -81,93 +81,93 @@ unsigned long long rmnet_shs_cpu_rx_min_pps_thresh[MAX_CPUS]__read_mostly = {
 			 RMNET_SHS_UDP_PPS_PERF_CPU_LTHRESH,
 			 RMNET_SHS_UDP_PPS_PERF_CPU_LTHRESH
 			};
-module_param_array(rmnet_shs_cpu_rx_min_pps_thresh, ullong, 0, 0644);
+module_param_array(rmnet_shs_cpu_rx_min_pps_thresh, ullong, NULL, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_min_pps_thresh, "Min pkts core can handle");
 
-unsigned int rmnet_shs_cpu_rx_flows[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_flows, uint, 0, 0444);
+static unsigned int rmnet_shs_cpu_rx_flows[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_flows, uint, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_flows, "Num flows processed per core");
 
-unsigned int rmnet_shs_cpu_rx_filter_flows[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_filter_flows, uint, 0, 0444);
+static unsigned int rmnet_shs_cpu_rx_filter_flows[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_filter_flows, uint, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_filter_flows, "Num filtered flows per core");
 
-unsigned long long rmnet_shs_cpu_rx_bytes[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_bytes, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_rx_bytes[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_bytes, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_bytes, "SHS stamp bytes per CPU");
 
-unsigned long long rmnet_shs_cpu_rx_pkts[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_pkts, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_rx_pkts[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_pkts, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_pkts, "SHS stamp total pkts per CPU");
 
-unsigned long long rmnet_shs_cpu_rx_bps[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_bps, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_rx_bps[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_bps, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_bps, "SHS stamp enq rate per CPU");
 
-unsigned long long rmnet_shs_cpu_rx_pps[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_rx_pps, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_rx_pps[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_rx_pps, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_rx_pps, "SHS stamp pkt enq rate per CPU");
 
-unsigned long long rmnet_shs_cpu_qhead_diff[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_qhead_diff, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_qhead_diff[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_qhead_diff, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_qhead_diff, "SHS nw stack queue processed diff");
 
-unsigned long long rmnet_shs_cpu_qhead_total[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_qhead_total, ullong, 0, 0444);
+static unsigned long long rmnet_shs_cpu_qhead_total[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_qhead_total, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_cpu_qhead_total, "SHS nw stack queue processed total");
 
-unsigned long rmnet_shs_flow_hash[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_hash, ulong, 0, 0444);
+static unsigned long rmnet_shs_flow_hash[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_hash, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_hash, "SHS stamp hash flow");
 
-unsigned long rmnet_shs_flow_proto[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_proto, ulong, 0, 0444);
+static unsigned long rmnet_shs_flow_proto[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_proto, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_proto, "SHS stamp hash transport protocol");
 
-unsigned long long rmnet_shs_flow_inactive_tsec[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_inactive_tsec, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_inactive_tsec[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_inactive_tsec, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_inactive_tsec, "SHS stamp inactive flow time");
 
-int rmnet_shs_flow_cpu[MAX_SUPPORTED_FLOWS_DEBUG] = {
+static int rmnet_shs_flow_cpu[MAX_SUPPORTED_FLOWS_DEBUG] = {
 			-1, -1, -1, -1, -1, -1, -1, -1,
 			-1, -1, -1, -1, -1, -1, -1, -1};
 module_param_array(rmnet_shs_flow_cpu, int, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_cpu, "SHS stamp flow processing CPU");
 
-int rmnet_shs_flow_cpu_recommended[MAX_SUPPORTED_FLOWS_DEBUG] = {
+static int rmnet_shs_flow_cpu_recommended[MAX_SUPPORTED_FLOWS_DEBUG] = {
 			 -1, -1, -1, -1, -1, -1, -1, -1,
 			 -1, -1, -1, -1, -1, -1, -1, -1
 			 };
 module_param_array(rmnet_shs_flow_cpu_recommended, int, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_cpu_recommended, "SHS stamp flow proc CPU");
 
-unsigned long long rmnet_shs_flow_rx_bytes[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_rx_bytes, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_rx_bytes[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_rx_bytes, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_rx_bytes, "SHS stamp bytes per flow");
 
-unsigned long long rmnet_shs_flow_rx_pkts[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_rx_pkts, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_rx_pkts[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_rx_pkts, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_rx_pkts, "SHS stamp total pkts per flow");
 
-unsigned long long rmnet_shs_flow_rx_bps[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_rx_bps, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_rx_bps[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_rx_bps, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_rx_bps, "SHS stamp enq rate per flow");
 
-unsigned long long rmnet_shs_flow_rx_pps[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_rx_pps, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_rx_pps[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_rx_pps, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_rx_pps, "SHS stamp pkt enq rate per flow");
 
 /* Counters for suggestions made by wq */
-unsigned long long rmnet_shs_flow_silver_to_gold[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_silver_to_gold, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_silver_to_gold[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_silver_to_gold, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_silver_to_gold, "SHS Suggest Silver to Gold");
 
-unsigned long long rmnet_shs_flow_gold_to_silver[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_gold_to_silver, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_gold_to_silver[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_gold_to_silver, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_gold_to_silver, "SHS Suggest Gold to Silver");
 
-unsigned long long rmnet_shs_flow_gold_balance[MAX_SUPPORTED_FLOWS_DEBUG];
-module_param_array(rmnet_shs_flow_gold_balance, ullong, 0, 0444);
+static unsigned long long rmnet_shs_flow_gold_balance[MAX_SUPPORTED_FLOWS_DEBUG];
+module_param_array(rmnet_shs_flow_gold_balance, ullong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flow_gold_balance, "SHS Suggest Gold Balance");
 
 static DEFINE_SPINLOCK(rmnet_shs_hstat_tbl_lock);
@@ -2196,11 +2196,13 @@ u64 rmnet_shs_wq_get_max_allowed_pps(u16 cpu)
 }
 
 void rmnet_shs_wq_ep_lock_bh(void)
+	__acquires(&rmnet_shs_ep_lock)
 {
 	spin_lock_bh(&rmnet_shs_ep_lock);
 }
 
 void rmnet_shs_wq_ep_unlock_bh(void)
+	__releases(&rmnet_shs_ep_lock)
 {
 	spin_unlock_bh(&rmnet_shs_ep_lock);
 }

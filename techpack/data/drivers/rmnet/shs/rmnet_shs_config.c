@@ -34,7 +34,7 @@ module_param(rmnet_shs_stats_enabled, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_stats_enabled, "Enable Disable stats collection");
 
 unsigned long rmnet_shs_crit_err[RMNET_SHS_CRIT_ERR_MAX];
-module_param_array(rmnet_shs_crit_err, ulong, 0, 0444);
+module_param_array(rmnet_shs_crit_err, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_crit_err, "rmnet shs crtical error type");
 
 static int rmnet_shs_dev_notify_cb(struct notifier_block *nb,

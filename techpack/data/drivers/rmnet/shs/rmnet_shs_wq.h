@@ -290,8 +290,10 @@ int rmnet_shs_wq_try_to_move_flow(u16 cur_cpu, u16 dest_cpu, u32 hash_to_move,
 
 int rmnet_shs_wq_set_flow_segmentation(u32 hash_to_set, u8 segs_per_skb);
 
+__acquires(&rmnet_shs_ep_lock)
 void rmnet_shs_wq_ep_lock_bh(void);
 
+__releases(&rmnet_shs_ep_lock)
 void rmnet_shs_wq_ep_unlock_bh(void);
 
 #endif /*_RMNET_SHS_WQ_H_*/

@@ -19,22 +19,22 @@
 
 MODULE_LICENSE("GPL v2");
 
-struct proc_dir_entry *shs_proc_dir;
+static struct proc_dir_entry *shs_proc_dir;
 
 /* Fixed arrays to copy to userspace over netlink */
-struct rmnet_shs_wq_cpu_cap_usr_s rmnet_shs_wq_cap_list_usr[MAX_CPUS];
-struct rmnet_shs_wq_gflows_usr_s rmnet_shs_wq_gflows_usr[RMNET_SHS_MAX_USRFLOWS];
-struct rmnet_shs_wq_ssflows_usr_s rmnet_shs_wq_ssflows_usr[RMNET_SHS_MAX_USRFLOWS];
-struct rmnet_shs_wq_netdev_usr_s rmnet_shs_wq_netdev_usr[RMNET_SHS_MAX_NETDEVS];
+static struct rmnet_shs_wq_cpu_cap_usr_s rmnet_shs_wq_cap_list_usr[MAX_CPUS];
+static struct rmnet_shs_wq_gflows_usr_s rmnet_shs_wq_gflows_usr[RMNET_SHS_MAX_USRFLOWS];
+static struct rmnet_shs_wq_ssflows_usr_s rmnet_shs_wq_ssflows_usr[RMNET_SHS_MAX_USRFLOWS];
+static struct rmnet_shs_wq_netdev_usr_s rmnet_shs_wq_netdev_usr[RMNET_SHS_MAX_NETDEVS];
 
 struct list_head gflows   = LIST_HEAD_INIT(gflows);   /* gold flows */
 struct list_head ssflows  = LIST_HEAD_INIT(ssflows);  /* slow start flows */
 struct list_head cpu_caps = LIST_HEAD_INIT(cpu_caps); /* capacities */
 
-struct rmnet_shs_mmap_info *cap_shared;
-struct rmnet_shs_mmap_info *gflow_shared;
-struct rmnet_shs_mmap_info *ssflow_shared;
-struct rmnet_shs_mmap_info *netdev_shared;
+static struct rmnet_shs_mmap_info *cap_shared;
+static struct rmnet_shs_mmap_info *gflow_shared;
+static struct rmnet_shs_mmap_info *ssflow_shared;
+static struct rmnet_shs_mmap_info *netdev_shared;
 
 /* Static Functions and Definitions */
 static void rmnet_shs_vm_open(struct vm_area_struct *vma)

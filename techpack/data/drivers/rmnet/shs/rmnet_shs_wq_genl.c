@@ -22,7 +22,7 @@ MODULE_LICENSE("GPL v2");
 static struct net *last_net;
 static u32 last_snd_portid;
 
-uint32_t rmnet_shs_genl_seqnum;
+static uint32_t rmnet_shs_genl_seqnum;
 int rmnet_shs_userspace_connected;
 
 /* Static Functions and Definitions */
@@ -53,7 +53,7 @@ static const struct genl_ops rmnet_shs_genl_ops[] = {
 			  rmnet_shs_genl_mem_sync),
 };
 
-struct genl_family rmnet_shs_genl_family = {
+static struct genl_family rmnet_shs_genl_family = {
 	.hdrsize = 0,
 	.name    = RMNET_SHS_GENL_FAMILY_NAME,
 	.version = RMNET_SHS_GENL_VERSION,

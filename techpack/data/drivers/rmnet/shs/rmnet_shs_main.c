@@ -53,14 +53,14 @@
 #define INCREMENT 1
 #define DECREMENT 0
 /* Local Definitions and Declarations */
-unsigned int rmnet_oom_pkt_limit __read_mostly = 5000;
+static unsigned int rmnet_oom_pkt_limit __read_mostly = 5000;
 module_param(rmnet_oom_pkt_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_oom_pkt_limit, "Max rmnet pre-backlog");
 
 DEFINE_SPINLOCK(rmnet_shs_ht_splock);
 DEFINE_HASHTABLE(RMNET_SHS_HT, RMNET_SHS_HT_SIZE);
 struct rmnet_shs_cpu_node_s rmnet_shs_cpu_node_tbl[MAX_CPUS];
-int cpu_num_flows[MAX_CPUS];
+static int cpu_num_flows[MAX_CPUS];
 
 /* Maintains a list of flows associated with a core
  * Also keeps track of number of packets processed on that core
@@ -69,86 +69,86 @@ int cpu_num_flows[MAX_CPUS];
 struct rmnet_shs_cfg_s rmnet_shs_cfg;
 /* This flag is set to true after a successful SHS module init*/
 
-struct rmnet_shs_flush_work shs_rx_work;
+static struct rmnet_shs_flush_work shs_rx_work;
 /* Delayed workqueue that will be used to flush parked packets*/
-unsigned long rmnet_shs_switch_reason[RMNET_SHS_SWITCH_MAX_REASON];
-module_param_array(rmnet_shs_switch_reason, ulong, 0, 0444);
+static unsigned long rmnet_shs_switch_reason[RMNET_SHS_SWITCH_MAX_REASON];
+module_param_array(rmnet_shs_switch_reason, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_switch_reason, "rmnet shs skb core swtich type");
 
-unsigned long rmnet_shs_flush_reason[RMNET_SHS_FLUSH_MAX_REASON];
-module_param_array(rmnet_shs_flush_reason, ulong, 0, 0444);
+static unsigned long rmnet_shs_flush_reason[RMNET_SHS_FLUSH_MAX_REASON];
+module_param_array(rmnet_shs_flush_reason, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_shs_flush_reason, "rmnet shs skb flush trigger type");
 
-unsigned int rmnet_shs_byte_store_limit __read_mostly = 271800 * 80;
+static unsigned int rmnet_shs_byte_store_limit __read_mostly = 271800 * 80;
 module_param(rmnet_shs_byte_store_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_byte_store_limit, "Maximum byte module will park");
 
 
-unsigned int rmnet_shs_in_count = 0;
+static unsigned int rmnet_shs_in_count;
 module_param(rmnet_shs_in_count, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_in_count, "SKb in count");
 
-unsigned int rmnet_shs_out_count = 0;
+static unsigned int rmnet_shs_out_count;
 module_param(rmnet_shs_out_count, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_out_count, "SKb out count");
 
-unsigned int rmnet_shs_wq_fb_limit = 10;
+static unsigned int rmnet_shs_wq_fb_limit = 10;
 module_param(rmnet_shs_wq_fb_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_wq_fb_limit, "Final fb timer");
 
 
-unsigned int rmnet_shs_pkts_store_limit __read_mostly = 2100 * 8;
+static unsigned int rmnet_shs_pkts_store_limit __read_mostly = 2100 * 8;
 module_param(rmnet_shs_pkts_store_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_pkts_store_limit, "Maximum pkts module will park");
 
-unsigned int rmnet_shs_max_core_wait __read_mostly = 45;
+static unsigned int rmnet_shs_max_core_wait __read_mostly = 45;
 module_param(rmnet_shs_max_core_wait, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_max_core_wait,
 		 "Max wait module will wait during move to perf core in ms");
 
-unsigned int rmnet_shs_inst_rate_interval __read_mostly = 20;
+static unsigned int rmnet_shs_inst_rate_interval __read_mostly = 20;
 module_param(rmnet_shs_inst_rate_interval, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_inst_rate_interval,
 		 "Max interval we sample for instant burst prioritizing");
 
-unsigned int rmnet_shs_inst_rate_switch __read_mostly = 1;
+static unsigned int rmnet_shs_inst_rate_switch __read_mostly = 1;
 module_param(rmnet_shs_inst_rate_switch, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_inst_rate_switch,
 		 "Configurable option to enable rx rate cpu switching");
 
-unsigned int rmnet_shs_fall_back_timer __read_mostly = 1;
+static unsigned int rmnet_shs_fall_back_timer __read_mostly = 1;
 module_param(rmnet_shs_fall_back_timer, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_fall_back_timer,
 		 "Option to enable fall back limit for parking");
 
-unsigned int rmnet_shs_backlog_max_pkts __read_mostly = 1100;
+static unsigned int rmnet_shs_backlog_max_pkts __read_mostly = 1100;
 module_param(rmnet_shs_backlog_max_pkts, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_backlog_max_pkts,
 		 "Max pkts in backlog prioritizing");
 
-unsigned int rmnet_shs_inst_rate_max_pkts __read_mostly = 2500;
+static unsigned int rmnet_shs_inst_rate_max_pkts __read_mostly = 2500;
 module_param(rmnet_shs_inst_rate_max_pkts, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_inst_rate_max_pkts,
 		 "Max pkts in a instant burst interval before prioritizing");
 
-unsigned int rmnet_shs_timeout __read_mostly = 6;
+static unsigned int rmnet_shs_timeout __read_mostly = 6;
 module_param(rmnet_shs_timeout, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_timeout, "Option to configure fall back duration");
 
-unsigned int rmnet_shs_switch_cores __read_mostly = 1;
+static unsigned int rmnet_shs_switch_cores __read_mostly = 1;
 module_param(rmnet_shs_switch_cores, uint, 0644);
 MODULE_PARM_DESC(rmnet_shs_switch_cores, "Switch core upon hitting threshold");
 
-unsigned int rmnet_shs_cpu_max_qdiff[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_max_qdiff, uint, 0, 0644);
+static unsigned int rmnet_shs_cpu_max_qdiff[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_max_qdiff, uint, NULL, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_max_qdiff, "Max queue length seen of each core");
 
-unsigned int rmnet_shs_cpu_ooo_count[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_ooo_count, uint, 0, 0644);
+static unsigned int rmnet_shs_cpu_ooo_count[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_ooo_count, uint, NULL, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_ooo_count, "OOO count for each cpu");
 
-unsigned int rmnet_shs_cpu_max_coresum[MAX_CPUS];
-module_param_array(rmnet_shs_cpu_max_coresum, uint, 0, 0644);
+static unsigned int rmnet_shs_cpu_max_coresum[MAX_CPUS];
+module_param_array(rmnet_shs_cpu_max_coresum, uint, NULL, 0644);
 MODULE_PARM_DESC(rmnet_shs_cpu_max_coresum, "Max coresum seen of each core");
 
 static void rmnet_shs_change_cpu_num_flows(u16 map_cpu, bool inc)

@@ -27,29 +27,29 @@
 #include "rmnet_perf_config.h"
 
 /* Max number of bytes we allow tcp_opt to aggregate per flow */
-unsigned int rmnet_perf_tcp_opt_flush_limit __read_mostly = 65000;
+static unsigned int rmnet_perf_tcp_opt_flush_limit __read_mostly = 65000;
 module_param(rmnet_perf_tcp_opt_flush_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_perf_tcp_opt_flush_limit,
 		 "Max flush limiit for tcp_opt");
 
 /* Stat showing reason for flushes of flow nodes */
-unsigned long int
+static unsigned long
 rmnet_perf_tcp_opt_flush_reason_cnt[RMNET_PERF_TCP_OPT_NUM_CONDITIONS];
-module_param_array(rmnet_perf_tcp_opt_flush_reason_cnt, ulong, 0, 0444);
+module_param_array(rmnet_perf_tcp_opt_flush_reason_cnt, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_tcp_opt_flush_reason_cnt,
 		 "tcp_opt performance statistics");
 
 /* Number of ip packets leaving tcp_opt. Should be less than "pre" */
-unsigned long int rmnet_perf_tcp_opt_post_ip_count;
+static unsigned long rmnet_perf_tcp_opt_post_ip_count;
 module_param(rmnet_perf_tcp_opt_post_ip_count, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_tcp_opt_post_ip_count,
 		 "Number of packets of MTU size, post-tcp_opt");
 
-unsigned long int rmnet_perf_tcp_opt_fn_seq = 0;
+static unsigned long rmnet_perf_tcp_opt_fn_seq;
 module_param(rmnet_perf_tcp_opt_fn_seq, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_tcp_opt_fn_seq, "flow node seq");
 
-unsigned long int rmnet_perf_tcp_opt_pkt_seq = 0;
+static unsigned long rmnet_perf_tcp_opt_pkt_seq;
 module_param(rmnet_perf_tcp_opt_pkt_seq, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_tcp_opt_pkt_seq, "incoming pkt seq");
 

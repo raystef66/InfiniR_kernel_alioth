@@ -26,15 +26,15 @@
 #include "rmnet_perf_config.h"
 
 /* Max number of bytes we allow udp_opt to aggregate per flow */
-unsigned int rmnet_perf_udp_opt_flush_limit __read_mostly = 65000;
+static unsigned int rmnet_perf_udp_opt_flush_limit __read_mostly = 65000;
 module_param(rmnet_perf_udp_opt_flush_limit, uint, 0644);
 MODULE_PARM_DESC(rmnet_perf_udp_opt_flush_limit,
 		 "Max flush limiit for udp_opt");
 
 /* Stat showing reason for flushes of flow nodes */
-unsigned long int
+static unsigned long
 rmnet_perf_udp_opt_flush_reason_cnt[RMNET_PERF_UDP_OPT_NUM_CONDITIONS];
-module_param_array(rmnet_perf_udp_opt_flush_reason_cnt, ulong, 0, 0444);
+module_param_array(rmnet_perf_udp_opt_flush_reason_cnt, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_udp_opt_flush_reason_cnt,
 		 "udp_opt performance statistics");
 

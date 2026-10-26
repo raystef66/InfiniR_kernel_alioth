@@ -30,19 +30,19 @@
 #include "rmnet_perf_config.h"
 
 /* If true then we allocate all large SKBs */
-unsigned long int rmnet_perf_opt_skb_recycle_off = 1;
+static unsigned long rmnet_perf_opt_skb_recycle_off = 1;
 module_param(rmnet_perf_opt_skb_recycle_off, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_opt_skb_recycle_off, "Num skbs max held");
 
 /* Stat showing reason for flushes of flow nodes */
-unsigned long int
+static unsigned long
 rmnet_perf_opt_flush_reason_cnt[RMNET_PERF_OPT_NUM_CONDITIONS];
-module_param_array(rmnet_perf_opt_flush_reason_cnt, ulong, 0, 0444);
+module_param_array(rmnet_perf_opt_flush_reason_cnt, ulong, NULL, 0444);
 MODULE_PARM_DESC(rmnet_perf_opt_flush_reason_cnt,
 		 "opt performance statistics");
 
 /* Stat showing packets dropped due to lack of memory */
-unsigned long int rmnet_perf_opt_oom_drops = 0;
+static unsigned long rmnet_perf_opt_oom_drops;
 module_param(rmnet_perf_opt_oom_drops, ulong, 0644);
 MODULE_PARM_DESC(rmnet_perf_opt_oom_drops,
 		 "Number of packets dropped because we couldn't allocate SKBs");
@@ -58,7 +58,7 @@ enum {
 static int rmnet_perf_opt_mode = RMNET_PERF_OPT_MODE_ALL;
 
 /* flow hash table */
-DEFINE_HASHTABLE(rmnet_perf_opt_fht, RMNET_PERF_FLOW_HASH_TABLE_BITS);
+static DEFINE_HASHTABLE(rmnet_perf_opt_fht, RMNET_PERF_FLOW_HASH_TABLE_BITS);
 
 static void rmnet_perf_opt_flush_flow_nodes_by_protocol(u8 protocol)
 {

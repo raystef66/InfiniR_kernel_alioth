@@ -29,7 +29,7 @@ struct rmnet_perf_opt_pkt_node {
 struct rmnet_perf_opt_ip_flags {
 	u8 ip_ttl;
 	u8 ip_tos;
-	u16 ip_frag_off;
+	__be16 ip_frag_off;
 };
 
 struct rmnet_perf_opt_flow_node {
@@ -62,7 +62,7 @@ struct rmnet_perf_opt_flow_node {
 	} ip_flags;
 
 	/* TCP metadata */
-	__be32 next_seq;
+	u32 next_seq;
 
 	/* GSO metadata */
 	u32 gso_len;
