@@ -354,7 +354,7 @@ static int cam_cpas_get_hw_features(struct platform_device *pdev,
 	struct cam_cpas_private_soc *soc_private)
 {
 	struct device_node *of_node;
-	void *fuse;
+	void __iomem *fuse;
 	uint32_t fuse_addr, fuse_bit;
 	uint32_t fuse_val = 0, feature_bit_pos;
 	int count = 0, i = 0;
@@ -382,6 +382,8 @@ static int cam_cpas_get_hw_features(struct platform_device *pdev,
 		}
 		CAM_INFO(CAM_CPAS, "fuse %pK, fuse_val %x, feature_mask %x",
 				fuse, fuse_val, soc_private->feature_mask);
+		if (fuse)
+			iounmap(fuse);
 
 	}
 

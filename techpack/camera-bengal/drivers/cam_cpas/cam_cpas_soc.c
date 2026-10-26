@@ -405,7 +405,7 @@ int cam_cpas_get_hw_features(struct platform_device *pdev,
 	struct cam_cpas_private_soc *soc_private)
 {
 	struct device_node *of_node;
-	void *fuse;
+	void __iomem *fuse;
 	uint32_t fuse_addr, fuse_bit;
 	uint32_t fuse_val = 0, feature;
 	uint32_t enable_type = 0, hw_id = 0;
@@ -438,6 +438,7 @@ int cam_cpas_get_hw_features(struct platform_device *pdev,
 		fuse = ioremap(fuse_addr, 4);
 		if (fuse) {
 			fuse_val = cam_io_r(fuse);
+			iounmap(fuse);
 		} else {
 			/* if fuse ioremap is failed, disable the feature */
 			CAM_ERR(CAM_CPAS,
