@@ -12,7 +12,7 @@
  *
  */
 
-#include <linux/notifier.h>
+#include <drm/drm_notifier_mi.h>
 
 static BLOCKING_NOTIFIER_HEAD(mi_drm_notifier_list);
 
