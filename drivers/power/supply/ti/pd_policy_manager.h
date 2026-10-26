@@ -311,7 +311,6 @@ struct pdpm_config {
 
 extern int usbpd_get_pps_status(struct usbpd *pd, u32 *status);
 extern int usbpd_fetch_pdo(struct usbpd *pd, struct usbpd_pdo *pdos);
-extern int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua);
 extern struct usbpd *smb_get_usbpd(void);
 extern int usbpd_get_current_state(struct usbpd *pd);
 

@@ -1034,7 +1034,7 @@ static void usbpd_fc2_exit_work(struct work_struct *work)
 	pdpm->fc2_exit_flag = false;
 }
 
-int pd_log_count = 0;
+static int pd_log_count;
 #define TAPER_TIMEOUT (10000 / PM_WORK_RUN_QUICK_INTERVAL)
 #define IBUS_CHANGE_TIMEOUT (1000 / PM_WORK_RUN_QUICK_INTERVAL)
 static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
@@ -1638,7 +1638,8 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 		     !pdpm->no_need_en_slave_bq) ||
 		    !pdpm->cp.charge_enabled) {
 			if (pdpm->cp.vbus_volt < 7200) {
-				pr_info("vbus_volt:%d is low, retry.\n");
+				pr_info("vbus_volt:%d is low, retry.\n",
+					pdpm->cp.vbus_volt);
 				usbpd_pm_move_state(pdpm, PD_PM_STATE_ENTRY);
 			}
 		}
@@ -1912,7 +1913,6 @@ static void usb_psy_change_work(struct work_struct *work)
 	union power_supply_propval pd_auth_val = {
 		0,
 	};
-	int usb_present = 0;
 	int ret = 0;
 
 	ret = power_supply_get_property(pdpm->usb_psy,
@@ -1921,7 +1921,6 @@ static void usb_psy_change_work(struct work_struct *work)
 		pr_err("Failed to read usb preset!\n");
 		goto out;
 	}
-	usb_present = val.intval;
 
 	ret = power_supply_get_property(
 		pdpm->usb_psy, POWER_SUPPLY_PROP_TYPEC_POWER_ROLE, &val);

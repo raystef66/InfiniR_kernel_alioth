@@ -66,6 +66,10 @@ enum plug_orientation {
 };
 
 #if IS_ENABLED(CONFIG_USB_PD_POLICY)
+extern bool has_dp_flag;
+
+int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua);
+
 /*
  * Obtains an instance of usbpd from a DT phandle
  */
@@ -103,6 +107,11 @@ enum plug_orientation usbpd_get_plug_orientation(struct usbpd *pd);
 
 void usbpd_vdm_in_suspend(struct usbpd *pd, bool in_suspend);
 #else
+static inline int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua)
+{
+	return -ENODEV;
+}
+
 static inline struct usbpd *devm_usbpd_get_by_phandle(struct device *dev,
 		const char *phandle)
 {

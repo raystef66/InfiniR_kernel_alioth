@@ -701,13 +701,13 @@ static void usbpd_disable_active_work(struct work_struct *w)
 }
 
 /**
- * This API allows client driver to request for releasing SS lanes. It should
- * not be called from atomic context.
+ * usbpd_release_ss_lane() - Release SS lanes for a client
+ * @pd: USBPD handler
+ * @hdlr: Client handler
  *
- * @pd - USBPD handler
- * @hdlr - client's handler
+ * This must not be called from atomic context.
  *
- * @returns int - Success - 0, else negative error code
+ * Return: Zero on success, otherwise a negative error code
  */
 static int usbpd_release_ss_lane(struct usbpd *pd,
 				struct usbpd_svid_handler *hdlr)
@@ -4579,13 +4579,16 @@ static ssize_t select_pdo_store(struct device *dev,
 
 	mutex_lock(&pd->swap_lock);
 
-	if (pd->verify_process)
+	if (pd->verify_process) {
+		ret = -EBUSY;
 		goto out;
+	}
 
 	/* use xiaomi pps control state machine */
 	if (pd->non_qcom_pps_ctr && pd->spec_rev == USBPD_REV_30) {
 		usbpd_info(&pd->dev,
 			"PPS is controlled by ourself, return not support\n");
+		ret = -EOPNOTSUPP;
 		goto out;
 	}
 
@@ -5011,27 +5014,6 @@ static ssize_t adapter_version_show(struct device *dev,
 }
 static DEVICE_ATTR_RO(adapter_version);
 
-static int StringToHex(char *str, unsigned char *out, unsigned int *outlen)
-{
-	char *p = str;
-	char high = 0, low = 0;
-	int tmplen = strlen(p), cnt = 0;
-	tmplen = strlen(p);
-	while (cnt < (tmplen / 2)) {
-		high = ((*p > '9') && ((*p <= 'F') || (*p <= 'f'))) ? *p - 48 - 7 : *p - 48;
-		low = (*(++p) > '9' && ((*p <= 'F') || (*p <= 'f'))) ? *(p) - 48 - 7 : *(p) - 48;
-		out[cnt] = ((high & 0x0f) << 4 | (low & 0x0f));
-		p++;
-		cnt++;
-	}
-	if (tmplen % 2 != 0)
-		out[cnt] = ((*p > '9') && ((*p <= 'F') || (*p <= 'f'))) ? *p - 48 - 7 : *p - 48;
-
-	if (outlen != NULL)
-		*outlen = tmplen / 2 + tmplen % 2;
-
-	return tmplen / 2 + tmplen % 2;
-}
 
 #define BSWAP_32(x) \
 	(u32)((((u32)(x) & 0xff000000) >> 24) | \
@@ -5096,19 +5078,69 @@ static ssize_t request_vdm_cmd_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t size)
 {
 	struct usbpd *pd = dev_get_drvdata(dev);
+	char *request, *command, *payload;
+	/* Preserve the original 32-byte scratch capacity with word alignment. */
+	u32 data[8] = { 0 };
+	size_t hex_len, bytes, required_bytes = 0;
 	int cmd, ret;
-	unsigned char buffer[64];
-	unsigned char data[32];
-	int count;
 
-	ret = sscanf(buf, "%d,%s\n", &cmd, buffer);
+	request = kmemdup_nul(buf, size, GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
+	payload = request;
+	command = strsep(&payload, ",");
+	ret = kstrtoint(strim(command), 10, &cmd);
+	if (ret)
+		goto out;
 
-	usbpd_dbg(&pd->dev, "%s:cmd:%d, buffer:%s\n", __func__, cmd, buffer);
+	switch (cmd) {
+	case USBPD_UVDM_CHARGER_VERSION:
+	case USBPD_UVDM_CHARGER_TEMP:
+	case USBPD_UVDM_CHARGER_VOLTAGE:
+		break;
+	case USBPD_UVDM_VERIFIED:
+	case USBPD_UVDM_REMOVE_COMPENSATION:
+		required_bytes = 1;
+		break;
+	case USBPD_UVDM_SESSION_SEED:
+	case USBPD_UVDM_AUTHENTICATION:
+	case USBPD_UVDM_REVERSE_AUTHEN:
+		required_bytes = USBPD_UVDM_SS_LEN * sizeof(data[0]);
+		break;
+	default:
+		ret = -EINVAL;
+		goto out;
+	}
 
-	StringToHex(buffer, data, &count);
-	usbpd_request_vdm_cmd(pd, cmd, (unsigned int *)data);
-
-	return size;
+	if (required_bytes) {
+		if (!payload) {
+			ret = -EINVAL;
+			goto out;
+		}
+		payload = strim(payload);
+		hex_len = strlen(payload);
+		bytes = DIV_ROUND_UP(hex_len, 2);
+		if (bytes < required_bytes || bytes > sizeof(data)) {
+			ret = -EINVAL;
+			goto out;
+		}
+		ret = hex2bin((u8 *)data, payload, hex_len / 2);
+		if (ret)
+			goto out;
+		/* The legacy interface encodes a final odd nibble as one byte. */
+		if (hex_len & 1) {
+			ret = hex_to_bin(payload[hex_len - 1]);
+			if (ret < 0) {
+				ret = -EINVAL;
+				goto out;
+			}
+			((u8 *)data)[bytes - 1] = ret;
+		}
+	}
+	ret = usbpd_request_vdm_cmd(pd, cmd, data);
+out:
+	kfree(request);
+	return ret ? ret : size;
 }
 
 static ssize_t request_vdm_cmd_show(struct device *dev,
@@ -5290,7 +5322,7 @@ static void usbpd_mi_vdm_received_cb(struct usbpd_svid_handler *hdlr, u32 vdm_hd
 		const u32 *vdos, int num_vdos)
 {
 	struct usbpd *pd;
-	int i, cmd;
+	int i, cmd, required_vdos = 0;
 	int usb_current, usb_voltage, r_cable;
 	union power_supply_propval val = {0};
 	int ret;
@@ -5298,8 +5330,32 @@ static void usbpd_mi_vdm_received_cb(struct usbpd_svid_handler *hdlr, u32 vdm_hd
 	pd = container_of(hdlr, struct usbpd, svid_handler);
 	cmd = UVDM_HDR_CMD(vdm_hdr);
 
+	/* Validate the payload before reading or updating vendor state. */
+	switch (cmd) {
+	case USBPD_UVDM_CHARGER_VERSION:
+	case USBPD_UVDM_CHARGER_TEMP:
+	case USBPD_UVDM_CHARGER_VOLTAGE:
+	case USBPD_UVDM_REVERSE_AUTHEN:
+		required_vdos = 1;
+		break;
+	case USBPD_UVDM_SESSION_SEED:
+		required_vdos = ARRAY_SIZE(pd->vdm_data.s_secert);
+		if (num_vdos != required_vdos)
+			goto invalid_payload;
+		break;
+	case USBPD_UVDM_AUTHENTICATION:
+		required_vdos = ARRAY_SIZE(pd->vdm_data.digest);
+		if (num_vdos != required_vdos)
+			goto invalid_payload;
+		break;
+	default:
+		break;
+	}
+	if (num_vdos < required_vdos || (required_vdos && !vdos))
+		goto invalid_payload;
+
 	usbpd_dbg(&pd->dev, "hdlr->svid:0x%x, vdm_hdr:0x%x, num_vdos:%d, cmd:%d\n",
-			hdlr->svid, vdm_hdr, num_vdos);
+			hdlr->svid, vdm_hdr, num_vdos, cmd);
 
 	switch (cmd) {
 	case USBPD_UVDM_CHARGER_VERSION:
@@ -5332,6 +5388,12 @@ static void usbpd_mi_vdm_received_cb(struct usbpd_svid_handler *hdlr, u32 vdm_hd
 		usb_current = val.intval / 1000;
 		usbpd_dbg(&pd->dev, "usb current now:%d\n", usb_current);
 
+		if (usb_current <= 0 || usb_voltage < 0) {
+			usbpd_dbg(&pd->dev,
+				  "Skipping cable resistance with invalid telemetry\n");
+			break;
+		}
+
 		r_cable = (pd->vdm_data.ta_voltage - usb_voltage) / usb_current;
 		usbpd_dbg(&pd->dev, "usb r_cable now:%dmohm\n", r_cable);
 		break;
@@ -5354,6 +5416,11 @@ static void usbpd_mi_vdm_received_cb(struct usbpd_svid_handler *hdlr, u32 vdm_hd
 		break;
 	}
 	pd->uvdm_state = cmd;
+	return;
+
+invalid_payload:
+	usbpd_err(&pd->dev, "Invalid vendor payload for cmd %d: %d words\n",
+		  cmd, num_vdos);
 }
 
 int usbpd_get_pps_status(struct usbpd *pd, u32 *pps_status)
@@ -5435,8 +5502,10 @@ int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua)
 
 	mutex_lock(&pd->swap_lock);
 
-	if (pd->verify_process)
+	if (pd->verify_process) {
+		ret = -EBUSY;
 		goto out;
+	}
 
 	if (pd->current_pr != PR_SINK) {
 		ret = -ENOTSUPP;
@@ -5458,6 +5527,7 @@ int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua)
 
 	if (pdo == pd->last_pdo && uv == pd->last_uv
 			&& ua == pd->last_ua && !pd->force_update) {
+		ret = 0;
 		goto out;
 	} else {
 		pd->force_update = false;
@@ -5495,6 +5565,8 @@ int usbpd_select_pdo(struct usbpd *pd, int pdo, int uv, int ua)
 	//}
 
 out:
+	if (ret)
+		pd->force_update = true;
 	pd->send_request = false;
 	pd->last_pdo = pdo;
 	pd->last_uv = uv;
@@ -5800,7 +5872,7 @@ static int num_pd_instances;
 
 /**
  * usbpd_create - Create a new instance of USB PD protocol/policy engine
- * @parent - parent device to associate with
+ * @parent: Parent device to associate with
  *
  * This creates a new usbpd class device which manages the state of a
  * USB PD-capable port. The parent device that is passed in should be

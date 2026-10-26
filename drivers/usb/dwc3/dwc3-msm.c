@@ -26,6 +26,7 @@
 #include <linux/list.h>
 #include <linux/uaccess.h>
 #include <linux/usb/ch9.h>
+#include <linux/usb/usbpd.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/of.h>
 #include <linux/regulator/consumer.h>
@@ -173,13 +174,6 @@ static const char *dwc3_drd_state_string(enum dwc3_drd_state state)
 enum dwc3_id_state {
 	DWC3_ID_GROUND = 0,
 	DWC3_ID_FLOAT,
-};
-
-/* for type c cable */
-enum plug_orientation {
-	ORIENTATION_NONE,
-	ORIENTATION_CC1,
-	ORIENTATION_CC2,
 };
 
 enum msm_usb_irq {
@@ -4394,7 +4388,6 @@ static void msm_dwc3_perf_vote_work(struct work_struct *w)
 			msecs_to_jiffies(1000 * PM_QOS_SAMPLE_SEC));
 }
 
-extern bool has_dp_flag;
 
 #define VBUS_REG_CHECK_DELAY	(msecs_to_jiffies(1000))
 

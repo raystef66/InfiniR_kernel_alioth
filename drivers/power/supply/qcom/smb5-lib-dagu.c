@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/usb/usbpd.h>
 #include <linux/device.h>
 #include <linux/regmap.h>
 #include <linux/delay.h>
@@ -9922,7 +9923,6 @@ out:
 	return IRQ_HANDLED;
 }
 
-extern bool has_dp_flag;
 irqreturn_t typec_state_change_irq_handler(int irq, void *data)
 {
 	struct smb_irq_data *irq_data = data;
