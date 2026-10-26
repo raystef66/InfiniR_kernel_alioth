@@ -239,7 +239,7 @@ put_pdphy_vdd_lpm:
 	return ret;
 }
 
-void pdphy_enable_irq(struct usb_pdphy *pdphy, bool enable)
+static void pdphy_enable_irq(struct usb_pdphy *pdphy, bool enable)
 {
 	if (enable) {
 		enable_irq(pdphy->sig_tx_irq);
