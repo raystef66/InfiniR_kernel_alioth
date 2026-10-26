@@ -505,7 +505,6 @@ int usb_driver_claim_interface(struct usb_driver *driver,
 				struct usb_interface *iface, void *priv)
 {
 	struct device *dev;
-	struct usb_device *udev;
 	int retval = 0;
 
 	if (!iface)
@@ -518,8 +517,6 @@ int usb_driver_claim_interface(struct usb_driver *driver,
 	/* reject claim if interface is not authorized */
 	if (!iface->authorized)
 		return -ENODEV;
-
-	udev = interface_to_usbdev(iface);
 
 	dev->driver = &driver->drvwrap.driver;
 	usb_set_intfdata(iface, priv);
