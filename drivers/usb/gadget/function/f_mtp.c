@@ -25,6 +25,7 @@
 #include <linux/wait.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
+#include <linux/limits.h>
 
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
@@ -835,6 +836,10 @@ static void send_file_work(struct work_struct *data)
 
 	if (dev->xfer_send_header) {
 		hdr_size = sizeof(struct mtp_data_header);
+		if (count > S64_MAX - hdr_size) {
+			dev->xfer_result = -EINVAL;
+			return;
+		}
 		count += hdr_size;
 	} else {
 		hdr_size = 0;
