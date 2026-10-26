@@ -1,4 +1,6 @@
 /**
+ * DOC: ELLIPTIC userspace data interface
+ *
  * Copyright Elliptic Labs
  *
  */
@@ -71,10 +73,18 @@ static ssize_t device_write(struct file *fp, const char __user *buff,
 			    size_t length, loff_t *ppos)
 {
 	int push_result;
+	char *data;
 
-	push_result = elliptic_data_push(ELLIPTIC_ALL_DEVICES, buff, length,
-					 ELLIPTIC_DATA_PUSH_FROM_USERSPACE);
+	if (length > ELLIPTIC_MSG_BUF_SIZE)
+		return -EINVAL;
+	data = memdup_user(buff, length);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
+	push_result = elliptic_data_push(ELLIPTIC_ALL_DEVICES, data, length,
+					 ELLIPTIC_DATA_PUSH_FROM_KERNEL);
+
+	kfree(data);
 	return push_result == 0 ? (ssize_t)length : (ssize_t)(-1);
 }
 

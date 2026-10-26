@@ -1,4 +1,6 @@
 /**
+ * DOC: MIUS userspace data interface
+ *
  * Copyright MI
  *
  */
@@ -71,10 +73,18 @@ static ssize_t device_write(struct file *fp, const char __user *buff,
 			    size_t length, loff_t *ppos)
 {
 	int push_result;
+	char *data;
 
-	push_result = mius_data_push(MIUS_ALL_DEVICES, buff, length,
-				     MIUS_DATA_PUSH_FROM_USERSPACE);
+	if (length > MIUS_MSG_BUF_SIZE)
+		return -EINVAL;
+	data = memdup_user(buff, length);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
+	push_result = mius_data_push(MIUS_ALL_DEVICES, data, length,
+				     MIUS_DATA_PUSH_FROM_KERNEL);
+
+	kfree(data);
 	return push_result == 0 ? (ssize_t)length : (ssize_t)(-1);
 }
 

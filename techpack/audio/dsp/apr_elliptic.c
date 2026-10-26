@@ -1,5 +1,7 @@
 /**
  * Elliptic Labs
+ * @a: First integer operand
+ * @b: Second integer operand
  */
 
 #include <linux/slab.h>
@@ -50,8 +52,15 @@ static int afe_set_parameter(int port, int param_id, int module_id,
 	u16 port_id = 0;
 	int index = 0;
 	u8 *packed_param_data = NULL;
-	int packed_data_size = sizeof(union param_hdrs) + length;
+	int packed_data_size;
+	size_t wire_header_size = q6common_is_instance_id_supported() ?
+		sizeof(struct afe_port_cmd_set_param_v3) + sizeof(struct param_hdr_v3) :
+		sizeof(struct afe_port_cmd_set_param_v2) + sizeof(struct param_hdr_v1);
 	int ret = 0;
+
+	if (length > U16_MAX - wire_header_size)
+		return -EINVAL;
+	packed_data_size = sizeof(union param_hdrs) + length;
 
 	pr_debug("[ELUS]: inside %s\n", __func__);
 

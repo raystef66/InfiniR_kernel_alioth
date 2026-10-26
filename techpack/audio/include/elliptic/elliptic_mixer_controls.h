@@ -184,3 +184,6 @@ int elliptic_trigger_branch_msg(void);
 int elliptic_trigger_tag_msg(void);
 
 int elliptic_trigger_diagnostics_msg(void);
+
+extern struct elliptic_system_configuration_parameters_cache
+	elliptic_system_configuration_cache;

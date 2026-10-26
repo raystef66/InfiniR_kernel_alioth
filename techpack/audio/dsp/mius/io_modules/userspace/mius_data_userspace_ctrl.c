@@ -1,4 +1,6 @@
 /**
+ * DOC: MIUS userspace control interface
+ *
  * Copyright MI
  *
  */

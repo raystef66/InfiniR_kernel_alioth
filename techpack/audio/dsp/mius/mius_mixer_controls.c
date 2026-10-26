@@ -1,4 +1,6 @@
 /**
+ * DOC: MIUS mixer controls
+ *
  * MI
  */
 
@@ -20,7 +22,7 @@ struct mius_system_configuration {
 	};
 };
 
-struct mius_system_configuration mius_system_configuration;
+static struct mius_system_configuration mius_system_configuration;
 
 struct mius_system_configuration_parameter {
 	enum mius_system_configuration_parameter_type type;

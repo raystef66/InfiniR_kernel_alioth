@@ -191,3 +191,6 @@ int mius_trigger_branch_msg(void);
 int mius_trigger_tag_msg(void);
 
 int mius_trigger_diagnostics_msg(void);
+
+extern struct mius_system_configuration_parameters_cache
+	mius_system_configuration_cache;

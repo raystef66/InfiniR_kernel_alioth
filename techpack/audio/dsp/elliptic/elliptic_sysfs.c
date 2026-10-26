@@ -15,8 +15,6 @@
 static int kobject_create_and_add_failed;
 static int sysfs_create_group_failed;
 
-extern struct elliptic_system_configuration_parameters_cache
-	elliptic_system_configuration_cache;
 
 static ssize_t calibration_store(struct device *dev,
 				 struct device_attribute *attr, const char *buf,

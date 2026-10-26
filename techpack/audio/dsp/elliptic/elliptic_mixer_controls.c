@@ -1,4 +1,6 @@
 /**
+ * DOC: ELLIPTIC mixer controls
+ *
  * Elliptic Labs
  */
 
@@ -20,7 +22,7 @@ struct elliptic_system_configuration {
 	};
 };
 
-struct elliptic_system_configuration elliptic_system_configuration;
+static struct elliptic_system_configuration elliptic_system_configuration;
 
 struct elliptic_system_configuration_parameter {
 	enum elliptic_system_configuration_parameter_type type;

@@ -1,4 +1,6 @@
 /**
+ * DOC: ELLIPTIC userspace control interface
+ *
  * Copyright Elliptic Labs
  *
  */
