@@ -42,6 +42,7 @@
 #include <linux/usb/composite.h>
 
 #include "configfs.h"
+#include "f_mtp.h"
 
 #define NUM_PAGES	10 /* # of pages for ipc logging */
 
@@ -93,13 +94,13 @@
 
 #define MAX_ITERATION		100
 
-unsigned int mtp_rx_req_len = MTP_RX_BUFFER_INIT_SIZE;
+static unsigned int mtp_rx_req_len = MTP_RX_BUFFER_INIT_SIZE;
 module_param(mtp_rx_req_len, uint, 0644);
 
-unsigned int mtp_tx_req_len = MTP_TX_BUFFER_INIT_SIZE;
+static unsigned int mtp_tx_req_len = MTP_TX_BUFFER_INIT_SIZE;
 module_param(mtp_tx_req_len, uint, 0644);
 
-unsigned int mtp_tx_reqs = MTP_TX_REQ_MAX;
+static unsigned int mtp_tx_reqs = MTP_TX_REQ_MAX;
 module_param(mtp_tx_reqs, uint, 0644);
 
 static const char mtp_shortname[] = DRIVER_NAME "_usb";
@@ -1669,7 +1670,7 @@ static const struct file_operations debug_mtp_ops = {
 	.write = debug_mtp_reset_stats,
 };
 
-struct dentry *dent_mtp;
+static struct dentry *dent_mtp;
 static void mtp_debugfs_init(void)
 {
 	struct dentry *dent_mtp_status;
