@@ -2162,9 +2162,9 @@ static int sde_rotator_add_request(struct sde_rot_mgr *mgr,
 	return 0;
 }
 
-void sde_rotator_remove_request(struct sde_rot_mgr *mgr,
-	struct sde_rot_file_private *private,
-	struct sde_rot_entry_container *req)
+static void sde_rotator_remove_request(struct sde_rot_mgr *mgr,
+				       struct sde_rot_file_private *private,
+				       struct sde_rot_entry_container *req)
 {
 	int i;
 
