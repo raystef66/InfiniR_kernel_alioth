@@ -50,7 +50,7 @@
 #define DISPLAY_CONFIG_OFFSET_PROP "qcom,msm-imem-display_config_offset"
 
 static int restart_mode;
-static void *restart_reason, *dload_type_addr;
+static void __iomem *restart_reason, *dload_type_addr;
 static bool scm_pmic_arbiter_disable_supported;
 static bool scm_deassert_ps_hold_supported;
 /* Download mode master kill-switch */
@@ -68,9 +68,9 @@ static struct kobject dload_kobj;
 
 static int in_panic;
 static int dload_type = SCM_DLOAD_FULLDUMP;
-static void *dload_mode_addr;
+static void __iomem *dload_mode_addr;
 static bool dload_mode_enabled;
-static void *emergency_dload_mode_addr;
+static void __iomem *emergency_dload_mode_addr;
 static bool scm_dload_supported;
 
 static bool force_warm_reboot;
@@ -144,7 +144,7 @@ static struct notifier_block panic_blk = {
 	.notifier_call	= panic_prep_restart,
 };
 
-int scm_set_dload_mode(int arg1, int arg2)
+static int scm_set_dload_mode(int arg1, int arg2)
 {
 	struct scm_desc desc = {
 		.args[0] = arg1,
@@ -242,10 +242,10 @@ static void free_dload_mode_mem(void)
 	iounmap(dload_mode_addr);
 }
 
-static void *map_prop_mem(const char *propname)
+static void __iomem *map_prop_mem(const char *propname)
 {
 	struct device_node *np = of_find_compatible_node(NULL, NULL, propname);
-	void *addr;
+	void __iomem *addr;
 
 	if (!np) {
 		pr_err("Unable to find DT property: %s\n", propname);
@@ -253,6 +253,7 @@ static void *map_prop_mem(const char *propname)
 	}
 
 	addr = of_iomap(np, 0);
+	of_node_put(np);
 	if (!addr)
 		pr_err("Unable to map memory for DT property: %s\n", propname);
 
@@ -260,7 +261,7 @@ static void *map_prop_mem(const char *propname)
 }
 
 #ifdef CONFIG_RANDOMIZE_BASE
-static void *kaslr_imem_addr;
+static void __iomem *kaslr_imem_addr;
 static void store_kaslr_offset(void)
 {
 	kaslr_imem_addr = map_prop_mem(KASLR_OFFSET_PROP);
@@ -291,7 +292,8 @@ static void store_kaslr_offset(void)
  */
 static void clear_display_config(void)
 {
-	void *display_config_imem_addr = map_prop_mem(DISPLAY_CONFIG_OFFSET_PROP);
+	void __iomem *display_config_imem_addr =
+		map_prop_mem(DISPLAY_CONFIG_OFFSET_PROP);
 
 	if (display_config_imem_addr) {
 		__raw_writel(0xdead4ead, display_config_imem_addr);
@@ -655,6 +657,7 @@ static int msm_restart_probe(struct platform_device *pdev)
 		pr_err("unable to find DT imem restart reason node\n");
 	} else {
 		restart_reason = of_iomap(np, 0);
+		of_node_put(np);
 		if (!restart_reason) {
 			pr_err("unable to map imem restart reason offset\n");
 			ret = -ENOMEM;
