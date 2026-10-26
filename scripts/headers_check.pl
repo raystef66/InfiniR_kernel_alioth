@@ -3,7 +3,7 @@
 #
 # headers_check.pl execute a number of trivial consistency checks
 #
-# Usage: headers_check.pl dir arch [files...]
+# Usage: headers_check.pl dir arch [--include-dir=dir ...] [files...]
 # dir:   dir to look for included files
 # arch:  architecture
 # files: list of files to check
@@ -24,6 +24,11 @@ use strict;
 use File::Basename;
 
 my ($dir, $arch, @files) = @ARGV;
+my @include_dirs = ($dir);
+while (@files && $files[0] =~ /^--include-dir=(.+)$/) {
+	push @include_dirs, $1;
+	shift @files;
+}
 
 my $ret = 0;
 my $line;
@@ -53,10 +58,16 @@ sub check_include
 	if ($line =~ m/^\s*#\s*include\s+<((asm|linux).*)>/) {
 		my $inc = $1;
 		my $found;
-		$found = stat($dir . "/" . $inc);
+		foreach my $include_dir (@include_dirs) {
+			$found = stat($include_dir . "/" . $inc);
+			last if $found;
+		}
 		if (!$found) {
 			$inc =~ s#asm/#asm-$arch/#;
-			$found = stat($dir . "/" . $inc);
+			foreach my $include_dir (@include_dirs) {
+				$found = stat($include_dir . "/" . $inc);
+				last if $found;
+			}
 		}
 		if (!$found) {
 			printf STDERR "$filename:$lineno: included file '$inc' is not exported\n";
@@ -117,7 +128,8 @@ sub check_include_typesh
 	my $import_path;
 
 	my $fh;
-	my @file_paths = ($path, $dir . "/" .  $path, dirname($filename) . "/" . $path);
+	my @file_paths = ($path, (map { $_ . "/" . $path } @include_dirs),
+			  dirname($filename) . "/" . $path);
 	for my $possible ( @file_paths ) {
 	    if (not $import_stack{$possible} and open($fh, '<', $possible)) {
 		$import_path = $possible;
@@ -125,7 +137,7 @@ sub check_include_typesh
 		last;
 	    }
 	}
-	if (eof $fh) {
+	if (!defined $import_path) {
 	    return;
 	}
 

@@ -24,16 +24,26 @@ subdirs       := $(patsubst $(srcdir)/%/,%,\
 		 $(filter-out $(srcdir)/,\
 		 $(sort $(dir $(wildcard $(srcdir)/*/)))))
 
+# Techpack is a dispatcher, not a UAPI tree. Keep each package in its
+# historical destination; sharing include/ would let one installer's cleanup
+# remove another package's headers.
+ifeq ($(obj),techpack)
+-include include/config/auto.conf
+include $(srcdir)/Kbuild
+subdirs := $(patsubst %/,%,$(header-y))
+$(subdirs): private hdr-check-root = $(INSTALL_HDR_PATH)/$(dst)/$@
+endif
+
 # Recursion
 __headers: $(subdirs)
 
 PHONY += $(subdirs)
 $(subdirs):
-	$(Q)$(MAKE) $(hdr-inst)=$(obj)/$@ dst=$(dst)/$@
+	$(Q)$(MAKE) $(hdr-inst)=$(obj)/$@ dst=$(dst)/$@ hdr-check-root=$(hdr-check-root)
 
 # Skip header install/check for include/uapi and arch/$(SRCARCH)/include/uapi.
 # We have only sub-directories there.
-skip-inst := $(if $(filter %/uapi,$(obj)),1)
+skip-inst := $(if $(filter techpack %/uapi,$(obj)),1)
 
 ifeq ($(skip-inst),)
 
@@ -89,7 +99,8 @@ quiet_cmd_check = CHECK   $(printdir) ($(words $(all-files)) files)
       cmd_check = for f in $(all-files); do                          \
                   echo "$(installdir)/$${f}"; done                      \
                   | xargs                                            \
-                  $(PERL) $< $(INSTALL_HDR_PATH)/include $(SRCARCH); \
+                  $(PERL) $< $(INSTALL_HDR_PATH)/include $(SRCARCH)    \
+                  $(if $(hdr-check-root),--include-dir=$(hdr-check-root)); \
 	          touch $@
 
 ifndef HDRCHECK
