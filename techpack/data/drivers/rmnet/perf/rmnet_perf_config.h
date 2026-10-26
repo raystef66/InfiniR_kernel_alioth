@@ -32,14 +32,6 @@ enum rmnet_perf_resource_management_e {
 	RMNET_PERF_RESOURCE_MGMT_FAIL,
 };
 
-/* rmnet based variables that we rely on*/
-extern int (*rmnet_perf_deag_entry)(struct sk_buff *skb,
-				    struct rmnet_port *port);
-extern void (*rmnet_perf_desc_entry)(struct rmnet_frag_descriptor *frag_desc,
-				     struct rmnet_port *port);
-extern void (*rmnet_perf_chain_end)(void);
-
-
 /* Function declarations */
 struct rmnet_perf *rmnet_perf_config_get_perf(void);
 enum rmnet_perf_resource_management_e

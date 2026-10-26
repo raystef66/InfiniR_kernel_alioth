@@ -294,8 +294,7 @@ free_skb:
 	kfree_skb(skb);
 }
 
-int (*rmnet_perf_deag_entry)(struct sk_buff *skb,
-			     struct rmnet_port *port) __rcu __read_mostly;
+rmnet_perf_deag_fn __rcu *rmnet_perf_deag_entry __read_mostly;
 EXPORT_SYMBOL(rmnet_perf_deag_entry);
 
 static void

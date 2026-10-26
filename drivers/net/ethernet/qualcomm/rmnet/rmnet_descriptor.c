@@ -25,6 +25,7 @@
 			       sizeof(struct rmnet_map_header) + \
 			       sizeof(struct rmnet_map_control_command_header))
 
+
 typedef void (*rmnet_perf_desc_hook_t)(struct rmnet_frag_descriptor *frag_desc,
 				       struct rmnet_port *port);
 typedef void (*rmnet_perf_chain_hook_t)(void);
@@ -1073,7 +1074,7 @@ int rmnet_frag_process_next_hdr_packet(struct rmnet_frag_descriptor *frag_desc,
 }
 
 /* Perf hook handler */
-rmnet_perf_desc_hook_t rmnet_perf_desc_entry __rcu __read_mostly;
+rmnet_perf_desc_fn __rcu *rmnet_perf_desc_entry __read_mostly;
 EXPORT_SYMBOL(rmnet_perf_desc_entry);
 
 static void
@@ -1161,7 +1162,7 @@ recycle:
 }
 
 /* Notify perf at the end of SKB chain */
-rmnet_perf_chain_hook_t rmnet_perf_chain_end __rcu __read_mostly;
+rmnet_perf_chain_fn __rcu *rmnet_perf_chain_end __read_mostly;
 EXPORT_SYMBOL(rmnet_perf_chain_end);
 
 void rmnet_frag_ingress_handler(struct sk_buff *skb,
