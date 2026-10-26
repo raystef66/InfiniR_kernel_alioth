@@ -81,76 +81,76 @@ static int msm_v4l2_querycap(struct file *filp, void *fh,
 	return msm_vidc_querycap((void *)vidc_inst, cap);
 }
 
-int msm_v4l2_enum_fmt(struct file *file, void *fh,
-					struct v4l2_fmtdesc *f)
+static int msm_v4l2_enum_fmt(struct file *file, void *fh,
+			     struct v4l2_fmtdesc *f)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_enum_fmt((void *)vidc_inst, f);
 }
 
-int msm_v4l2_s_fmt(struct file *file, void *fh,
-					struct v4l2_format *f)
+static int msm_v4l2_s_fmt(struct file *file, void *fh,
+			  struct v4l2_format *f)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_s_fmt((void *)vidc_inst, f);
 }
 
-int msm_v4l2_g_fmt(struct file *file, void *fh,
-					struct v4l2_format *f)
+static int msm_v4l2_g_fmt(struct file *file, void *fh,
+			  struct v4l2_format *f)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_g_fmt((void *)vidc_inst, f);
 }
 
-int msm_v4l2_s_ctrl(struct file *file, void *fh,
-					struct v4l2_control *a)
+static int msm_v4l2_s_ctrl(struct file *file, void *fh,
+			   struct v4l2_control *a)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_s_ctrl((void *)vidc_inst, a);
 }
 
-int msm_v4l2_g_ctrl(struct file *file, void *fh,
-					struct v4l2_control *a)
+static int msm_v4l2_g_ctrl(struct file *file, void *fh,
+			   struct v4l2_control *a)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_g_ctrl((void *)vidc_inst, a);
 }
 
-int msm_v4l2_reqbufs(struct file *file, void *fh,
-				struct v4l2_requestbuffers *b)
+static int msm_v4l2_reqbufs(struct file *file, void *fh,
+			    struct v4l2_requestbuffers *b)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_reqbufs((void *)vidc_inst, b);
 }
 
-int msm_v4l2_qbuf(struct file *file, void *fh,
-				struct v4l2_buffer *b)
+static int msm_v4l2_qbuf(struct file *file, void *fh,
+			 struct v4l2_buffer *b)
 {
 	return msm_vidc_qbuf(get_vidc_inst(file, fh), b);
 }
 
-int msm_v4l2_dqbuf(struct file *file, void *fh,
-				struct v4l2_buffer *b)
+static int msm_v4l2_dqbuf(struct file *file, void *fh,
+			  struct v4l2_buffer *b)
 {
 	return msm_vidc_dqbuf(get_vidc_inst(file, fh), b);
 }
 
-int msm_v4l2_streamon(struct file *file, void *fh,
-				enum v4l2_buf_type i)
+static int msm_v4l2_streamon(struct file *file, void *fh,
+			     enum v4l2_buf_type i)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
 	return msm_vidc_streamon((void *)vidc_inst, i);
 }
 
-int msm_v4l2_streamoff(struct file *file, void *fh,
-				enum v4l2_buf_type i)
+static int msm_v4l2_streamoff(struct file *file, void *fh,
+			      enum v4l2_buf_type i)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
 
@@ -224,7 +224,7 @@ static long msm_v4l2_default(struct file *file, void *fh,
 }
 
 
-const struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
+static const struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 	.vidioc_querycap = msm_v4l2_querycap,
 	.vidioc_enum_fmt_vid_cap_mplane = msm_v4l2_enum_fmt,
 	.vidioc_enum_fmt_vid_out_mplane = msm_v4l2_enum_fmt,
@@ -249,10 +249,8 @@ const struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 	.vidioc_default = msm_v4l2_default,
 };
 
-static const struct v4l2_ioctl_ops msm_v4l2_enc_ioctl_ops = { 0 };
-
 static unsigned int msm_v4l2_poll(struct file *filp,
-	struct poll_table_struct *pt)
+			      struct poll_table_struct *pt)
 {
 	struct msm_vidc_inst *vidc_inst = get_vidc_inst(filp, NULL);
 
@@ -270,7 +268,7 @@ static const struct v4l2_file_operations msm_v4l2_vidc_fops = {
 	.poll = msm_v4l2_poll,
 };
 
-void msm_vidc_release_video_device(struct video_device *pvdev)
+static void msm_vidc_release_video_device(struct video_device *pvdev)
 {
 }
 
