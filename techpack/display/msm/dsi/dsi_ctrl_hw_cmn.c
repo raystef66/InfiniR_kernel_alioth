@@ -5,6 +5,7 @@
 
 #include <linux/delay.h>
 #include <linux/iopoll.h>
+#include <asm/unaligned.h>
 
 #include "dsi_catalog.h"
 #include "dsi_ctrl_hw.h"
@@ -800,7 +801,10 @@ void dsi_ctrl_hw_cmn_clear_rdbk_reg(struct dsi_ctrl_hw *ctrl)
  * get_cmd_read_data() - get data read from the peripheral
  * @ctrl:           Pointer to the controller host hardware.
  * @rd_buf:         Buffer where data will be read into.
- * @total_read_len: Number of bytes to read.
+ * @read_offset: Offset of the read chunk in the response.
+ * @rx_byte: Number of response bytes requested.
+ * @pkt_size: Expected response packet size.
+ * @hw_read_cnt: Receives the hardware read count.
  *
  * return: number of bytes read.
  */
@@ -811,15 +815,16 @@ u32 dsi_ctrl_hw_cmn_get_cmd_read_data(struct dsi_ctrl_hw *ctrl,
 				     u32 pkt_size,
 				     u32 *hw_read_cnt)
 {
-	u32 *lp, *temp, data;
+	u8 *lp, *temp;
+	u32 data;
 	int i, j = 0, cnt, off;
 	u32 read_cnt;
 	u32 repeated_bytes = 0;
 	u8 reg[16] = {0};
 	bool ack_err = false;
 
-	lp = (u32 *)rd_buf;
-	temp = (u32 *)reg;
+	lp = rd_buf;
+	temp = reg;
 	cnt = (rx_byte + 3) >> 2;
 
 	if (cnt > 4)
@@ -853,10 +858,13 @@ u32 dsi_ctrl_hw_cmn_get_cmd_read_data(struct dsi_ctrl_hw *ctrl,
 
 	for (i = 0; i < cnt; i++) {
 		data = DSI_R32(ctrl, off);
-		if (!repeated_bytes)
-			*lp++ = ntohl(data);
-		else
-			*temp++ = ntohl(data);
+		if (!repeated_bytes) {
+			put_unaligned_be32(data, lp);
+			lp += sizeof(data);
+		} else {
+			put_unaligned_be32(data, temp);
+			temp += sizeof(data);
+		}
 		off -= 4;
 	}
 
@@ -1257,7 +1265,7 @@ void dsi_ctrl_hw_cmn_enable_error_interrupts(struct dsi_ctrl_hw *ctrl,
 	DSI_W32(ctrl, DSI_INT_CTRL, int_ctrl);
 	DSI_W32(ctrl, DSI_ERR_INT_MASK0, int_mask0);
 
-	DSI_CTRL_HW_DBG(ctrl, "[DSI_%d] enable errors = 0x%llx, int_mask0=0x%x\n",
+	DSI_CTRL_HW_DBG(ctrl, "enable errors = 0x%llx, int_mask0=0x%x\n",
 		 errors, int_mask0);
 }
 

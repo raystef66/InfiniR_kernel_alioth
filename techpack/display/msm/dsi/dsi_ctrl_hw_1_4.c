@@ -8,6 +8,7 @@
 
 #include "dsi_ctrl_hw.h"
 #include "dsi_ctrl_reg.h"
+#include "dsi_catalog.h"
 #include "dsi_hw.h"
 
 #define MMSS_MISC_CLAMP_REG_OFF           0x0014

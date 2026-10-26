@@ -39,7 +39,7 @@
 
 static atomic64_t g_param = ATOMIC64_INIT(0);
 
-int dsi_display_set_disp_param(struct drm_connector *connector,
+static int dsi_display_set_disp_param(struct drm_connector *connector,
 			u32 param_type)
 {
 	struct dsi_display *display = NULL;
@@ -73,10 +73,7 @@ int dsi_display_set_disp_param(struct drm_connector *connector,
 int dsi_display_hbm_set_disp_param(struct drm_connector *connector,
 				u32 op_code)
 {
-	int rc;
-	struct sde_connector *c_conn;
-
-	c_conn = to_sde_connector(connector);
+	int rc = -EINVAL;
 
 	pr_debug("%s fod hbm command:0x%x \n", __func__, op_code);
 

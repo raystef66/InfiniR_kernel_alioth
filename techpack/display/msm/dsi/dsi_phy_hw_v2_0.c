@@ -5,6 +5,7 @@
 
 #include <linux/math64.h>
 #include <linux/delay.h>
+#include "dsi_catalog.h"
 #include "dsi_hw.h"
 #include "dsi_phy_hw.h"
 

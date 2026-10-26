@@ -8,6 +8,7 @@
 
 #include "dsi_ctrl_hw.h"
 #include "dsi_ctrl_reg.h"
+#include "dsi_catalog.h"
 #include "dsi_hw.h"
 
 void dsi_ctrl_hw_20_setup_lane_map(struct dsi_ctrl_hw *ctrl,

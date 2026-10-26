@@ -5753,7 +5753,7 @@ end:
 
 int dsi_display_dev_remove(struct platform_device *pdev)
 {
-	int rc = 0i, i = 0;
+	int rc = 0, i = 0;
 	struct dsi_display *display;
 	struct dsi_display_ctrl *ctrl;
 
