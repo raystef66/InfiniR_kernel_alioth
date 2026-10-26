@@ -1434,7 +1434,7 @@ static int cam_ife_csid_tpg_stop(struct cam_ife_csid_hw   *csid_hw,
 		csid_hw->csid_info->csid_reg->tpg_reg->csid_tpg_ctrl_addr);
 	}
 
-	return 0;
+	return rc;
 }
 
 

@@ -317,6 +317,9 @@ static int cam_vfe_camif_resource_deinit(
 	return rc;
 }
 
+static int cam_vfe_camif_resource_stop(
+	struct cam_isp_resource_node        *camif_res);
+
 static int cam_vfe_camif_resource_start(
 	struct cam_isp_resource_node   *camif_res)
 {
@@ -467,6 +470,11 @@ static int cam_vfe_camif_resource_start(
 		}
 	}
 
+	if (rc) {
+		cam_vfe_camif_resource_stop(camif_res);
+		return rc;
+	}
+
 	CAM_DBG(CAM_ISP, "Start Camif IFE %d Done", camif_res->hw_intf->hw_idx);
 	return 0;
 }
@@ -542,7 +550,6 @@ static int cam_vfe_camif_resource_stop(
 	struct cam_isp_resource_node        *camif_res)
 {
 	struct cam_vfe_mux_camif_data       *camif_priv;
-	struct cam_vfe_camif_ver2_reg       *camif_reg;
 	int rc = 0;
 	uint32_t val = 0;
 
@@ -556,7 +563,6 @@ static int cam_vfe_camif_resource_stop(
 		return 0;
 
 	camif_priv = (struct cam_vfe_mux_camif_data *)camif_res->res_priv;
-	camif_reg = camif_priv->camif_reg;
 
 	if ((camif_priv->dsp_mode >= CAM_ISP_DSP_MODE_ONE_WAY) &&
 		(camif_priv->dsp_mode <= CAM_ISP_DSP_MODE_ROUND)) {

@@ -108,7 +108,6 @@ static int cam_vfe_camif_ver3_err_irq_top_half(
 	struct cam_isp_resource_node          *camif_node;
 	struct cam_vfe_mux_camif_ver3_data    *camif_priv;
 	struct cam_vfe_top_irq_evt_payload    *evt_payload;
-	bool                                   error_flag = false;
 
 	camif_node = th_payload->handler_priv;
 	camif_priv = camif_node->res_priv;
@@ -129,7 +128,6 @@ static int cam_vfe_camif_ver3_err_irq_top_half(
 			camif_priv->irq_err_handle);
 		cam_irq_controller_clear_and_mask(evt_id,
 			camif_priv->vfe_irq_controller);
-		error_flag = true;
 	}
 
 	rc  = cam_vfe_camif_ver3_get_evt_payload(camif_priv, &evt_payload);
@@ -337,6 +335,9 @@ static int cam_vfe_camif_ver3_resource_deinit(
 	return rc;
 }
 
+static int cam_vfe_camif_ver3_resource_stop(
+	struct cam_isp_resource_node *camif_res);
+
 static int cam_vfe_camif_ver3_resource_start(
 	struct cam_isp_resource_node *camif_res)
 {
@@ -539,6 +540,11 @@ static int cam_vfe_camif_ver3_resource_start(
 		}
 	}
 
+	if (rc) {
+		cam_vfe_camif_ver3_resource_stop(camif_res);
+		return rc;
+	}
+
 	CAM_DBG(CAM_ISP, "VFE:%d CAMIF Start Done", camif_res->hw_intf->hw_idx);
 	return 0;
 }
@@ -620,7 +626,6 @@ static int cam_vfe_camif_ver3_resource_stop(
 	struct cam_isp_resource_node *camif_res)
 {
 	struct cam_vfe_mux_camif_ver3_data        *camif_priv;
-	struct cam_vfe_camif_ver3_pp_clc_reg      *camif_reg;
 	int                                        rc = 0;
 	uint32_t                                   val = 0;
 
@@ -634,7 +639,6 @@ static int cam_vfe_camif_ver3_resource_stop(
 		return 0;
 
 	camif_priv = (struct cam_vfe_mux_camif_ver3_data *)camif_res->res_priv;
-	camif_reg = camif_priv->camif_reg;
 
 	if ((camif_priv->dsp_mode >= CAM_ISP_DSP_MODE_ONE_WAY) &&
 		(camif_priv->dsp_mode <= CAM_ISP_DSP_MODE_ROUND)) {

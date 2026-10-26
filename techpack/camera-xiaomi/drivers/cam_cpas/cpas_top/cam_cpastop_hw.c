@@ -633,7 +633,7 @@ static int cam_cpastop_init_hw_version(struct cam_hw_info *cpas_hw,
 		break;
 	}
 
-	return 0;
+	return rc;
 }
 
 int cam_cpastop_get_internal_ops(struct cam_cpas_internal_ops *internal_ops)
