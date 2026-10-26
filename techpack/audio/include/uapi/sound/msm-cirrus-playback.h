@@ -112,7 +112,7 @@ struct crus_sp_ioctl_header {
 	uint32_t module_id;
 	uint32_t param_id;
 	uint32_t data_length;
-	void *data;
+	void __user *data;
 };
 
 #endif /* _UAPI_MSM_CIRRUS_SPK_PR_H */

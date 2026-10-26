@@ -66,8 +66,6 @@
 #define CIRRUS_RX_GET_IODATA 0x00A1AF09
 #define CIRRUS_TX_GET_IODATA 0x00A1BF09
 
-static struct crus_sp_ioctl_header crus_sp_hdr;
-
 static struct crus_control_t this_ctrl = {
 	.fb_port_index = 2,
 	.fb_port = AFE_PORT_ID_TERTIARY_MI2S_TX,
@@ -83,13 +81,79 @@ static struct crus_control_t this_ctrl = {
 	.copp_ena = true,
 };
 
+static DEFINE_SPINLOCK(crus_response_lock);
+static size_t crus_response_capacity;
+static size_t crus_response_header_size;
+static size_t crus_response_data_size;
+static int crus_response_error;
+
+/* param_lock serializes requests; the APR callback uses response_lock. */
+static int crus_alloc_response(size_t size, size_t data_size, size_t header_size)
+{
+	s32 *buffer = kzalloc(size, GFP_KERNEL);
+	unsigned long flags;
+
+	if (!buffer)
+		return -ENOMEM;
+	spin_lock_irqsave(&crus_response_lock, flags);
+	this_ctrl.user_buffer = buffer;
+	crus_response_capacity = size;
+	crus_response_data_size = data_size;
+	crus_response_header_size = header_size;
+	crus_response_error = 0;
+	spin_unlock_irqrestore(&crus_response_lock, flags);
+	return 0;
+}
+
+static void crus_free_response(void)
+{
+	s32 *buffer;
+	unsigned long flags;
+
+	spin_lock_irqsave(&crus_response_lock, flags);
+	buffer = this_ctrl.user_buffer;
+	this_ctrl.user_buffer = NULL;
+	crus_response_capacity = 0;
+	crus_response_data_size = 0;
+	crus_response_header_size = 0;
+	crus_response_error = 0;
+	spin_unlock_irqrestore(&crus_response_lock, flags);
+	kfree(buffer);
+}
+
+static int crus_copy_response(void *data, size_t length, size_t offset)
+{
+	unsigned long flags;
+	int ret;
+
+	spin_lock_irqsave(&crus_response_lock, flags);
+	ret = crus_response_error;
+	if (!ret)
+		memcpy(data, (u8 *)this_ctrl.user_buffer + offset, length);
+	spin_unlock_irqrestore(&crus_response_lock, flags);
+	return ret;
+}
+
+static size_t crus_packed_param_header_size(void)
+{
+	return q6common_is_instance_id_supported() ? sizeof(struct param_hdr_v3) :
+						  sizeof(struct param_hdr_v1);
+}
+
 static void *crus_gen_afe_get_header(int length, int port, int module,
 				     int param)
 {
 	struct afe_custom_crus_get_config_v2_t *config = NULL;
 	int size = sizeof(struct afe_custom_crus_get_config_v2_t);
 	int index = afe_get_port_index(port);
-	uint16_t payload_size = sizeof(struct param_hdr_v2) + length;
+	u16 payload_size;
+
+	if (length < 0 ||
+	    length > U16_MAX - sizeof(struct apr_hdr) - sizeof(u32) -
+		     sizeof(struct param_hdr_v2))
+		return NULL;
+
+	payload_size = sizeof(struct param_hdr_v2) + length;
 
 	/* Allocate memory for the message */
 	config = kzalloc(size, GFP_KERNEL);
@@ -136,9 +200,16 @@ static void *crus_gen_afe_set_header(int length, int port, int module,
 				     int param)
 {
 	struct afe_custom_crus_set_config_v2_t *config = NULL;
-	int size = sizeof(struct afe_custom_crus_set_config_v2_t) + length;
+	int size;
 	int index = afe_get_port_index(port);
-	uint16_t payload_size = sizeof(struct param_hdr_v2) + length;
+	u16 payload_size;
+
+	if (length < 0 || length > U16_MAX - (sizeof(struct afe_custom_crus_set_config_v2_t)))
+		return NULL;
+
+	size = sizeof(struct afe_custom_crus_set_config_v2_t) + length;
+
+	payload_size = sizeof(struct param_hdr_v2) + length;
 
 	/* Allocate memory for the message */
 	config = kzalloc(size, GFP_KERNEL);
@@ -186,6 +257,11 @@ static int crus_afe_get_param_v2(int port, int module, int param, void *data,
 	int index = afe_get_port_index(port);
 	int ret = 0, count = 0;
 
+	if (length < 0 ||
+	    length > U16_MAX - sizeof(struct apr_hdr) - sizeof(u32) -
+		     sizeof(struct param_hdr_v2))
+		return -EINVAL;
+
 	pr_info("CRUS_SP: (get_param) module = 0x%08x, port = 0x%08x, param = 0x%08x\n",
 		module, port, param);
 
@@ -199,12 +275,16 @@ static int crus_afe_get_param_v2(int port, int module, int param, void *data,
 	mutex_lock(&this_ctrl.param_lock);
 	atomic_set(&this_ctrl.callback_wait, 0);
 
-	this_ctrl.user_buffer =
-		kzalloc(config->param.payload_size + 16, GFP_KERNEL);
+	ret = crus_alloc_response(config->param.payload_size + 16, length,
+				  4 * sizeof(u32));
+	if (ret)
+		goto exit;
 
 	ret = afe_apr_send_pkt_crus(config, index, 0);
-	if (ret)
+	if (ret) {
 		pr_err("CRUS_SP: (get_param) failed with code %d\n", ret);
+		goto exit;
+	}
 
 	/* Wait for afe callback to populate data */
 	while (!atomic_read(&this_ctrl.callback_wait)) {
@@ -218,10 +298,10 @@ static int crus_afe_get_param_v2(int port, int module, int param, void *data,
 	}
 
 	/* Copy from dynamic buffer to return buffer */
-	memcpy((u8 *)data, &this_ctrl.user_buffer[4], length);
+	ret = crus_copy_response(data, length, 4 * sizeof(u32));
 
 exit:
-	kfree(this_ctrl.user_buffer);
+	crus_free_response();
 	mutex_unlock(&this_ctrl.param_lock);
 	kfree(config);
 	return ret;
@@ -233,6 +313,9 @@ static int crus_afe_set_param_v2(int port, int module, int param,
 	struct afe_custom_crus_set_config_v2_t *config = NULL;
 	int index = afe_get_port_index(port);
 	int ret = 0;
+
+	if (length < 0 || length > U16_MAX - (sizeof(struct afe_custom_crus_set_config_v2_t)))
+		return -EINVAL;
 
 	pr_info("CRUS_SP: (set_param) module = 0x%08x, port = 0x%08x, param = 0x%08x\n",
 		module, port, param);
@@ -261,7 +344,11 @@ static int crus_afe_get_param_v3(int port, int module_id, int param_id,
 	struct param_hdr_v3 param_hdr;
 	u16 port_id = 0;
 	int index = 0;
-	int ret = 0;
+	int ret = 0, count = 0;
+
+	if (length > U16_MAX - sizeof(struct apr_hdr) - sizeof(u32) -
+		     sizeof(struct param_hdr_v3))
+		return -EINVAL;
 
 	pr_info("%s: port=0x%x, module=0x%x, param_id=0x%x, size=%d\n",
 		__func__, port, module_id, param_id, length);
@@ -298,7 +385,9 @@ static int crus_afe_get_param_v3(int port, int module_id, int param_id,
 
 	mutex_lock(&this_ctrl.param_lock);
 	atomic_set(&this_ctrl.callback_wait, 0);
-	this_ctrl.user_buffer = kzalloc(length + 64, GFP_KERNEL);
+	ret = crus_alloc_response(length + 64, length, 5 * sizeof(u32));
+	if (ret)
+		goto fail_cmd;
 	atomic_set(cspl_afe.status, 0);
 	ret = apr_send_pkt(*cspl_afe.apr, (uint32_t *)&afe_get_param);
 	if (ret < 0) {
@@ -307,8 +396,13 @@ static int crus_afe_get_param_v3(int port, int module_id, int param_id,
 		goto fail_cmd;
 	}
 	/* Wait for afe callback to populate data */
-	while (!atomic_read(&this_ctrl.callback_wait))
+	while (!atomic_read(&this_ctrl.callback_wait)) {
+		if (count++ >= 1000) {
+			ret = -ETIMEDOUT;
+			goto fail_cmd;
+		}
 		msleep(1);
+	}
 
 #if 0 
 	for (index = 0; index < length; index ++)
@@ -317,14 +411,13 @@ static int crus_afe_get_param_v3(int port, int module_id, int param_id,
 	pr_info("[5]=%s\n", &this_ctrl.user_buffer[5]);
 #endif
 	/* copy from dynamic buffer to return buffer */
-	memcpy((u8 *)data, &this_ctrl.user_buffer[5], length);
+	ret = crus_copy_response(data, length, 5 * sizeof(u32));
 	pr_info("%s: Copied %d bytes data \n", __func__, length);
 
-	ret = 0;
 fail_cmd:
 	pr_info("%s: param_id %x status %d\n", __func__, param_id, ret);
+	crus_free_response();
 	mutex_unlock(&this_ctrl.param_lock);
-	kfree(this_ctrl.user_buffer);
 	return ret;
 }
 
@@ -339,6 +432,10 @@ static int crus_afe_set_param_v3(int port, int module_id, int param_id,
 	u8 *packed_param_data = NULL;
 	int packed_data_size = sizeof(union param_hdrs) + length;
 	int ret = 0;
+
+	if (length > U16_MAX - sizeof(struct afe_port_cmd_set_param_v3) -
+		     crus_packed_param_header_size())
+		return -EINVAL;
 
 	pr_info("%s: port=0x%x, module=0x%x, param_id=0x%x, size=%d\n",
 		__func__, port, module_id, param_id, length);
@@ -429,29 +526,26 @@ static int crus_get_param(int port_id, int module_id, int param_id,
 	if (this_ctrl.afe_ena) {
 		switch (this_ctrl.q6afe_rev) {
 		case 2:
-			crus_afe_get_param_v2(port_id, module_id, param_id,
+			return crus_afe_get_param_v2(port_id, module_id, param_id,
 					      data_ptr, length);
-			break;
 		case 3:
-			crus_afe_get_param_v3(port_id, module_id, param_id,
+			return crus_afe_get_param_v3(port_id, module_id, param_id,
 					      data_ptr, length);
-			break;
 		default:
-			break;
+			return -EOPNOTSUPP;
 		}
 	} else if (this_ctrl.copp_ena) {
 		switch (this_ctrl.copp_rev) {
 		case 5:
 		case 6:
-			crus_adm_get_params(port_id, 0, module_id, param_id,
+			return crus_adm_get_params(port_id, 0, module_id, param_id,
 					    data_ptr, length, 0);
-			break;
 		default:
-			break;
+			return -EOPNOTSUPP;
 		}
 	} else {
 	}
-	return 0;
+	return -ENODEV;
 }
 static int crus_set_param(int port_id, int module_id, int param_id,
 			  void *data_ptr, int length)
@@ -459,30 +553,27 @@ static int crus_set_param(int port_id, int module_id, int param_id,
 	if (this_ctrl.afe_ena) {
 		switch (this_ctrl.q6afe_rev) {
 		case 2:
-			crus_afe_set_param_v2(port_id, module_id, param_id,
+			return crus_afe_set_param_v2(port_id, module_id, param_id,
 					      data_ptr, length);
-			break;
 		case 3:
-			crus_afe_set_param_v3(port_id, module_id, param_id,
+			return crus_afe_set_param_v3(port_id, module_id, param_id,
 					      data_ptr, length);
-			break;
 		default:
-			break;
+			return -EOPNOTSUPP;
 		}
 	} else if (this_ctrl.copp_ena) {
 		switch (this_ctrl.copp_rev) {
 		case 5:
 		case 6:
-			crus_adm_set_params(port_id, 0, module_id, param_id,
+			return crus_adm_set_params(port_id, 0, module_id, param_id,
 					    data_ptr, length);
-			break;
 		default:
-			break;
+			return -EOPNOTSUPP;
 		}
 	} else {
 	}
 
-	return 0;
+	return -ENODEV;
 }
 static int crus_afe_send_config(const char *data, int32_t length, int32_t port,
 				int32_t module)
@@ -609,17 +700,40 @@ static int crus_afe_send_delta(const char *data, uint32_t length)
 	return ret;
 }
 
-extern int crus_afe_callback(void *payload, int size)
+int crus_afe_callback(void *payload, int size)
 {
 	uint32_t *payload32 = payload;
+	unsigned long flags;
+	u32 param_size;
+
+	if (!payload || size < (int)(2 * sizeof(u32)))
+		return -EINVAL;
 
 	pr_debug("%s: module=0x%x size = %d\n", __func__, (int)payload32[1],
 		 size);
 
 	switch (payload32[1]) {
 	case CIRRUS_SP:
-		memcpy(this_ctrl.user_buffer, payload32, size);
+		spin_lock_irqsave(&crus_response_lock, flags);
+		if (!this_ctrl.user_buffer) {
+			spin_unlock_irqrestore(&crus_response_lock, flags);
+			return -EINVAL;
+		}
+		if (size > crus_response_capacity || size < crus_response_header_size) {
+			crus_response_error = -EINVAL;
+		} else {
+			memcpy(&param_size, (u8 *)payload + crus_response_header_size -
+			       sizeof(param_size), sizeof(param_size));
+			if (param_size > crus_response_data_size ||
+			    param_size > size - crus_response_header_size)
+				crus_response_error = -EINVAL;
+			else if (payload32[0])
+				crus_response_error = -EIO;
+			else
+				memcpy(this_ctrl.user_buffer, payload32, size);
+		}
 		atomic_set(&this_ctrl.callback_wait, 1);
+		spin_unlock_irqrestore(&crus_response_lock, flags);
 		break;
 	default:
 		return -EINVAL;
@@ -1184,8 +1298,9 @@ int crus_afe_port_close(u16 port_id)
 EXPORT_SYMBOL(crus_afe_port_close);
 
 static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
-				 void __user *arg)
+				 void __user *arg, bool compat)
 {
+	struct crus_sp_ioctl_header crus_sp_hdr = {0};
 	int result = 0, port;
 	uint32_t bufsize = 0, size;
 	void *io_data = NULL;
@@ -1198,7 +1313,14 @@ static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
 		goto exit;
 	}
 
-	/* Copy IOCTL header from usermode */
+	/* The 32-bit ABI has a four-byte data pointer after four u32 fields. */
+	if (size != (compat ? offsetof(struct crus_sp_ioctl_header, data) +
+			     sizeof(compat_uptr_t) : sizeof(crus_sp_hdr))) {
+		result = -EINVAL;
+		goto exit;
+	}
+
+	/* Copy IOCTL header from usermode; zero any absent pointer high bits. */
 	if (copy_from_user(&crus_sp_hdr, arg, size)) {
 		pr_err("CRUS_SP: copy_from_user (struct) failed\n");
 		result = -EFAULT;
@@ -1206,7 +1328,15 @@ static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
 	}
 
 	bufsize = crus_sp_hdr.data_length;
+	if (bufsize > U16_MAX) {
+		result = -EINVAL;
+		goto exit;
+	}
 	io_data = kzalloc(bufsize, GFP_KERNEL);
+	if (!io_data) {
+		result = -ENOMEM;
+		goto exit;
+	}
 
 	switch (cmd) {
 	case CRUS_SP_IOCTL_GET:
@@ -1223,8 +1353,10 @@ static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
 			port = this_ctrl.ff_port;
 		}
 
-		crus_get_param(port, CIRRUS_SP, crus_sp_hdr.param_id, io_data,
+		result = crus_get_param(port, CIRRUS_SP, crus_sp_hdr.param_id, io_data,
 			       bufsize);
+		if (result)
+			goto exit_io;
 		result = copy_to_user(crus_sp_hdr.data, io_data, bufsize);
 		if (result) {
 			pr_err("CRUS_SP: copy_to_user failed (%d)\n", result);
@@ -1233,7 +1365,7 @@ static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
 			result = bufsize;
 		break;
 	case CRUS_SP_IOCTL_SET:
-		result = copy_from_user(io_data, (void *)crus_sp_hdr.data,
+		result = copy_from_user(io_data, (void __user *)crus_sp_hdr.data,
 					bufsize);
 		if (result) {
 			pr_err("CRUS_SP: copy_from_user failed (%d)\n", result);
@@ -1254,7 +1386,7 @@ static long crus_sp_shared_ioctl(struct file *f, unsigned int cmd,
 			port = this_ctrl.ff_port;
 		}
 
-		crus_set_param(port, CIRRUS_SP, crus_sp_hdr.param_id, io_data,
+		result = crus_set_param(port, CIRRUS_SP, crus_sp_hdr.param_id, io_data,
 			       bufsize);
 		break;
 
@@ -1274,7 +1406,7 @@ static long crus_sp_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	pr_info("%s\n", __func__);
 
-	return crus_sp_shared_ioctl(f, cmd, (void __user *)arg);
+	return crus_sp_shared_ioctl(f, cmd, (void __user *)arg, false);
 }
 
 static long crus_sp_compat_ioctl(struct file *f, unsigned int cmd,
@@ -1296,7 +1428,7 @@ static long crus_sp_compat_ioctl(struct file *f, unsigned int cmd,
 		return -EINVAL;
 	}
 
-	return crus_sp_shared_ioctl(f, cmd64, compat_ptr(arg));
+	return crus_sp_shared_ioctl(f, cmd64, compat_ptr(arg), true);
 }
 
 static int crus_sp_open(struct inode *inode, struct file *f)
@@ -1519,7 +1651,7 @@ static const struct file_operations crus_sp_fops = {
 	.compat_ioctl = crus_sp_compat_ioctl,
 };
 
-struct miscdevice crus_sp_misc = {
+static struct miscdevice crus_sp_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "msm_cirrus_playback",
 	.fops = &crus_sp_fops,
