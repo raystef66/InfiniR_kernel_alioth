@@ -189,7 +189,7 @@ void *fuse_open_finalize(struct fuse_bpf_args *fa,
 		ff->fh = foo->fh;
 		ff->nodeid = get_fuse_inode(inode)->nodeid;
 	}
-	return 0;
+	return NULL;
 }
 
 int fuse_create_open_initialize(
@@ -349,7 +349,7 @@ void *fuse_create_open_finalize(
 		fi->nodeid = feo->nodeid;
 	if (ff)
 		ff->fh = foo->fh;
-	return 0;
+	return NULL;
 }
 
 int fuse_release_initialize(struct fuse_bpf_args *fa, struct fuse_release_in *fri,
@@ -2130,8 +2130,7 @@ int fuse_statfs_initialize(
 		.nodeid = get_node_id(d_inode(dentry)),
 		.opcode = FUSE_STATFS,
 		.out_numargs = 1,
-		.out_numargs = 1,
-		.out_args[0].size = sizeof(fso),
+		.out_args[0].size = sizeof(*fso),
 		.out_args[0].value = fso,
 	};
 
