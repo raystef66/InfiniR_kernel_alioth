@@ -412,6 +412,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 				sizeof(struct snd_lsm_event_status_v3) +
 				payload_size, GFP_ATOMIC);
 		if (!temp) {
+			spin_unlock_irqrestore(&prtd->event_lock, flags);
 			dev_err(rtd->dev, "%s: no memory for event status\n",
 				__func__);
 			__pm_relax(prtd->ws);
@@ -498,7 +499,7 @@ exit:
 }
 
 static int msm_lsm_get_conf_levels(struct lsm_client *client,
-				   u8 *conf_levels_ptr)
+				   u8 __user *conf_levels_ptr)
 {
 	int rc = 0;
 
@@ -1070,6 +1071,7 @@ static int msm_lsm_start_lab_buffer(struct lsm_priv *prtd, uint16_t status)
 static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			 unsigned int cmd, void *arg)
 {
+	void __user *uarg = (void __user *)arg;
 	struct snd_soc_pcm_runtime *rtd;
 	unsigned long flags;
 	int ret;
@@ -1100,14 +1102,14 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 
 		if (cmd == SNDRV_LSM_SET_SESSION_DATA) {
 			dev_dbg(rtd->dev, "%s: set session data\n", __func__);
-			rc = copy_from_user(&session_data, arg, sizeof(session_data));
+			rc = copy_from_user(&session_data, uarg, sizeof(session_data));
 			if (!rc) {
 				ses_data_v2.app_id = session_data.app_id;
 				ses_data_v2.num_stages = 1;
 			}
 		} else {
 			dev_dbg(rtd->dev, "%s: set session data_v2\n", __func__);
-			rc = copy_from_user(&ses_data_v2, arg, sizeof(ses_data_v2));
+			rc = copy_from_user(&ses_data_v2, uarg, sizeof(ses_data_v2));
 		}
 		if (rc) {
 			dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
@@ -1214,10 +1216,9 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			break;
 		}
 
-		dev_dbg(rtd->dev, "SND Model Magic no byte[0] %x,\n"
-			 "byte[1] %x, byte[2] %x byte[3] %x\n",
-			 snd_model_v2.data[0], snd_model_v2.data[1],
-			 snd_model_v2.data[2], snd_model_v2.data[3]);
+		dev_dbg(rtd->dev, "SND Model Magic no %*ph\n",
+			min_t(u32, snd_model_v2.data_size, 4),
+			prtd->lsm_client->stage_cfg[p_info.stage_idx].sound_model.data);
 		prtd->lsm_client->num_confidence_levels =
 			snd_model_v2.num_confidence_levels;
 
@@ -1511,7 +1512,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			return -EINVAL;
 		}
 
-		if (copy_from_user(&enable, arg, sizeof(enable))) {
+		if (copy_from_user(&enable, uarg, sizeof(enable))) {
 			dev_err(rtd->dev, "%s: %s: copy_frm_user failed\n",
 				__func__, "LSM_LAB_CONTROL");
 			__pm_relax(prtd->ws);
@@ -1566,7 +1567,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 	case SNDRV_LSM_SET_FWK_MODE_CONFIG: {
 		u32 mode;
 
-		if (copy_from_user(&mode, arg, sizeof(mode))) {
+		if (copy_from_user(&mode, uarg, sizeof(mode))) {
 			dev_err(rtd->dev, "%s: %s: copy_frm_user failed\n",
 				__func__, "LSM_SET_FWK_MODE_CONFIG");
 			__pm_relax(prtd->ws);
@@ -1597,7 +1598,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		struct lsm_hw_params *in_params;
 		struct snd_lsm_input_hw_params params;
 
-		if (copy_from_user(&params, arg, sizeof(params))) {
+		if (copy_from_user(&params, uarg, sizeof(params))) {
 			dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
 				__func__, "LSM_SET_INPUT_HW_PARAMS");
 			__pm_relax(prtd->ws);
@@ -1735,8 +1736,9 @@ enum {
 };
 
 static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
-			  unsigned int cmd, void __user *arg)
+			  unsigned int cmd, void *arg)
 {
+	void __user *uarg = (void __user *)arg;
 	struct snd_pcm_runtime *runtime;
 	struct lsm_priv *prtd;
 	struct snd_soc_pcm_runtime *rtd;
@@ -1773,7 +1775,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		if (err)
 			goto done;
 
-		if (copy_from_user(&userarg32, arg, sizeof(userarg32))) {
+		if (copy_from_user(&userarg32, uarg, sizeof(userarg32))) {
 			dev_err(rtd->dev, "%s: %s: Failed to copy from user\n",
 				__func__, (cmd == SNDRV_LSM_EVENT_STATUS) ?
 				"SNDRV_LSM_EVENT_STATUS" :
@@ -1811,7 +1813,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 
 		/* Update size with actual payload size */
 		size = sizeof(userarg32) + user->payload_size;
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -1831,7 +1833,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		memcpy(user32->payload, user->payload,
 		       user32->payload_size);
 
-		if (copy_to_user(arg, user32, size)) {
+		if (copy_to_user(uarg, user32, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to copy payload to user, size = %d",
 				__func__, size);
@@ -1855,7 +1857,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&userarg32, arg, sizeof(userarg32))) {
+		if (copy_from_user(&userarg32, uarg, sizeof(userarg32))) {
 			dev_err(rtd->dev, "%s: err copyuser ioctl %s\n",
 				__func__, "SNDRV_LSM_EVENT_STATUS_V3_32");
 			err = -EFAULT;
@@ -1886,7 +1888,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 
 		/* Update size with actual payload size */
 		size = sizeof(userarg32) + user->payload_size;
-		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
+		if (!err && !access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: write verify failed size %d\n",
 				__func__, size);
@@ -1908,7 +1910,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 				user->payload, user32->payload_size);
 			}
 		}
-		if (!err && (copy_to_user(arg, user32, size))) {
+		if (!err && (copy_to_user(uarg, user32, size))) {
 			dev_err(rtd->dev, "%s: failed to copy payload %d",
 				__func__, size);
 			err = -EFAULT;
@@ -1933,7 +1935,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&snd_modelv232, arg,
+		if (copy_from_user(&snd_modelv232, uarg,
 			sizeof(snd_modelv232))) {
 			err = -EFAULT;
 			dev_err(rtd->dev,
@@ -1974,7 +1976,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			err = -EINVAL;
 		}
 
-		if (copy_from_user(&det_params32, arg,
+		if (copy_from_user(&det_params32, uarg,
 				   sizeof(det_params32))) {
 			err = -EFAULT;
 			dev_err(rtd->dev,
@@ -2019,7 +2021,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&p_data_32, arg,
+		if (copy_from_user(&p_data_32, uarg,
 				   sizeof(p_data_32))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %zd\n",
@@ -2125,7 +2127,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&p_info_32, arg, sizeof(p_info_32))) {
+		if (copy_from_user(&p_info_32, uarg, sizeof(p_info_32))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %zd\n",
 				__func__, "GET_MODULE_PARAMS_32",
@@ -2185,7 +2187,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -2197,7 +2199,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		memcpy(param_info_rsp->payload, prtd->lsm_client->get_param_payload,
 			p_info_32.param_size);
 
-		if (copy_to_user(arg, param_info_rsp, size)) {
+		if (copy_to_user(uarg, param_info_rsp, size)) {
 			dev_err(rtd->dev, "%s: Failed to copy payload to user, size = %d\n",
 				__func__, size);
 			err = -EFAULT;
@@ -2236,8 +2238,9 @@ done:
 #endif
 
 static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void __user *arg)
+			 unsigned int cmd, void *arg)
 {
+	void __user *uarg = (void __user *)arg;
 	int err = 0;
 	u32 size = 0;
 	struct snd_pcm_runtime *runtime;
@@ -2266,7 +2269,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&snd_model_v2, arg, sizeof(snd_model_v2))) {
+		if (copy_from_user(&snd_model_v2, uarg, sizeof(snd_model_v2))) {
 			err = -EFAULT;
 			dev_err(rtd->dev,
 				"%s: copy from user failed, size %zd\n",
@@ -2296,7 +2299,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 
 		pr_debug("%s: SNDRV_LSM_SET_PARAMS\n", __func__);
 
-		if (copy_from_user(&det_params, arg,
+		if (copy_from_user(&det_params, uarg,
 				   sizeof(det_params))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size %zd\n",
@@ -2333,7 +2336,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&p_data, arg,
+		if (copy_from_user(&p_data, uarg,
 				   sizeof(p_data))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %zd\n",
@@ -2429,7 +2432,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (copy_from_user(&temp_p_info, arg, sizeof(temp_p_info))) {
+		if (copy_from_user(&temp_p_info, uarg, sizeof(temp_p_info))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %zd\n",
 				__func__, "GET_MODULE_PARAMS_32",
@@ -2479,7 +2482,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			goto free;
 		}
 
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -2490,7 +2493,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		memcpy(p_info->payload, prtd->lsm_client->get_param_payload,
 			temp_p_info.param_size);
 
-		if (copy_to_user(arg, p_info, sizeof(struct lsm_params_get_info) +
+		if (copy_to_user(uarg, p_info, sizeof(struct lsm_params_get_info) +
 				 p_info->param_size)) {
 			dev_err(rtd->dev, "%s: Failed to copy payload to user, size = %d\n",
 				__func__, size);
@@ -2517,7 +2520,7 @@ free:
 		if (err)
 			goto done;
 
-		if (copy_from_user(&userarg, arg, sizeof(userarg))) {
+		if (copy_from_user(&userarg, uarg, sizeof(userarg))) {
 			dev_err(rtd->dev,
 				"%s: %s: Copy from user failed\n", __func__,
 				(cmd == SNDRV_LSM_EVENT_STATUS) ?
@@ -2557,13 +2560,13 @@ free:
 
 		/* Update size with actual payload size */
 		size = sizeof(*user) + user->payload_size;
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
 			err = -EFAULT;
 		}
-		if (!err && copy_to_user(arg, user, size)) {
+		if (!err && copy_to_user(uarg, user, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to copy payload to user, size = %d\n",
 				__func__, size);
@@ -2597,7 +2600,7 @@ free:
 			err = -EINVAL;
 			goto done;
 		}
-		if (copy_from_user(&userarg, arg, sizeof(userarg))) {
+		if (copy_from_user(&userarg, uarg, sizeof(userarg))) {
 			dev_err(rtd->dev,
 				"%s: err copyuser event_status_v3\n",
 				__func__);
@@ -2629,13 +2632,13 @@ free:
 
 		/* Update size with actual payload size */
 		size = sizeof(*user) + user->payload_size;
-		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
+		if (!err && !access_ok(VERIFY_WRITE, uarg, size)) {
 			dev_err(rtd->dev,
 				"%s: write verify failed size %d\n",
 				__func__, size);
 			err = -EFAULT;
 		}
-		if (!err && (copy_to_user(arg, user, size))) {
+		if (!err && (copy_to_user(uarg, user, size))) {
 			dev_err(rtd->dev,
 				"%s: failed to copy payload %d",
 				__func__, size);

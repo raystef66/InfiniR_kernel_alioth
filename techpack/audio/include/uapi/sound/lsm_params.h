@@ -120,7 +120,7 @@ struct snd_lsm_det_event_type {
 
 struct snd_lsm_sound_model_v2 {
 	__u8 __user *data;
-	__u8 *confidence_level;
+	__u8 __user *confidence_level;
 	__u32 data_size;
 	enum lsm_detection_mode detection_mode;
 	__u8 num_confidence_levels;
@@ -176,7 +176,7 @@ struct snd_lsm_event_status_v3 {
 };
 
 struct snd_lsm_detection_params {
-	__u8 *conf_level;
+	__u8 __user *conf_level;
 	enum lsm_detection_mode detect_mode;
 	__u8 num_confidence_levels;
 	bool detect_failure;
