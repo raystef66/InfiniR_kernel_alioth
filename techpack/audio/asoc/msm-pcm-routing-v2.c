@@ -90,7 +90,7 @@ static int slim0_rx_aanc_fb_port;
 static int msm_route_ec_ref_rx;
 static int msm_ec_ref_ch = 4;
 static int msm_ec_ref_ch_downmixed = 4;
-static int msm_ec_ref_bit_format = SNDRV_PCM_FORMAT_S16_LE;
+static snd_pcm_format_t msm_ec_ref_bit_format = SNDRV_PCM_FORMAT_S16_LE;
 static int msm_ec_ref_sampling_rate = 48000;
 static uint32_t voc_session_id = ALL_SESSION_VSID;
 static int msm_route_ext_ec_ref;
@@ -186,7 +186,7 @@ static int msm_routing_send_device_pp_params(int port_id,  int copp_idx,
 static void msm_routing_load_topology(size_t data_size, void *data);
 static void msm_routing_unload_topology(uint32_t topology_id);
 
-static int msm_routing_get_bit_width(unsigned int format)
+static int msm_routing_get_bit_width(snd_pcm_format_t format)
 {
 	int bit_width;
 
@@ -330,7 +330,7 @@ static void msm_pcm_routng_cfg_matrix_map_pp(struct route_payload payload,
 }
 
 #define SLIMBUS_EXTPROC_RX AFE_PORT_INVALID
-struct msm_pcm_routing_bdai_data msm_bedais[MSM_BACKEND_DAI_MAX] = {
+static struct msm_pcm_routing_bdai_data msm_bedais[MSM_BACKEND_DAI_MAX] = {
 	{ PRIMARY_I2S_RX, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_PRI_I2S_RX},
 	{ PRIMARY_I2S_TX, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_PRI_I2S_TX},
 	{ SLIMBUS_0_RX, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_SLIMBUS_0_RX},
@@ -1134,6 +1134,10 @@ EXPORT_SYMBOL(msm_pcm_routing_reg_stream_app_type_cfg);
  *                is wanted
  * be_id - Returned value, back end device id the app type config data is for
  * cfg_data - Returned value, configuration data used by app type config
+ * @bedai_id: Back-end DAI identifier
+ * @cfg_data: Receives the stream application-type configuration
+ * @fedai_id: Front-end DAI identifier
+ * @session_type: Audio session type
  */
 int msm_pcm_routing_get_stream_app_type_cfg(
 	int fedai_id, int session_type, int *bedai_id,
@@ -2439,7 +2443,7 @@ static void msm_pcm_routing_process_voice(u16 reg, u16 val, int set)
 			voc_be_media_format.sample_rate =
 						msm_bedais[reg].sample_rate;
 			voc_be_media_format.bits_per_sample =
-						msm_bedais[reg].format;
+			msm_routing_get_bit_width(msm_bedais[reg].format);
 			/* Defaulting this to 1 for voice call usecases */
 			voc_be_media_format.channel_mapping[0] = 1;
 
@@ -30737,7 +30741,8 @@ static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
 			voc_be_media_format.port_id = bedai->port_id;
 			voc_be_media_format.num_channels = bedai->channel;
 			voc_be_media_format.sample_rate = bedai->sample_rate;
-			voc_be_media_format.bits_per_sample = bedai->format;
+			voc_be_media_format.bits_per_sample =
+				msm_routing_get_bit_width(bedai->format);
 			/* Defaulting this to 1 for voice call usecases */
 			voc_be_media_format.channel_mapping[0] = 1;
 
@@ -30759,7 +30764,8 @@ static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
 		/* Get format info for ec ref port from msm_bedais[] */
 		voc_be_media_format.port_id = bedai->port_id;
 		voc_be_media_format.num_channels = bedai->channel;
-		voc_be_media_format.bits_per_sample = bedai->format;
+		voc_be_media_format.bits_per_sample =
+				msm_routing_get_bit_width(bedai->format);
 		voc_be_media_format.sample_rate = bedai->sample_rate;
 		/* Defaulting this to 1 for voice call usecases */
 		voc_be_media_format.channel_mapping[0] = 1;

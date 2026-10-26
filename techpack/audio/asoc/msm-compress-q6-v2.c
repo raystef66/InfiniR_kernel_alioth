@@ -67,7 +67,7 @@
 #define COMPR_PLAYBACK_MAX_NUM_FRAGMENTS (16 * 4)
 
 #define COMPRESSED_LR_VOL_MAX_STEPS	0x2000
-const DECLARE_TLV_DB_LINEAR(msm_compr_vol_gain, 0,
+static const DECLARE_TLV_DB_LINEAR(msm_compr_vol_gain, 0,
 				COMPRESSED_LR_VOL_MAX_STEPS);
 
 /* Stream id switches between 1 and 2 */
@@ -185,7 +185,13 @@ struct msm_compr_audio {
 	spinlock_t lock;
 };
 
-const u32 compr_codecs[] = {
+/* PCM uses the ALSA format number in the untyped compressed-codec ABI. */
+static snd_pcm_format_t msm_compr_pcm_format(struct msm_compr_audio *prtd)
+{
+	return (__force snd_pcm_format_t)prtd->codec_param.codec.format;
+}
+
+static const u32 compr_codecs[] = {
 	SND_AUDIOCODEC_AC3, SND_AUDIOCODEC_EAC3, SND_AUDIOCODEC_DTS,
 	SND_AUDIOCODEC_DSD, SND_AUDIOCODEC_TRUEHD, SND_AUDIOCODEC_IEC61937};
 
@@ -1061,7 +1067,7 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 			    pdata->ch_map[rtd->dai_link->id]->channel_map;
 		}
 
-		switch (prtd->codec_param.codec.format) {
+		switch (msm_compr_pcm_format(prtd)) {
 		case SNDRV_PCM_FORMAT_S32_LE:
 			bit_width = 32;
 			sample_word_size = 32;
@@ -1415,10 +1421,10 @@ static int msm_compr_configure_dsp_for_playback
 			__func__, DSP_BIT_WIDTH_MIXER_CTL);
 	}
 
-	if ((prtd->codec_param.codec.format == SNDRV_PCM_FORMAT_S24_LE) ||
-		(prtd->codec_param.codec.format == SNDRV_PCM_FORMAT_S24_3LE))
+	if ((msm_compr_pcm_format(prtd) == SNDRV_PCM_FORMAT_S24_LE) ||
+		(msm_compr_pcm_format(prtd) == SNDRV_PCM_FORMAT_S24_3LE))
 		bits_per_sample = 24;
-	else if (prtd->codec_param.codec.format == SNDRV_PCM_FORMAT_S32_LE)
+	else if (msm_compr_pcm_format(prtd) == SNDRV_PCM_FORMAT_S32_LE)
 		bits_per_sample = 32;
 
 	if (prtd->compr_passthr != LEGACY_PCM) {
@@ -1552,7 +1558,7 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	uint32_t enc_cfg_id = ENC_CFG_ID_NONE;
 	bool compress_ts = false;
 
-	switch (prtd->codec_param.codec.format) {
+	switch (msm_compr_pcm_format(prtd)) {
 	case SNDRV_PCM_FORMAT_S24_LE:
 		bits_per_sample = 24;
 		sample_word_size = 32;
@@ -2322,6 +2328,7 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 
 static int msm_compr_drain_buffer(struct msm_compr_audio *prtd,
 				  unsigned long *flags)
+	__must_hold(&prtd->lock)
 {
 	int rc = 0;
 
@@ -2351,6 +2358,7 @@ static int msm_compr_drain_buffer(struct msm_compr_audio *prtd,
 
 static int msm_compr_wait_for_stream_avail(struct msm_compr_audio *prtd,
 				    unsigned long *flags)
+	__must_hold(&prtd->lock)
 {
 	int rc = 0;
 
@@ -2831,9 +2839,9 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 			break;
 		}
 
-		if (prtd->codec_param.codec.format == SNDRV_PCM_FORMAT_S24_LE)
+		if (msm_compr_pcm_format(prtd) == SNDRV_PCM_FORMAT_S24_LE)
 			bits_per_sample = 24;
-		else if (prtd->codec_param.codec.format ==
+		else if (msm_compr_pcm_format(prtd) ==
 			 SNDRV_PCM_FORMAT_S32_LE)
 			bits_per_sample = 32;
 

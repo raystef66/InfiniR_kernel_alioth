@@ -122,7 +122,7 @@ static struct snd_soc_dai_link_component tfa98xx_codec_components[]=
 #endif
 
 #if defined(CONFIG_MACH_XIAOMI_ENUMA) || defined(CONFIG_MACH_XIAOMI_ELISH)
-struct snd_soc_dai_link_component cs35l41_codec_components[] = {
+static struct snd_soc_dai_link_component cs35l41_codec_components[] = {
        {
                .name = "cs35l41.1-0040",
                .dai_name = "cs35l41.1-0040",
@@ -157,7 +157,7 @@ struct snd_soc_dai_link_component cs35l41_codec_components[] = {
        },
 };
 #elif defined(CONFIG_MACH_XIAOMI_DAGU)
-struct snd_soc_dai_link_component cs35l41_codec_components[] = {
+static struct snd_soc_dai_link_component cs35l41_codec_components[] = {
        {
                .name = "cs35l41.1-0040",
                .dai_name = "cs35l41.1-0040",
@@ -176,7 +176,7 @@ struct snd_soc_dai_link_component cs35l41_codec_components[] = {
        },
 };
 #else
-struct snd_soc_dai_link_component cs35l41_codec_components[] = {
+static struct snd_soc_dai_link_component cs35l41_codec_components[] = {
 	{
 		.name = CS35L41_SPEAKER_NAME,
 		//.dai_name = "cs35l41-pcm",
@@ -359,7 +359,7 @@ struct aux_codec_dev_info {
 
 struct dev_config {
 	u32 sample_rate;
-	u32 bit_format;
+	snd_pcm_format_t bit_format;
 	u32 channels;
 };
 
@@ -1091,8 +1091,10 @@ static inline struct snd_mask *param_to_mask(struct snd_pcm_hw_params *p,
 }
 
 static void param_set_mask(struct snd_pcm_hw_params *p, int n,
-			   unsigned int bit)
+			   snd_pcm_format_t format)
 {
+	unsigned int bit = (__force unsigned int)format;
+
 	if (bit >= SNDRV_MASK_MAX)
 		return;
 	if (param_is_mask(n)) {
@@ -1937,9 +1939,9 @@ static int tdm_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
 	return ret;
 }
 
-static int tdm_get_format(int value)
+static snd_pcm_format_t tdm_get_format(int value)
 {
-	int format = 0;
+	snd_pcm_format_t format = SNDRV_PCM_FORMAT_S16_LE;
 
 	switch (value) {
 	case 0:
@@ -1958,7 +1960,7 @@ static int tdm_get_format(int value)
 	return format;
 }
 
-static int tdm_get_format_val(int format)
+static int tdm_get_format_val(snd_pcm_format_t format)
 {
 	int value = 0;
 
@@ -2258,9 +2260,9 @@ static int aux_pcm_get_sample_rate_val(int sample_rate)
 	return sample_rate_val;
 }
 
-static int mi2s_auxpcm_get_format(int value)
+static snd_pcm_format_t mi2s_auxpcm_get_format(int value)
 {
-	int format = 0;
+	snd_pcm_format_t format = SNDRV_PCM_FORMAT_S16_LE;
 
 	switch (value) {
 	case 0:
@@ -2282,7 +2284,7 @@ static int mi2s_auxpcm_get_format(int value)
 	return format;
 }
 
-static int mi2s_auxpcm_get_format_value(int format)
+static int mi2s_auxpcm_get_format_value(snd_pcm_format_t format)
 {
 	int value = 0;
 
@@ -2862,7 +2864,7 @@ static int msm_get_port_id(int be_id)
 	return afe_port_id;
 }
 
-static u32 get_mi2s_bits_per_sample(u32 bit_format)
+static u32 get_mi2s_bits_per_sample(snd_pcm_format_t bit_format)
 {
 	u32 bit_per_sample = 0;
 
@@ -5127,7 +5129,7 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 			pr_debug("%s: id %d rx_ch=%d\n", __func__,
 				ch_id, cdc_dma_rx_cfg[ch_id].channels);
 			user_set_rx_ch = cdc_dma_rx_cfg[ch_id].channels;
-			ret = snd_soc_dai_set_channel_map(cpu_dai, 0, 0,
+			ret = snd_soc_dai_set_channel_map(cpu_dai, 0, NULL,
 					  user_set_rx_ch, &rx_ch_cdc_dma);
 			if (ret < 0) {
 				pr_err("%s: failed to set cpu chan map, err:%d\n",
@@ -5163,7 +5165,7 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 		}
 
 		ret = snd_soc_dai_set_channel_map(cpu_dai, user_set_tx_ch,
-					&tx_ch_cdc_dma, 0, 0);
+					&tx_ch_cdc_dma, 0, NULL);
 		if (ret < 0) {
 			pr_err("%s: failed to set cpu chan map, err:%d\n",
 			__func__, ret);
@@ -7814,7 +7816,7 @@ static struct snd_soc_ops msm_stub_be_ops = {
 	.hw_params = msm_snd_stub_hw_params,
 };
 
-struct snd_soc_card snd_soc_card_stub_msm = {
+static struct snd_soc_card snd_soc_card_stub_msm = {
 	.name		= "kona-stub-snd-card",
 #if defined(CONFIG_MACH_XIAOMI_MUNCH)
 	.codec_conf	= tfa98xx_codec_conf,

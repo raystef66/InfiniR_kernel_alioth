@@ -3,6 +3,7 @@
  */
 #ifndef _MSM_PCM_ROUTING_H
 #define _MSM_PCM_ROUTING_H
+#include <sound/asound.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6adm-v2.h>
 
@@ -582,7 +583,7 @@ struct msm_pcm_routing_bdai_data {
 
 	unsigned int  sample_rate;
 	unsigned int  channel;
-	unsigned int  format;
+	snd_pcm_format_t format;
 	unsigned int  adm_override_ch;
 	char *name;
 };

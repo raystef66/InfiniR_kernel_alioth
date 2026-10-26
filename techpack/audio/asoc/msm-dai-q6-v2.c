@@ -236,9 +236,9 @@ struct msm_dai_q6_dai_data {
 	u32 bitwidth;
 	u32 cal_mode;
 	u32 afe_rx_in_channels;
-	u16 afe_rx_in_bitformat;
+	snd_pcm_format_t afe_rx_in_bitformat;
 	u32 afe_tx_out_channels;
-	u16 afe_tx_out_bitformat;
+	snd_pcm_format_t afe_tx_out_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
 	struct afe_ttp_config ttp_config;
@@ -4487,7 +4487,7 @@ static int msm_auxpcm_dev_probe(struct platform_device *pdev)
 	uint32_t val = 0;
 	const char *intf_name;
 	int rc = 0, i = 0, len = 0;
-	const uint32_t *slot_mapping_array = NULL;
+	const __be32 *slot_mapping_array = NULL;
 	u32 array_length = 0;
 
 	dai_data = kzalloc(sizeof(struct msm_dai_q6_auxpcm_dai_data),
@@ -7760,7 +7760,7 @@ static int msm_dai_q6_tdm_set_clk_param(u32 group_id,
 static int msm_dai_tdm_q6_probe(struct platform_device *pdev)
 {
 	int rc = 0;
-	const uint32_t *port_id_array = NULL;
+	const __be32 *port_id_array = NULL;
 	uint32_t array_length = 0;
 	int i = 0;
 	int group_idx = 0;
