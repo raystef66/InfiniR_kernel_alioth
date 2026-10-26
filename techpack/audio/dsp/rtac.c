@@ -33,15 +33,15 @@
 
 #define TIMEOUT_MS	1000
 
-struct rtac_cal_block_data	rtac_cal[MAX_RTAC_BLOCKS] = {
+static struct rtac_cal_block_data	rtac_cal[MAX_RTAC_BLOCKS] = {
 /* ADM_RTAC_CAL */
-	{{RTAC_BUF_SIZE, 0, 0}, {0, 0, 0} },
+	{ .map_data.map_size = RTAC_BUF_SIZE },
 /* ASM_RTAC_CAL */
-	{{RTAC_BUF_SIZE, 0, 0}, {0, 0, 0} },
+	{ .map_data.map_size = RTAC_BUF_SIZE },
 /* VOICE_RTAC_CAL */
-	{{RTAC_BUF_SIZE, 0, 0}, {0, 0, 0} },
+	{ .map_data.map_size = RTAC_BUF_SIZE },
 /* AFE_RTAC_CAL */
-	{{RTAC_BUF_SIZE, 0, 0}, {0, 0, 0} }
+	{ .map_data.map_size = RTAC_BUF_SIZE }
 };
 
 struct rtac_common_data {
@@ -110,12 +110,12 @@ static u32			*rtac_voice_buffer;
 static u32			voice_session_id[RTAC_MAX_ACTIVE_VOICE_COMBOS];
 
 
-struct mutex			rtac_adm_mutex;
-struct mutex			rtac_adm_apr_mutex;
-struct mutex			rtac_asm_apr_mutex;
-struct mutex			rtac_voice_mutex;
-struct mutex			rtac_voice_apr_mutex;
-struct mutex			rtac_afe_apr_mutex;
+static struct mutex			rtac_adm_mutex;
+static struct mutex			rtac_adm_apr_mutex;
+static struct mutex			rtac_asm_apr_mutex;
+static struct mutex			rtac_voice_mutex;
+static struct mutex			rtac_voice_apr_mutex;
+static struct mutex			rtac_afe_apr_mutex;
 
 int rtac_clear_mapping(uint32_t cal_type)
 {
@@ -204,7 +204,7 @@ static int rtac_free_cal_buffer(uint32_t cal_type)
 	rtac_cal[cal_type].map_data.map_handle = 0;
 	rtac_cal[cal_type].map_data.dma_buf = NULL;
 	rtac_cal[cal_type].cal_data.size = 0;
-	rtac_cal[cal_type].cal_data.kvaddr = 0;
+	rtac_cal[cal_type].cal_data.kvaddr = NULL;
 	rtac_cal[cal_type].cal_data.paddr = 0;
 done:
 	return result;
@@ -733,7 +733,7 @@ bool rtac_make_adm_callback(uint32_t *payload, u32 payload_size)
 	return true;
 }
 
-static int send_adm_apr(void *buf, u32 opcode)
+static int send_adm_apr(void __user *buf, u32 opcode)
 {
 	s32	result;
 	u32	user_buf_size = 0;
@@ -765,7 +765,7 @@ static int send_adm_apr(void *buf, u32 opcode)
 		}
 	}
 
-	if (copy_from_user(&user_buf_size, (void *)buf,
+	if (copy_from_user(&user_buf_size, (void __user *)buf,
 						sizeof(user_buf_size))) {
 		pr_err("%s: Copy from user failed! buf = 0x%pK\n",
 		       __func__, buf);
@@ -992,7 +992,7 @@ bool rtac_make_asm_callback(u32 session_id, uint32_t *payload,
 	return true;
 }
 
-static int send_rtac_asm_apr(void *buf, u32 opcode)
+static int send_rtac_asm_apr(void __user *buf, u32 opcode)
 {
 	s32 result;
 	u32 user_buf_size = 0;
@@ -1023,7 +1023,7 @@ static int send_rtac_asm_apr(void *buf, u32 opcode)
 		}
 	}
 
-	if (copy_from_user(&user_buf_size, (void *)buf,
+	if (copy_from_user(&user_buf_size, (void __user *)buf,
 						sizeof(user_buf_size))) {
 		pr_err("%s: Copy from user failed! buf = 0x%pK\n",
 		       __func__, buf);
@@ -1299,7 +1299,7 @@ static int send_rtac_afe_apr(void __user *buf, uint32_t opcode)
 		}
 	}
 
-	if (copy_from_user(&user_afe_buf, (void *)buf,
+	if (copy_from_user(&user_afe_buf, (void __user *)buf,
 		sizeof(struct rtac_afe_user_data))) {
 		pr_err("%s: Copy from user failed! buf = 0x%pK\n",
 		       __func__, buf);
@@ -1555,7 +1555,7 @@ bool rtac_make_voice_callback(u32 mode, uint32_t *payload, u32 payload_size)
 	return true;
 }
 
-static int send_voice_apr(u32 mode, void *buf, u32 opcode)
+static int send_voice_apr(u32 mode, void __user *buf, u32 opcode)
 {
 	s32 result;
 	u32 user_buf_size = 0;
@@ -1585,7 +1585,7 @@ static int send_voice_apr(u32 mode, void *buf, u32 opcode)
 		}
 	}
 
-	if (copy_from_user(&user_buf_size, (void *)buf,
+	if (copy_from_user(&user_buf_size, (void __user *)buf,
 						sizeof(user_buf_size))) {
 		pr_err("%s: Copy from user failed! buf = 0x%pK\n",
 		       __func__, buf);
@@ -1784,7 +1784,7 @@ void get_rtac_adm_data(struct rtac_adm *adm_data)
 
 
 static long rtac_ioctl_shared(struct file *f,
-		unsigned int cmd, void *arg)
+		unsigned int cmd, void __user *arg)
 {
 	u32 opcode;
 	int result = 0;
@@ -1797,7 +1797,7 @@ static long rtac_ioctl_shared(struct file *f,
 	switch (cmd) {
 	case AUDIO_GET_RTAC_ADM_INFO: {
 		mutex_lock(&rtac_adm_mutex);
-		if (copy_to_user((void *)arg, &rtac_adm_data,
+		if (copy_to_user((void __user *)arg, &rtac_adm_data,
 						sizeof(rtac_adm_data))) {
 			pr_err("%s: copy_to_user failed for AUDIO_GET_RTAC_ADM_INFO\n",
 					__func__);
@@ -1810,7 +1810,7 @@ static long rtac_ioctl_shared(struct file *f,
 	}
 	case AUDIO_GET_RTAC_VOICE_INFO: {
 		mutex_lock(&rtac_voice_mutex);
-		if (copy_to_user((void *)arg, &rtac_voice_data,
+		if (copy_to_user((void __user *)arg, &rtac_voice_data,
 						sizeof(rtac_voice_data))) {
 			pr_err("%s: copy_to_user failed for AUDIO_GET_RTAC_VOICE_INFO\n",
 					__func__);
@@ -1826,49 +1826,49 @@ static long rtac_ioctl_shared(struct file *f,
 		opcode = q6common_is_instance_id_supported() ?
 				 ADM_CMD_GET_PP_PARAMS_V6 :
 				 ADM_CMD_GET_PP_PARAMS_V5;
-		result = send_adm_apr((void *) arg, opcode);
+		result = send_adm_apr(arg, opcode);
 		break;
 	case AUDIO_SET_RTAC_ADM_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 ADM_CMD_SET_PP_PARAMS_V6 :
 				 ADM_CMD_SET_PP_PARAMS_V5;
-		result = send_adm_apr((void *) arg, opcode);
+		result = send_adm_apr(arg, opcode);
 		break;
 	case AUDIO_GET_RTAC_ASM_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 ASM_STREAM_CMD_GET_PP_PARAMS_V3 :
 				 ASM_STREAM_CMD_GET_PP_PARAMS_V2;
-		result = send_rtac_asm_apr((void *) arg, opcode);
+		result = send_rtac_asm_apr(arg, opcode);
 		break;
 	case AUDIO_SET_RTAC_ASM_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 ASM_STREAM_CMD_SET_PP_PARAMS_V3 :
 				 ASM_STREAM_CMD_SET_PP_PARAMS_V2;
-		result = send_rtac_asm_apr((void *) arg, opcode);
+		result = send_rtac_asm_apr(arg, opcode);
 		break;
 	case AUDIO_GET_RTAC_CVS_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 VSS_ICOMMON_CMD_GET_PARAM_V3 :
 				 VSS_ICOMMON_CMD_GET_PARAM_V2;
-		result = send_voice_apr(RTAC_CVS, (void *) arg, opcode);
+		result = send_voice_apr(RTAC_CVS, arg, opcode);
 		break;
 	case AUDIO_SET_RTAC_CVS_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 VSS_ICOMMON_CMD_SET_PARAM_V3 :
 				 VSS_ICOMMON_CMD_SET_PARAM_V2;
-		result = send_voice_apr(RTAC_CVS, (void *) arg, opcode);
+		result = send_voice_apr(RTAC_CVS, arg, opcode);
 		break;
 	case AUDIO_GET_RTAC_CVP_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 VSS_ICOMMON_CMD_GET_PARAM_V3 :
 				 VSS_ICOMMON_CMD_GET_PARAM_V2;
-		result = send_voice_apr(RTAC_CVP, (void *) arg, opcode);
+		result = send_voice_apr(RTAC_CVP, arg, opcode);
 		break;
 	case AUDIO_SET_RTAC_CVP_CAL:
 		opcode = q6common_is_instance_id_supported() ?
 				 VSS_ICOMMON_CMD_SET_PARAM_V3 :
 				 VSS_ICOMMON_CMD_SET_PARAM_V2;
-		result = send_voice_apr(RTAC_CVP, (void *) arg, opcode);
+		result = send_voice_apr(RTAC_CVP, arg, opcode);
 		break;
 	case AUDIO_GET_RTAC_AFE_CAL:
 		opcode = q6common_is_instance_id_supported() ?
@@ -1995,7 +1995,7 @@ static const struct file_operations rtac_fops = {
 	.compat_ioctl = rtac_compat_ioctl,
 };
 
-struct miscdevice rtac_misc = {
+static struct miscdevice rtac_misc = {
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "msm_rtac",
 	.fops	= &rtac_fops,

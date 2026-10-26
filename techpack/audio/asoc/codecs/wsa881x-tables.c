@@ -6,6 +6,7 @@
 #include <linux/regmap.h>
 #include <linux/device.h>
 #include "wsa881x-registers.h"
+#include "wsa881x.h"
 
 const u8 wsa881x_reg_readable[WSA881X_CACHE_SIZE] = {
 	[WSA881X_CHIP_ID0] = 1,

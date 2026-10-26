@@ -38,6 +38,8 @@ do {                                                                    \
  * msm_audio_effects_is_effmodule_supp_in_top -
  *        Checks if given topology and module in effects
  *
+ * @effect_module: Requested effect module identifier
+ * @topology: DSP topology identifier
  */
 bool msm_audio_effects_is_effmodule_supp_in_top(int effect_module,
 						int topology)
@@ -102,7 +104,7 @@ int msm_audio_effects_enable_extn(struct audio_client *ac,
  *        Audio effects handler for virtualizer
  *
  * @ac: audio client handle
- * @pbe: virtualizer params
+ * @virtualizer: virtualizer params
  * @values: values to be updated
  *
  * Return 0 on success or error on failure
@@ -281,7 +283,7 @@ EXPORT_SYMBOL(msm_audio_effects_virtualizer_handler);
  *        Audio effects handler for reverb
  *
  * @ac: audio client handle
- * @pbe: reverb params
+ * @reverb: reverb params
  * @values: values to be updated
  *
  * Return 0 on success or error on failure

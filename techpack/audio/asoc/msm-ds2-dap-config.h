@@ -95,10 +95,10 @@ struct custom_stereo_param {
 int msm_ds2_dap_update_port_parameters(struct snd_hwdep *hw,  struct file *file,
 				       bool open);
 int msm_ds2_dap_ioctl(struct snd_hwdep *hw, struct file *file,
-		      u32 cmd, void *arg);
+		      u32 cmd, void __user *arg);
 int msm_ds2_dap_compat_ioctl(struct snd_hwdep *hw,
 			     struct file *file,
-			     u32 cmd, void *arg);
+			     u32 cmd, void __user *arg);
 int msm_ds2_dap_init(int port_id, int copp_idx, int channels,
 		     bool is_custom_stereo_on);
 void msm_ds2_dap_deinit(int port_id);
@@ -115,14 +115,14 @@ static inline int msm_ds2_dap_update_port_parameters(struct snd_hwdep *hw,
 }
 
 static inline int msm_ds2_dap_ioctl(struct snd_hwdep *hw, struct file *file,
-				    u32 cmd, void *arg)
+				    u32 cmd, void __user *arg)
 {
 	return 0;
 }
 
 static inline int msm_ds2_dap_compat_ioctl(struct snd_hwdep *hw,
 					   struct file *file,
-					   u32 cmd, void *arg)
+					   u32 cmd, void __user *arg)
 {
 	return 0;
 }

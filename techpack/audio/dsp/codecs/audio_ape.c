@@ -108,7 +108,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_GET_APE_CONFIG: {
-		if (copy_to_user((void *)arg, audio->codec_cfg,
+		if (copy_to_user((void __user *)arg, audio->codec_cfg,
 			sizeof(struct msm_audio_ape_config))) {
 			pr_err("%s:copy_to_user for AUDIO_GET_APE_CONFIG failed\n",
 				__func__);
@@ -118,7 +118,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_SET_APE_CONFIG: {
-		if (copy_from_user(audio->codec_cfg, (void *)arg,
+		if (copy_from_user(audio->codec_cfg, (void __user *)arg,
 			sizeof(struct msm_audio_ape_config))) {
 			pr_err("%s:copy_from_user for AUDIO_SET_APE_CONFIG failed\n",
 				__func__);
@@ -190,7 +190,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		ape_config_32.sampleRate = ape_config->sampleRate;
 		ape_config_32.seekTablePresent = ape_config->seekTablePresent;
 
-		if (copy_to_user((void *)arg, &ape_config_32,
+		if (copy_to_user((void __user *)arg, &ape_config_32,
 			sizeof(ape_config_32))) {
 			pr_err("%s: copy_to_user for GET_APE_CONFIG_32 failed\n",
 				 __func__);
@@ -203,7 +203,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_ape_config *ape_config;
 		struct msm_audio_ape_config_32 ape_config_32;
 
-		if (copy_from_user(&ape_config_32, (void *)arg,
+		if (copy_from_user(&ape_config_32, (void __user *)arg,
 			sizeof(ape_config_32))) {
 			pr_err("%s: copy_from_user for SET_APE_CONFIG_32 failed\n"
 				, __func__);

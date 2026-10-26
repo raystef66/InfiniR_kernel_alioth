@@ -65,11 +65,6 @@ enum msm_audio_g711_mode {
 #define VOIP_MODE_MAX		MODE_G711A
 #define VOIP_RATE_MAX		23850
 
-enum format {
-	FORMAT_S16_LE = 2,
-	FORMAT_SPECIAL = 31,
-};
-
 
 enum amr_rate_type {
 	AMR_RATE_4750, /* AMR 4.75 kbps */
@@ -1080,22 +1075,22 @@ static int voip_config_vocoder(struct snd_pcm_substream *substream)
 		 __func__, prtd->mode, prtd->play_samp_rate,
 		 prtd->cap_samp_rate);
 
-	if ((runtime->format != FORMAT_S16_LE &&
-	     runtime->format != FORMAT_SPECIAL) &&
+	if ((runtime->format != SNDRV_PCM_FORMAT_S16_LE &&
+	     runtime->format != SNDRV_PCM_FORMAT_SPECIAL) &&
 	    ((prtd->mode == MODE_AMR) || (prtd->mode == MODE_AMR_WB) ||
 	    (prtd->mode == MODE_IS127) || (prtd->mode == MODE_4GV_NB) ||
 	    (prtd->mode == MODE_4GV_WB) || (prtd->mode == MODE_4GV_NW) ||
 	    (prtd->mode == MODE_G711) || (prtd->mode == MODE_G711A))) {
-		pr_err("%s(): mode:%d and format:%u are not matched\n",
-			__func__, prtd->mode, (uint32_t)runtime->format);
+		pr_err("%s(): mode:%d and format:%s are not matched\n",
+			__func__, prtd->mode, snd_pcm_format_name(runtime->format));
 
 		ret =  -EINVAL;
 		goto done;
 	}
 
-	if (runtime->format != FORMAT_S16_LE && (prtd->mode == MODE_PCM)) {
-		pr_err("%s(): mode:%d and format:%u are not matched\n",
-		       __func__, prtd->mode, runtime->format);
+	if (runtime->format != SNDRV_PCM_FORMAT_S16_LE && (prtd->mode == MODE_PCM)) {
+		pr_err("%s(): mode:%d and format:%s are not matched\n",
+		       __func__, prtd->mode, snd_pcm_format_name(runtime->format));
 
 		ret =  -EINVAL;
 		goto done;

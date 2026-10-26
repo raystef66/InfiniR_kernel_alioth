@@ -269,7 +269,7 @@ static long audio_in_ioctl_shared(struct file *file,
 		break;
 	}
 	case AUDIO_GET_SESSION_ID: {
-		if (copy_to_user((void *) arg, &audio->ac->session,
+		if (copy_to_user((void __user *) arg, &audio->ac->session,
 			sizeof(u16))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_SESSION_ID failed\n",
 				__func__);
@@ -296,7 +296,7 @@ long audio_in_ioctl(struct file *file,
 		memset(&stats, 0, sizeof(stats));
 		stats.byte_count = atomic_read(&audio->in_bytes);
 		stats.sample_count = atomic_read(&audio->in_samples);
-		if (copy_to_user((void *) arg, &stats, sizeof(stats)))
+		if (copy_to_user((void __user *) arg, &stats, sizeof(stats)))
 			return -EFAULT;
 		return rc;
 	}
@@ -314,7 +314,7 @@ long audio_in_ioctl(struct file *file,
 		memset(&cfg, 0, sizeof(cfg));
 		cfg.buffer_size = audio->str_cfg.buffer_size;
 		cfg.buffer_count = audio->str_cfg.buffer_count;
-		if (copy_to_user((void *)arg, &cfg, sizeof(cfg)))
+		if (copy_to_user((void __user *)arg, &cfg, sizeof(cfg)))
 			rc = -EFAULT;
 		pr_debug("%s:session id %d: AUDIO_GET_STREAM_CONFIG %d %d\n",
 				__func__, audio->ac->session, cfg.buffer_size,
@@ -324,7 +324,7 @@ long audio_in_ioctl(struct file *file,
 	case AUDIO_SET_STREAM_CONFIG: {
 		struct msm_audio_stream_config cfg;
 
-		if (copy_from_user(&cfg, (void *)arg, sizeof(cfg))) {
+		if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_STREAM_CONFIG failed\n"
 				, __func__);
 			rc = -EFAULT;
@@ -367,7 +367,7 @@ long audio_in_ioctl(struct file *file,
 	case AUDIO_SET_BUF_CFG: {
 		struct msm_audio_buf_cfg  cfg;
 
-		if (copy_from_user(&cfg, (void *)arg, sizeof(cfg))) {
+		if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg))) {
 			rc = -EFAULT;
 			break;
 		}
@@ -398,13 +398,13 @@ long audio_in_ioctl(struct file *file,
 			audio->ac->session, audio->buf_cfg.meta_info_enable,
 			audio->buf_cfg.frames_per_buf);
 
-		if (copy_to_user((void *)arg, &audio->buf_cfg,
+		if (copy_to_user((void __user *)arg, &audio->buf_cfg,
 					sizeof(struct msm_audio_buf_cfg)))
 			rc = -EFAULT;
 		break;
 	}
 	case AUDIO_GET_CONFIG: {
-		if (copy_to_user((void *)arg, &audio->pcm_cfg,
+		if (copy_to_user((void __user *)arg, &audio->pcm_cfg,
 					sizeof(struct msm_audio_config)))
 			rc = -EFAULT;
 		break;
@@ -413,7 +413,7 @@ long audio_in_ioctl(struct file *file,
 	case AUDIO_SET_CONFIG: {
 		struct msm_audio_config cfg;
 
-		if (copy_from_user(&cfg, (void *)arg, sizeof(cfg))) {
+		if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_CONFIG failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -487,7 +487,7 @@ long audio_in_compat_ioctl(struct file *file,
 		memset(&stats_32, 0, sizeof(stats_32));
 		stats_32.byte_count = atomic_read(&audio->in_bytes);
 		stats_32.sample_count = atomic_read(&audio->in_samples);
-		if (copy_to_user((void *) arg, &stats_32, sizeof(stats_32))) {
+		if (copy_to_user((void __user *) arg, &stats_32, sizeof(stats_32))) {
 			pr_err("%s: copy_to_user failed for AUDIO_GET_STATS_32\n",
 				__func__);
 			return -EFAULT;
@@ -508,7 +508,7 @@ long audio_in_compat_ioctl(struct file *file,
 		memset(&cfg_32, 0, sizeof(cfg_32));
 		cfg_32.buffer_size = audio->str_cfg.buffer_size;
 		cfg_32.buffer_count = audio->str_cfg.buffer_count;
-		if (copy_to_user((void *)arg, &cfg_32, sizeof(cfg_32))) {
+		if (copy_to_user((void __user *)arg, &cfg_32, sizeof(cfg_32))) {
 			pr_err("%s: Copy to user failed\n", __func__);
 			rc = -EFAULT;
 		}
@@ -522,7 +522,7 @@ long audio_in_compat_ioctl(struct file *file,
 		struct msm_audio_stream_config32 cfg_32;
 		struct msm_audio_stream_config cfg;
 
-		if (copy_from_user(&cfg_32, (void *)arg, sizeof(cfg_32))) {
+		if (copy_from_user(&cfg_32, (void __user *)arg, sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_STREAM_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -564,7 +564,7 @@ long audio_in_compat_ioctl(struct file *file,
 		struct msm_audio_buf_cfg32 cfg_32;
 		struct msm_audio_buf_cfg cfg;
 
-		if (copy_from_user(&cfg_32, (void *)arg, sizeof(cfg_32))) {
+		if (copy_from_user(&cfg_32, (void __user *)arg, sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_BUG_CFG_32 failed",
 				__func__);
 			rc = -EFAULT;
@@ -603,7 +603,7 @@ long audio_in_compat_ioctl(struct file *file,
 		cfg_32.meta_info_enable = audio->buf_cfg.meta_info_enable;
 		cfg_32.frames_per_buf = audio->buf_cfg.frames_per_buf;
 
-		if (copy_to_user((void *)arg, &cfg_32,
+		if (copy_to_user((void __user *)arg, &cfg_32,
 			sizeof(struct msm_audio_buf_cfg32))) {
 			pr_err("%s: Copy to user failed\n", __func__);
 			rc = -EFAULT;
@@ -622,7 +622,7 @@ long audio_in_compat_ioctl(struct file *file,
 		cfg_32.meta_field = audio->pcm_cfg.meta_field;
 		cfg_32.bits = audio->pcm_cfg.bits;
 
-		if (copy_to_user((void *)arg, &cfg_32,
+		if (copy_to_user((void __user *)arg, &cfg_32,
 					sizeof(struct msm_audio_config32))) {
 			pr_err("%s: Copy to user failed\n", __func__);
 			rc = -EFAULT;
@@ -633,7 +633,7 @@ long audio_in_compat_ioctl(struct file *file,
 		struct msm_audio_config32 cfg_32;
 		struct msm_audio_config cfg;
 
-		if (copy_from_user(&cfg_32, (void *)arg, sizeof(cfg_32))) {
+		if (copy_from_user(&cfg_32, (void __user *)arg, sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;

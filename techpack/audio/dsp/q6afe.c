@@ -357,7 +357,7 @@ static char clk_src_name[CLK_SRC_MAX][CLK_SRC_NAME_MAX];
 
 static int pcm_afe_instance[2];
 static int proxy_afe_instance[2];
-bool afe_close_done[2] = {true, true};
+static bool afe_close_done[2] = {true, true};
 
 #define SIZEOF_CFG_CMD(y) \
 		(sizeof(struct apr_hdr) + sizeof(u16) + (sizeof(struct y)))
@@ -505,6 +505,8 @@ static int remap_cal_data(struct cal_block_data *cal_block, int cal_index);
  * @private_data - external mclk callback specific data
  *
  * Returns 0 in case of success and -EINVAL for failure
+ * @fn: External master-clock control callback
+ * @private_data: Context passed to the master-clock callback
  */
 int afe_register_ext_mclk_cb(afe_enable_mclk_and_get_info_cb_func fn,
 				void *private_data)
@@ -1658,7 +1660,7 @@ int afe_apr_send_pkt_crus(void *data, int index, int set)
 	if (set)
 		return afe_apr_send_pkt(data, &this_afe.wait[index]);
 	else /* get */
-		return afe_apr_send_pkt(data, 0);
+		return afe_apr_send_pkt(data, NULL);
 }
 
 EXPORT_SYMBOL(afe_apr_send_pkt_crus);
@@ -5958,6 +5960,7 @@ EXPORT_SYMBOL(afe_port_start);
  * @dec_cfg: AFE dec configuration information to set up decoder
  *
  * Returns 0 on success or error value on port start failure.
+ * @afe_in_bit_width: AFE input sample width in bits
  */
 int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
@@ -5996,6 +5999,7 @@ EXPORT_SYMBOL(afe_port_start_v2);
  * @ttp_cfg: TTP generator configuration to enable TTP in AFE
  *
  * Returns 0 on success or error value on port start failure.
+ * @afe_in_bit_width: AFE input sample width in bits
  */
 int afe_port_start_v3(u16 port_id, union afe_port_config *afe_config,
 		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
@@ -9842,7 +9846,7 @@ done:
  *       command to get excursion logging data from DSP
  *
  * @xt_logging: excursion logging params
- * @port: AFE port ID
+ * @port_id: AFE port ID
  *
  * Returns 0 on success or error on failure
  */
@@ -11601,7 +11605,9 @@ static bool q6afe_is_afe_lsm_port(int port_id)
  *            Update LSM AFE port
  * idx: LSM port index
  * lsm_port: LSM port id
-*/
+ * @idx: LSM port array index
+ * @lsm_port: AFE port assigned to the LSM session
+ */
 void afe_set_lsm_afe_port_id(int idx, int lsm_port)
 {
 	if (idx < 0 || idx >= MAX_LSM_SESSIONS) {

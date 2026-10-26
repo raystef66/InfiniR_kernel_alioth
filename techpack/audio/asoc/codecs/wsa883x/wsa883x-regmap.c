@@ -8,8 +8,6 @@
 #include "wsa883x-registers.h"
 #include "wsa883x.h"
 
-extern const u8 wsa883x_reg_access[WSA883X_NUM_REGISTERS];
-
 static struct reg_default wsa883x_defaults[] = {
 	{WSA883X_REF_CTRL,                   0xD5},
 	{WSA883X_TEST_CTL_0,                 0x06},

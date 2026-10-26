@@ -1829,7 +1829,7 @@ int msm_ds2_dap_ioctl_shared(struct snd_hwdep *hw, struct file *file,
 }
 
 int msm_ds2_dap_ioctl(struct snd_hwdep *hw, struct file *file,
-		      u32 cmd, void *arg)
+		      u32 cmd, void __user *arg)
 {
 
 	int ret = 0;
@@ -1898,7 +1898,7 @@ end:
 }
 #ifdef CONFIG_COMPAT
 int msm_ds2_dap_compat_ioctl(struct snd_hwdep *hw, struct file *file,
-			     u32 cmd, void *arg)
+			     u32 cmd, void __user *arg)
 {
 	int ret = 0;
 

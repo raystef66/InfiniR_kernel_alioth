@@ -99,8 +99,8 @@ static struct service_info service_data[AUDIO_NOTIFIER_MAX_SERVICES]
 };
 
 /* Master list of all audio notifier clients */
-struct list_head   client_list;
-struct mutex       notifier_mutex;
+static struct list_head client_list;
+static struct mutex       notifier_mutex;
 
 static int audio_notifer_get_default_service(int domain)
 {

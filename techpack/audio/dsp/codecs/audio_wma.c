@@ -105,7 +105,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_GET_WMA_CONFIG_V2: {
-		if (copy_to_user((void *)arg, audio->codec_cfg,
+		if (copy_to_user((void __user *)arg, audio->codec_cfg,
 			sizeof(struct msm_audio_wma_config_v2))) {
 			pr_err("%s:copy_to_user for AUDIO_SET_WMA_CONFIG_V2 failed\n",
 				__func__);
@@ -115,7 +115,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_SET_WMA_CONFIG_V2: {
-		if (copy_from_user(audio->codec_cfg, (void *)arg,
+		if (copy_from_user(audio->codec_cfg, (void __user *)arg,
 			sizeof(struct msm_audio_wma_config_v2))) {
 			pr_err("%s:copy_from_user for AUDIO_SET_WMA_CONFIG_V2 failed\n",
 				__func__);
@@ -181,7 +181,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 					wma_config->validbitspersample;
 		wma_config_32.channelmask = wma_config->channelmask;
 		wma_config_32.encodeopt = wma_config->encodeopt;
-		if (copy_to_user((void *)arg, &wma_config_32,
+		if (copy_to_user((void __user *)arg, &wma_config_32,
 			sizeof(wma_config_32))) {
 			pr_err("%s: copy_to_user for GET_WMA_CONFIG_V2_32 failed\n",
 				 __func__);
@@ -194,7 +194,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_wma_config_v2 *wma_config;
 		struct msm_audio_wma_config_v2_32 wma_config_32;
 
-		if (copy_from_user(&wma_config_32, (void *)arg,
+		if (copy_from_user(&wma_config_32, (void __user *)arg,
 			sizeof(wma_config_32))) {
 			pr_err("%s: copy_from_user for SET_WMA_CONFIG_V2_32 failed\n"
 				, __func__);

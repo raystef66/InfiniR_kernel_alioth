@@ -153,7 +153,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	switch (cmd) {
 	case AUDIO_GET_WMAPRO_CONFIG: {
-		if (copy_to_user((void *)arg, audio->codec_cfg,
+		if (copy_to_user((void __user *)arg, audio->codec_cfg,
 			 sizeof(struct msm_audio_wmapro_config))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_WMAPRO_CONFIG failed\n",
 				__func__);
@@ -162,7 +162,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_SET_WMAPRO_CONFIG: {
-		if (copy_from_user(audio->codec_cfg, (void *)arg,
+		if (copy_from_user(audio->codec_cfg, (void __user *)arg,
 			sizeof(struct msm_audio_wmapro_config))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_WMAPRO_CONFIG_V2 failed\n",
 				__func__);
@@ -241,7 +241,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		wmapro_config_32.advancedencodeopt2 =
 					wmapro_config->advancedencodeopt2;
 
-		if (copy_to_user((void *)arg, &wmapro_config_32,
+		if (copy_to_user((void __user *)arg, &wmapro_config_32,
 			 sizeof(struct msm_audio_wmapro_config32))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_WMAPRO_CONFIG_V2_32 failed\n",
 				__func__);
@@ -253,7 +253,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_wmapro_config *wmapro_config;
 		struct msm_audio_wmapro_config32 wmapro_config_32;
 
-		if (copy_from_user(&wmapro_config_32, (void *)arg,
+		if (copy_from_user(&wmapro_config_32, (void __user *)arg,
 			sizeof(struct msm_audio_wmapro_config32))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_SET_WMAPRO_CONFG_V2_32 failed\n",

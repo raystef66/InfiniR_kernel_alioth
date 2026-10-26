@@ -135,6 +135,7 @@ static const struct irq_domain_ops wcd_domain_ops = {
  * @irq_info: pointer to IRQ info structure
  *
  * Returns 0 on success or error on failure
+ * @virq: Codec IRQ context
  */
 int wcd_irq_init(struct wcd_irq_info *irq_info, struct irq_domain **virq)
 {
@@ -170,6 +171,7 @@ EXPORT_SYMBOL(wcd_irq_init);
  * @irq_info: pointer to IRQ info structure
  *
  * Returns 0 on success or error on failure
+ * @virq: Codec IRQ context
  */
 int wcd_irq_exit(struct wcd_irq_info *irq_info, struct irq_domain *virq)
 {

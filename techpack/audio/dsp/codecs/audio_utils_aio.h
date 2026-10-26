@@ -112,7 +112,7 @@ struct audio_aio_ion_region {
 	struct list_head list;
 	struct dma_buf *dma_buf;
 	int fd;
-	void *vaddr;
+	void __user *vaddr;
 	phys_addr_t paddr;
 	void *kvaddr;
 	unsigned long len;

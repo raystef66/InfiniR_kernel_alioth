@@ -229,7 +229,7 @@ static int audio_effects_shared_ioctl(struct file *file, unsigned int cmd,
 		bufptr = q6asm_is_cpu_buf_avail(IN, effects->ac, &size, &idx);
 		if (bufptr) {
 			if ((effects->config.buf_cfg.output_len > size) ||
-				copy_from_user(bufptr, (void *)arg,
+				copy_from_user(bufptr, (void __user *)arg,
 					effects->config.buf_cfg.output_len)) {
 				rc = -EFAULT;
 				mutex_unlock(&effects->lock);
@@ -295,7 +295,7 @@ static int audio_effects_shared_ioctl(struct file *file, unsigned int cmd,
 				goto ioctl_fail;
 			}
 			if ((effects->config.buf_cfg.input_len > size) ||
-				copy_to_user((void *)arg, bufptr,
+				copy_to_user((void __user *)arg, bufptr,
 					  effects->config.buf_cfg.input_len)) {
 				rc = -EFAULT;
 				mutex_unlock(&effects->lock);
@@ -412,7 +412,7 @@ static long audio_effects_ioctl(struct file *file, unsigned int cmd,
 		pr_debug("%s: AUDIO_SET_EFFECTS_CONFIG\n", __func__);
 		mutex_lock(&effects->lock);
 		memset(&effects->config, 0, sizeof(effects->config));
-		if (copy_from_user(&effects->config, (void *)arg,
+		if (copy_from_user(&effects->config, (void __user *)arg,
 				   sizeof(effects->config))) {
 			pr_err("%s: copy from user for AUDIO_SET_EFFECTS_CONFIG failed\n",
 				__func__);
@@ -433,7 +433,7 @@ static long audio_effects_ioctl(struct file *file, unsigned int cmd,
 	}
 	case AUDIO_EFFECTS_SET_BUF_LEN: {
 		mutex_lock(&effects->lock);
-		if (copy_from_user(&effects->config.buf_cfg, (void *)arg,
+		if (copy_from_user(&effects->config.buf_cfg, (void __user *)arg,
 				   sizeof(effects->config.buf_cfg))) {
 			pr_err("%s: copy from user for AUDIO_EFFECTS_SET_BUF_LEN failed\n",
 				__func__);
@@ -454,7 +454,7 @@ static long audio_effects_ioctl(struct file *file, unsigned int cmd,
 		pr_debug("%s: write buf avail: %d, read buf avail: %d\n",
 			 __func__, buf_avail.output_num_avail,
 			 buf_avail.input_num_avail);
-		if (copy_to_user((void *)arg, &buf_avail,
+		if (copy_to_user((void __user *)arg, &buf_avail,
 				   sizeof(buf_avail))) {
 			pr_err("%s: copy to user for AUDIO_EFFECTS_GET_NUM_BUF_AVAIL failed\n",
 				__func__);
@@ -465,7 +465,7 @@ static long audio_effects_ioctl(struct file *file, unsigned int cmd,
 	}
 	case AUDIO_EFFECTS_SET_PP_PARAMS: {
 		mutex_lock(&effects->lock);
-		if (copy_from_user(argvalues, (void *)arg,
+		if (copy_from_user(argvalues, (void __user *)arg,
 				   MAX_PP_PARAMS_SZ*sizeof(long))) {
 			pr_err("%s: copy from user for pp params failed\n",
 				__func__);
@@ -542,7 +542,7 @@ static long audio_effects_compat_ioctl(struct file *file, unsigned int cmd,
 
 		mutex_lock(&effects->lock);
 		memset(&effects->config, 0, sizeof(effects->config));
-		if (copy_from_user(&config32, (void *)arg,
+		if (copy_from_user(&config32, (void __user *)arg,
 				   sizeof(config32))) {
 			pr_err("%s: copy to user for AUDIO_SET_EFFECTS_CONFIG failed\n",
 				__func__);
@@ -592,7 +592,7 @@ static long audio_effects_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_hwacc_effects_config *config = &effects->config;
 
 		mutex_lock(&effects->lock);
-		if (copy_from_user(&buf_cfg32, (void *)arg,
+		if (copy_from_user(&buf_cfg32, (void __user *)arg,
 				   sizeof(buf_cfg32))) {
 			pr_err("%s: copy from user for AUDIO_EFFECTS_SET_BUF_LEN failed\n",
 				__func__);
@@ -619,7 +619,7 @@ static long audio_effects_compat_ioctl(struct file *file, unsigned int cmd,
 		pr_debug("%s: write buf avail: %d, read buf avail: %d\n",
 			 __func__, buf_avail.output_num_avail,
 			 buf_avail.input_num_avail);
-		if (copy_to_user((void *)arg, &buf_avail,
+		if (copy_to_user((void __user *)arg, &buf_avail,
 				   sizeof(buf_avail))) {
 			pr_err("%s: copy to user for AUDIO_EFFECTS_GET_NUM_BUF_AVAIL failed\n",
 				__func__);
@@ -633,7 +633,7 @@ static long audio_effects_compat_ioctl(struct file *file, unsigned int cmd,
 		int argvalues32[MAX_PP_PARAMS_SZ] = {0};
 
 		mutex_lock(&effects->lock);
-		if (copy_from_user(argvalues32, (void *)arg,
+		if (copy_from_user(argvalues32, (void __user *)arg,
 				   MAX_PP_PARAMS_SZ*sizeof(int))) {
 			pr_err("%s: copy from user failed for pp params\n",
 				__func__);
@@ -754,7 +754,7 @@ static const struct file_operations audio_effects_fops = {
 #endif
 };
 
-struct miscdevice audio_effects_misc = {
+static struct miscdevice audio_effects_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "msm_hweffects",
 	.fops = &audio_effects_fops,

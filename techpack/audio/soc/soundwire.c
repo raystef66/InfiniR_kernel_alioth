@@ -224,6 +224,7 @@ EXPORT_SYMBOL(swr_port_response);
  * dev_num: device number of the soundwire slave device
  *
  * Returns error code for failure and 0 for success
+ * @dev_num: SoundWire logical device number
  */
 int swr_remove_from_group(struct swr_device *dev, u8 dev_num)
 {
@@ -257,6 +258,7 @@ EXPORT_SYMBOL(swr_remove_from_group);
  * @dev_num: device number of the soundwire slave device
  *
  * Returns error code for failure and 0 for success
+ * @enable: Whether to enable the slave datapath
  */
 int swr_slvdev_datapath_control(struct swr_device *dev, u8 dev_num,
 				bool enable)
@@ -301,6 +303,7 @@ EXPORT_SYMBOL(swr_slvdev_datapath_control);
  * its ports and corresponding channels and channel rate. This API will
  * call master connect_port callback function to calculate frame structure
  * and enable master and slave ports
+ * @port_type: Port type for each SoundWire slave port
  */
 int swr_connect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
 			u8 *ch_mask, u32 *ch_rate, u8 *num_ch, u8 *port_type)
@@ -388,6 +391,8 @@ EXPORT_SYMBOL(swr_connect_port);
  * soundwire slave device call swr_disconnect_port API to disable all/some of
  * its ports. This API will call master disconnect_port callback function to
  * disable master and slave port and (re)configure frame structure
+ * @ch_mask: Channel mask for each disconnected port
+ * @port_type: Port type for each SoundWire slave port
  */
 int swr_disconnect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
 					u8 *ch_mask, u8 *port_type)
@@ -568,7 +573,7 @@ EXPORT_SYMBOL(swr_read);
  * swr_bulk_write - write soundwire slave device registers
  * @dev: pointer to soundwire slave device
  * @dev_num: logical device num of soundwire slave device
- * @reg_addr: register address of soundwire slave device
+ * @reg: register address of soundwire slave device
  * @buf: contains value of register address
  * @len: indicates number of registers
  *
@@ -1088,7 +1093,7 @@ static const struct dev_pm_ops soundwire_pm = {
 		)
 };
 
-struct device soundwire_dev = {
+static struct device soundwire_dev = {
 	.init_name = "soundwire",
 };
 

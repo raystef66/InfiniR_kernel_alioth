@@ -47,7 +47,7 @@ enum {
 	VOC_SOURCE_TRACKING_MEM_MAP_TOKEN
 };
 
-struct cvd_version_table cvd_version_table_mapping[CVD_INT_VERSION_MAX] = {
+static struct cvd_version_table cvd_version_table_mapping[CVD_INT_VERSION_MAX] = {
 		{CVD_VERSION_DEFAULT, CVD_INT_VERSION_DEFAULT},
 		{CVD_VERSION_0_0, CVD_INT_VERSION_0_0},
 		{CVD_VERSION_2_1, CVD_INT_VERSION_2_1},
@@ -6574,7 +6574,7 @@ EXPORT_SYMBOL(voc_get_tty_mode);
  *       Command to set PP for voice module
  *
  * @session_id: voice session ID to send this command
- * @module_id: voice module id
+ * @mod_inst_info: voice module id
  * @enable: enable/disable flag
  *
  * Returns 0 on success or error on failure
@@ -7454,6 +7454,8 @@ EXPORT_SYMBOL(voc_start_voice_call);
  *       Set EC ref port id
  *
  * Returns 0 on success or -EINVAL on failure
+ * @port_id: AFE port identifier
+ * @state: Whether the external echo-reference port is enabled
  */
 int voc_set_ext_ec_ref_port_id(uint16_t port_id, bool state)
 {
@@ -7503,6 +7505,7 @@ EXPORT_SYMBOL(voc_get_ext_ec_ref_port_id);
  * ssr_cb: SSR callback fn
  * @private_data: private data of mvs
  *
+ * @ssr_cb: Subsystem-restart callback
  */
 void voc_register_mvs_cb(ul_cb_fn ul_cb,
 			   dl_cb_fn dl_cb,
@@ -7535,6 +7538,12 @@ EXPORT_SYMBOL(voc_register_dtmf_rx_detection_cb);
 /**
  * voc_config_vocoder -
  *       Update config for mvs params.
+ * @dtx_mode: Discontinuous transmission mode
+ * @evrc_max_rate: Maximum EVRC rate setting
+ * @evrc_min_rate: Minimum EVRC rate setting
+ * @media_type: Vocoder media format identifier
+ * @network_type: Vocoder network type
+ * @rate: Vocoder rate setting
  */
 void voc_config_vocoder(uint32_t media_type,
 			uint32_t rate,
@@ -8470,6 +8479,8 @@ done:
  * @session_id: voice session ID to send this command
  *
  * Returns 0 on success or error on failure
+ * @no_of_tp: Number of voice PCM tap points
+ * @vpcm_tp: Voice PCM tap-point configuration
  */
 int voc_send_cvp_start_vocpcm(uint32_t session_id,
 			      struct vss_ivpcm_tap_point *vpcm_tp,
@@ -8631,6 +8642,8 @@ EXPORT_SYMBOL(voc_send_cvp_stop_vocpcm);
  * bufsize: Buffer size of memory mapped area
  *
  * Returns 0 on success or error on failure
+ * @bufsize: Mapped voice PCM buffer size in bytes
+ * @paddr: Physical address of the voice PCM buffer
  */
 int voc_send_cvp_map_vocpcm_memory(uint32_t session_id,
 				   struct mem_map_table *tp_mem_table,

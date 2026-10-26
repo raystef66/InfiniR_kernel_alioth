@@ -202,7 +202,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case AUDIO_GET_AAC_CONFIG: {
-		if (copy_to_user((void *)arg, audio->codec_cfg,
+		if (copy_to_user((void __user *)arg, audio->codec_cfg,
 			sizeof(struct msm_audio_aac_config))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_AAC_CONFIG failed\n",
 				__func__);
@@ -215,7 +215,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		struct msm_audio_aac_config aac_config;
 
 		pr_debug("%s: AUDIO_SET_AAC_CONFIG\n", __func__);
-		if (copy_from_user(&aac_config, (void *)arg,
+		if (copy_from_user(&aac_config, (void __user *)arg,
 			sizeof(aac_config))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_AAC_CONFIG failed\n",
 				__func__);
@@ -293,7 +293,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 					aac_config->channel_configuration;
 		aac_config_32.sample_rate = aac_config->sample_rate;
 
-		if (copy_to_user((void *)arg, &aac_config_32,
+		if (copy_to_user((void __user *)arg, &aac_config_32,
 			sizeof(aac_config_32))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_AAC_CONFIG_32 failed\n",
 				__func__);
@@ -307,7 +307,7 @@ static long audio_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_aac_config32 aac_config_32;
 
 		pr_debug("%s: AUDIO_SET_AAC_CONFIG\n", __func__);
-		if (copy_from_user(&aac_config_32, (void *)arg,
+		if (copy_from_user(&aac_config_32, (void __user *)arg,
 			sizeof(aac_config_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_AAC_CONFIG_32 failed\n",
 				__func__);

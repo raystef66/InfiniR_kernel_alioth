@@ -55,7 +55,7 @@ struct msm_audio_pp_asphere_state_s {
 
 static struct msm_audio_pp_asphere_state_s asphere_state;
 
-struct msm_audio_eq_stream_config	eq_data[MAX_EQ_SESSIONS];
+static struct msm_audio_eq_stream_config eq_data[MAX_EQ_SESSIONS];
 
 static int msm_route_hfp_vol_control;
 static const DECLARE_TLV_DB_LINEAR(hfp_rx_vol_gain, 0,
@@ -284,7 +284,7 @@ int msm_qti_pp_send_stereo_to_custom_stereo_cmd(int port_id, int copp_idx,
 {
 	char *params_value;
 	int *update_params_value32, rc = 0;
-	int16_t *update_params_value16 = 0;
+	int16_t *update_params_value16 = NULL;
 	uint32_t params_length = CUSTOM_STEREO_PAYLOAD_SIZE * sizeof(uint32_t);
 	uint32_t avail_length = params_length;
 
@@ -442,7 +442,7 @@ int msm_qti_pp_send_chmix_cfg_cmd(int port_id, int copp_idx,
 	char *params_value;
 	int rc = 0, i, direction;
 	u8 *param_ptr;
-	int16_t *update_params_value16 = 0;
+	int16_t *update_params_value16 = NULL;
 	uint32_t param_size = msm_qti_pp_get_chmix_param_size(ip_channel_cnt,
 				op_channel_cnt);
 	struct param_hdr_v3 *param_hdr;

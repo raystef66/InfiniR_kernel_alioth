@@ -755,6 +755,9 @@ EXPORT_SYMBOL(q6core_get_avcs_api_version_per_service);
  * @build_branch_version - pointer to build branch version
  *
  * Returns 0 on success and error on failure
+ * @build_branch_version: Receives the AVCS/AVS branch build version
+ * @build_major_version: Receives the AVCS/AVS major build version
+ * @build_minor_version: Receives the AVCS/AVS minor build version
  */
 int q6core_get_avcs_avs_build_version_info(
 	uint32_t *build_major_version, uint32_t *build_minor_version,

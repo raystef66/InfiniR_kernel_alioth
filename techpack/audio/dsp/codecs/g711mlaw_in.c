@@ -144,7 +144,7 @@ static long g711_in_ioctl(struct file *file,
 		break;
 	}
 	case AUDIO_GET_G711_ENC_CONFIG: {
-		if (copy_to_user((void *)arg, audio->enc_cfg,
+		if (copy_to_user((void __user *)arg, audio->enc_cfg,
 			sizeof(struct msm_audio_g711_enc_config))) {
 			pr_err(
 				"%s: copy_to_user for AUDIO_GET_g711_ENC_CONFIG failed",
@@ -156,7 +156,7 @@ static long g711_in_ioctl(struct file *file,
 	case AUDIO_SET_G711_ENC_CONFIG: {
 		struct msm_audio_g711_enc_config cfg;
 
-		if (copy_from_user(&cfg, (void *) arg,
+		if (copy_from_user(&cfg, (void __user *) arg,
 				sizeof(cfg))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_GET_G711_ENC_CONFIG failed",
@@ -207,7 +207,7 @@ static long g711_in_compat_ioctl(struct file *file,
 
 		enc_cfg = (struct msm_audio_g711_enc_config32 *)audio->enc_cfg;
 		cfg_32.sample_rate = enc_cfg->sample_rate;
-		if (copy_to_user((void *)arg, &cfg_32,
+		if (copy_to_user((void __user *)arg, &cfg_32,
 			sizeof(cfg_32))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_G711_ENC_CONFIG_32 failed\n",
 				__func__);
@@ -219,7 +219,7 @@ static long g711_in_compat_ioctl(struct file *file,
 		struct msm_audio_g711_enc_config32 cfg_32;
 		struct msm_audio_g711_enc_config32 cfg;
 
-		if (copy_from_user(&cfg_32, (void *) arg,
+		if (copy_from_user(&cfg_32, (void __user *) arg,
 				sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_G711_ENC_CONFIG_32 failed\n",
 				__func__);
@@ -362,7 +362,7 @@ static const struct file_operations audio_in_fops = {
 #endif
 };
 
-struct miscdevice audio_g711mlaw_in_misc = {
+static struct miscdevice audio_g711mlaw_in_misc = {
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "msm_g711mlaw_in",
 	.fops	= &audio_in_fops,

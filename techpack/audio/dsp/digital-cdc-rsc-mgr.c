@@ -10,7 +10,7 @@
 #include <dsp/digital-cdc-rsc-mgr.h>
 #include "q6_init.h"
 
-struct mutex hw_vote_lock;
+static struct mutex hw_vote_lock;
 static bool is_init_done;
 
 /**
@@ -63,6 +63,7 @@ EXPORT_SYMBOL(digital_cdc_rsc_mgr_hw_vote_disable);
 /**
  * digital_cdc_rsc_mgr_hw_vote_reset - Resets hw vote count
  *
+ * @vote_handle: Codec hardware vote handle
  */
 void digital_cdc_rsc_mgr_hw_vote_reset(struct clk* vote_handle)
 {

@@ -55,7 +55,7 @@
 #endif
 
 static int tx_unmute_delay = TX_MACRO_DMIC_UNMUTE_DELAY_MS;
-struct tx_macro_priv *g_tx_priv;
+static struct tx_macro_priv *g_tx_priv;
 
 module_param(tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(tx_unmute_delay, "delay to unmute the tx path");

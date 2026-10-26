@@ -31,6 +31,8 @@ EXPORT_SYMBOL(msm_aud_evt_unregister_client);
 /**
  * msm_aud_evt_notifier_call_chain - notify clients of fb_events
  *
+ * @v: Notifier event payload
+ * @val: Notifier event value
  */
 int msm_aud_evt_notifier_call_chain(unsigned long val, void *v)
 {

@@ -7,8 +7,6 @@
 #include <linux/device.h>
 #include "wcd938x-registers.h"
 
-extern const u8 wcd938x_reg_access[WCD938X_REGISTERS_MAX_SIZE];
-
 static const struct reg_default wcd938x_defaults[] = {
 	{WCD938X_ANA_PAGE_REGISTER,                            0x00},
 	{WCD938X_ANA_BIAS,                                     0x00},

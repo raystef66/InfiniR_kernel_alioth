@@ -6,6 +6,11 @@
 #ifndef _WCD938X_REGISTERS_H
 #define _WCD938X_REGISTERS_H
 
+#include <linux/types.h>
+
+struct regmap_config;
+extern struct regmap_config wcd938x_regmap_config;
+
 #define WCD938X_BASE_ADDRESS 0x3000
 #define WCD938X_REG(reg)  (reg - WCD938X_BASE_ADDRESS)
 
@@ -498,5 +503,7 @@ enum {
 
 #define WCD938X_REGISTERS_MAX_SIZE (WCD938X_DIGITAL_DEM_BYPASS_DATA3 + 1)
 #define WCD938X_MAX_REGISTER (WCD938X_REGISTERS_MAX_SIZE - 1)
+
+extern const u8 wcd938x_reg_access[WCD938X_REG(WCD938X_REGISTERS_MAX_SIZE)];
 
 #endif /*_WCD938X_REGISTERS_H*/

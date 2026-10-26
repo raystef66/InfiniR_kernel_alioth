@@ -120,7 +120,7 @@ static int insert_meta_data_flush(struct q6audio_aio *audio,
 		sizeof(meta_data->meta_out_dsp[0]);
 }
 
-static int audio_aio_ion_lookup_vaddr(struct q6audio_aio *audio, void *addr,
+static int audio_aio_ion_lookup_vaddr(struct q6audio_aio *audio, void __user *addr,
 					unsigned long len,
 					struct audio_aio_ion_region **region)
 {
@@ -168,7 +168,7 @@ static int audio_aio_ion_lookup_vaddr(struct q6audio_aio *audio, void *addr,
 	return *region ? 0 : -1;
 }
 
-static phys_addr_t audio_aio_ion_fixup(struct q6audio_aio *audio, void *addr,
+static phys_addr_t audio_aio_ion_fixup(struct q6audio_aio *audio, void __user *addr,
 				unsigned long len, int ref_up, void **kvaddr)
 {
 	struct audio_aio_ion_region *region;
@@ -786,14 +786,14 @@ static long audio_aio_process_event_req_common(struct q6audio_aio *audio,
 			__func__, audio);
 		mutex_lock(&audio->write_lock);
 		audio_aio_ion_fixup(audio, drv_evt->payload.aio_buf.buf_addr,
-		drv_evt->payload.aio_buf.buf_len, 0, 0);
+		drv_evt->payload.aio_buf.buf_len, 0, NULL);
 		mutex_unlock(&audio->write_lock);
 	} else if (drv_evt->event_type == AUDIO_EVENT_READ_DONE) {
 		pr_debug("%s[%pK]:posted AUDIO_EVENT_READ_DONE to user\n",
 			__func__, audio);
 		mutex_lock(&audio->read_lock);
 		audio_aio_ion_fixup(audio, drv_evt->payload.aio_buf.buf_addr,
-		drv_evt->payload.aio_buf.buf_len, 0, 0);
+		drv_evt->payload.aio_buf.buf_len, 0, NULL);
 		mutex_unlock(&audio->read_lock);
 	}
 
@@ -942,7 +942,7 @@ static long audio_aio_process_event_req_compat(struct q6audio_aio *audio,
 #endif
 
 static int audio_aio_ion_check(struct q6audio_aio *audio,
-				void *vaddr, unsigned long len)
+				void __user *vaddr, unsigned long len)
 {
 	struct audio_aio_ion_region *region_elt;
 	struct audio_aio_ion_region t = {.vaddr = vaddr, .len = len };
@@ -1510,7 +1510,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 	}
 	case AUDIO_GET_SESSION_ID: {
 		mutex_lock(&audio->lock);
-		if (copy_to_user((void *)arg, &audio->ac->session,
+		if (copy_to_user((void __user *)arg, &audio->ac->session,
 			sizeof(u16))) {
 			pr_err_ratelimited("%s: copy_to_user for AUDIO_GET_SESSION_ID failed\n",
 				__func__);
@@ -1599,7 +1599,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 			memcpy(&stats.unused[0], &timestamp, sizeof(timestamp));
 		else
 			pr_debug("Error while getting timestamp\n");
-		if (copy_to_user((void *)arg, &stats, sizeof(stats))) {
+		if (copy_to_user((void __user *)arg, &stats, sizeof(stats))) {
 			pr_err("%s: copy_frm_user for AUDIO_GET_STATS failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -1650,7 +1650,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 		cfg.buffer_count = audio->str_cfg.buffer_count;
 		pr_debug("%s[%pK]:GET STREAM CFG %d %d\n",
 			__func__, audio, cfg.buffer_size, cfg.buffer_count);
-		if (copy_to_user((void *)arg, &cfg, sizeof(cfg))) {
+		if (copy_to_user((void __user *)arg, &cfg, sizeof(cfg))) {
 			pr_err(
 				"%s: copy_to_user for AUDIO_GET_STREAM_CONFIG failed\n",
 				__func__);
@@ -1664,7 +1664,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 
 		pr_debug("%s[%pK]:SET STREAM CONFIG\n", __func__, audio);
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&cfg, (void *)arg, sizeof(cfg))) {
+		if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_SET_STREAM_CONFIG failed\n",
 				__func__);
@@ -1682,7 +1682,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_config cfg;
 
 		mutex_lock(&audio->lock);
-		if (copy_to_user((void *)arg, &audio->pcm_cfg, sizeof(cfg))) {
+		if (copy_to_user((void __user *)arg, &audio->pcm_cfg, sizeof(cfg))) {
 			pr_err(
 				"%s: copy_to_user for AUDIO_GET_CONFIG failed\n",
 				__func__);
@@ -1696,7 +1696,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 
 		pr_debug("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&config, (void *)arg, sizeof(config))) {
+		if (copy_from_user(&config, (void __user *)arg, sizeof(config))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_SET_CONFIG failed\n",
 				__func__);
@@ -1730,7 +1730,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_buf_cfg  cfg;
 
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&cfg, (void *)arg, sizeof(cfg))) {
+		if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_GET_BUF CONFIG failed\n",
 				__func__);
@@ -1759,7 +1759,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 			audio->buf_cfg.frames_per_buf);
 
 		mutex_lock(&audio->lock);
-		if (copy_to_user((void *)arg, &audio->buf_cfg,
+		if (copy_to_user((void __user *)arg, &audio->buf_cfg,
 			sizeof(struct msm_audio_buf_cfg))) {
 			pr_err(
 				"%s: copy_to_user for AUDIO_GET_BUF_CONFIG failed\n",
@@ -1774,7 +1774,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 
 		pr_debug("%s[%pK]:AUDIO_REGISTER_ION\n", __func__, audio);
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&info, (void *)arg, sizeof(info))) {
+		if (copy_from_user(&info, (void __user *)arg, sizeof(info))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_REGISTER_ION failed\n",
 				__func__);
@@ -1794,7 +1794,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 
 		mutex_lock(&audio->lock);
 		pr_debug("%s[%pK]:AUDIO_DEREGISTER_ION\n", __func__, audio);
-		if (copy_from_user(&info, (void *)arg, sizeof(info))) {
+		if (copy_from_user(&info, (void __user *)arg, sizeof(info))) {
 			pr_err(
 				"%s: copy_from_user for AUDIO_DEREGISTER_ION failed\n",
 				__func__);
@@ -1905,7 +1905,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 			memcpy(&stats.unused[0], &timestamp, sizeof(timestamp));
 		else
 			pr_debug("Error while getting timestamp\n");
-		if (copy_to_user((void *)arg, &stats, sizeof(stats))) {
+		if (copy_to_user((void __user *)arg, &stats, sizeof(stats))) {
 			pr_err(
 				"%s: copy_to_user for AUDIO_GET_STATS_32 failed\n",
 				__func__);
@@ -1957,7 +1957,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 		cfg.buffer_count = audio->str_cfg.buffer_count;
 		pr_debug("%s[%pK]:GET STREAM CFG %d %d\n",
 			__func__, audio, cfg.buffer_size, cfg.buffer_count);
-		if (copy_to_user((void *)arg, &cfg, sizeof(cfg))) {
+		if (copy_to_user((void __user *)arg, &cfg, sizeof(cfg))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_STREAM_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -1971,7 +1971,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 
 		pr_debug("%s[%pK]:SET STREAM CONFIG\n", __func__, audio);
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&cfg_32, (void *)arg, sizeof(cfg_32))) {
+		if (copy_from_user(&cfg_32, (void __user *)arg, sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_STREAM_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -2000,7 +2000,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 		cfg_32.meta_field = audio->pcm_cfg.meta_field;
 		cfg_32.bits = audio->pcm_cfg.bits;
 
-		if (copy_to_user((void *)arg, &cfg_32, sizeof(cfg_32))) {
+		if (copy_to_user((void __user *)arg, &cfg_32, sizeof(cfg_32))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -2022,7 +2022,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 			break;
 		}
 		pr_debug("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
-		if (copy_from_user(&config_32, (void *)arg,
+		if (copy_from_user(&config_32, (void __user *)arg,
 					sizeof(config_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_CONFIG_32 failed\n",
 				__func__);
@@ -2058,7 +2058,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 		struct msm_audio_buf_cfg32 cfg_32;
 
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&cfg_32, (void *)arg, sizeof(cfg_32))) {
+		if (copy_from_user(&cfg_32, (void __user *)arg, sizeof(cfg_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_CONFIG_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -2093,7 +2093,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 		memset(&cfg_32, 0, sizeof(cfg_32));
 		cfg_32.meta_info_enable = audio->buf_cfg.meta_info_enable;
 		cfg_32.frames_per_buf = audio->buf_cfg.frames_per_buf;
-		if (copy_to_user((void *)arg, &cfg_32,
+		if (copy_to_user((void __user *)arg, &cfg_32,
 			sizeof(struct msm_audio_buf_cfg32))) {
 			pr_err("%s: copy_to_user for AUDIO_GET_BUF_CFG_32 failed\n",
 				__func__);
@@ -2108,7 +2108,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 
 		pr_debug("%s[%pK]:AUDIO_REGISTER_ION\n", __func__, audio);
 		mutex_lock(&audio->lock);
-		if (copy_from_user(&info_32, (void *)arg, sizeof(info_32))) {
+		if (copy_from_user(&info_32, (void __user *)arg, sizeof(info_32))) {
 			pr_err("%s: copy_from_user for AUDIO_REGISTER_ION_32 failed\n",
 				__func__);
 			rc = -EFAULT;
@@ -2130,7 +2130,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 
 		mutex_lock(&audio->lock);
 		pr_debug("%s[%pK]:AUDIO_DEREGISTER_ION\n", __func__, audio);
-		if (copy_from_user(&info_32, (void *)arg, sizeof(info_32))) {
+		if (copy_from_user(&info_32, (void __user *)arg, sizeof(info_32))) {
 			pr_err("%s: copy_from_user for	AUDIO_DEREGISTER_ION_32 failed\n",
 				__func__);
 			rc = -EFAULT;

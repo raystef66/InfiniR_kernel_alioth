@@ -5,6 +5,11 @@
 #ifndef WSA883X_REGISTERS_H
 #define WSA883X_REGISTERS_H
 
+#include <linux/types.h>
+
+struct regmap_config;
+extern struct regmap_config wsa883x_regmap_config;
+
 #define WSA883X_BASE                    0x3000
 #define WSA883X_REG(reg)    (reg - WSA883X_BASE)
 
@@ -382,5 +387,7 @@ enum {
 
 #define WSA883X_NUM_REGISTERS           (WSA883X_EMEM_63+1)
 #define WSA883X_MAX_REGISTER            (WSA883X_NUM_REGISTERS-1)
+
+extern const u8 wsa883x_reg_access[WSA883X_NUM_REGISTERS];
 
 #endif /* WSA883X_REGISTERS_H */

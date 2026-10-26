@@ -188,7 +188,7 @@ struct msm_audio_stats {
 
 struct msm_audio_ion_info {
 	int fd;
-	void *vaddr;
+	void __user *vaddr;
 };
 
 struct msm_audio_pmem_info {
@@ -197,10 +197,10 @@ struct msm_audio_pmem_info {
 };
 
 struct msm_audio_aio_buf {
-	void *buf_addr;
+	void __user *buf_addr;
 	uint32_t buf_len;
 	uint32_t data_len;
-	void *private_data;
+	void __user *private_data;
 	unsigned short mfield_sz; /*only useful for data has meta field */
 };
 

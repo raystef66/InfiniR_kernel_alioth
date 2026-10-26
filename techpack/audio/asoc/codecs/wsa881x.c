@@ -1434,7 +1434,7 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 	if (!debugfs_wsa881x_dent) {
 		dbgwsa881x = wsa881x;
 		debugfs_wsa881x_dent = debugfs_create_dir(
-						"wsa881x_swr_slave", 0);
+						"wsa881x_swr_slave", NULL);
 		if (!IS_ERR(debugfs_wsa881x_dent)) {
 			debugfs_peek = debugfs_create_file("swrslave_peek",
 					S_IFREG | 0444, debugfs_wsa881x_dent,

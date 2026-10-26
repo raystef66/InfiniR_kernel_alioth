@@ -1203,8 +1203,9 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 }
 
 static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void __user *arg)
+			 unsigned int cmd, void *arg)
 {
+	void __user *uarg = (void __user *)arg;
 	struct msm_audio *prtd = NULL;
 	struct snd_soc_pcm_runtime *rtd = NULL;
 	uint64_t ses_time = 0, abs_time = 0;
@@ -1242,7 +1243,7 @@ static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
 			goto done;
 		}
 		memset(&userarg, 0, sizeof(userarg));
-		if (copy_from_user(&userarg, arg, sizeof(userarg))) {
+		if (copy_from_user(&userarg, uarg, sizeof(userarg))) {
 			dev_err(rtd->dev, "%s: err copyuser DSP_POSITION\n",
 				__func__);
 			rc = -EFAULT;
@@ -1267,7 +1268,7 @@ static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
 		}
 
 		userarg.timestamp = abs_time + av_offset;
-		if (copy_to_user(arg, &userarg, sizeof(userarg))) {
+		if (copy_to_user(uarg, &userarg, sizeof(userarg))) {
 			dev_err(rtd->dev, "%s: err copy to user DSP_POSITION\n",
 				__func__);
 			rc = -EFAULT;
@@ -1287,7 +1288,7 @@ done:
 
 #ifdef CONFIG_COMPAT
 static int msm_pcm_compat_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void __user *arg)
+			 unsigned int cmd, void *arg)
 {
 	return msm_pcm_ioctl(substream, cmd, arg);
 }

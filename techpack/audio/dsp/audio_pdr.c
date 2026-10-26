@@ -16,7 +16,7 @@ static struct pd_qmi_client_data audio_pdr_services[AUDIO_PDR_DOMAIN_MAX] = {
 	}
 };
 
-struct srcu_notifier_head audio_pdr_cb_list;
+static struct srcu_notifier_head audio_pdr_cb_list;
 
 static int audio_pdr_locator_callback(struct notifier_block *this,
 				      unsigned long opcode, void *data)
