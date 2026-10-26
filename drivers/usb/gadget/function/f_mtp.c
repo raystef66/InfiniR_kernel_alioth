@@ -887,8 +887,8 @@ static void send_file_work(struct work_struct *data)
 					__cpu_to_le32(dev->xfer_transaction_id);
 		}
 		start_time = ktime_get();
-		ret = vfs_read(filp, req->buf + hdr_size, xfer - hdr_size,
-								&offset);
+		ret = kernel_read(filp, req->buf + hdr_size,
+				  xfer - hdr_size, &offset);
 		if (ret < 0) {
 			r = ret;
 			break;
@@ -981,8 +981,8 @@ static void receive_file_work(struct work_struct *data)
 		if (write_req) {
 			mtp_log("rx %pK %d\n", write_req, write_req->actual);
 			start_time = ktime_get();
-			ret = vfs_write(filp, write_req->buf, write_req->actual,
-				&offset);
+			ret = kernel_write(filp, write_req->buf,
+					   write_req->actual, &offset);
 			mtp_log("vfs_write %d\n", ret);
 			if (ret != write_req->actual) {
 				r = -EIO;
