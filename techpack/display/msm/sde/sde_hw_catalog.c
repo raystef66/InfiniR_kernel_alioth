@@ -2954,12 +2954,11 @@ static int _sde_vbif_populate_qos_parsing(struct sde_mdss_cfg *sde_cfg,
 }
 
 static int _sde_vbif_populate(struct sde_mdss_cfg *sde_cfg,
-	struct sde_vbif_cfg *vbif, struct sde_prop_value *prop_value,
+	struct sde_prop_value *prop_value,
 	int *prop_count, u32 vbif_len, int i)
 {
+	struct sde_vbif_cfg *vbif = sde_cfg->vbif + i;
 	int j, k, rc;
-
-	vbif = sde_cfg->vbif + i;
 	vbif->base = PROP_VALUE_ACCESS(prop_value, VBIF_OFF, i);
 	vbif->len = vbif_len;
 	vbif->id = VBIF_0 + PROP_VALUE_ACCESS(prop_value, VBIF_ID, i);
@@ -2984,6 +2983,7 @@ static int _sde_vbif_populate(struct sde_mdss_cfg *sde_cfg,
 	if (vbif->memtype_count > MAX_XIN_COUNT) {
 		vbif->memtype_count = 0;
 		SDE_ERROR("too many memtype defs, ignoring entries\n");
+		return 0;
 	}
 	for (j = 0, k = 0; j < prop_count[VBIF_MEMTYPE_0]; j++)
 		vbif->memtype[k++] = PROP_VALUE_ACCESS(
@@ -3002,7 +3002,6 @@ static int sde_vbif_parse_dt(struct device_node *np,
 	struct sde_prop_value *prop_value = NULL;
 	bool prop_exists[VBIF_PROP_MAX];
 	u32 off_count, vbif_len;
-	struct sde_vbif_cfg *vbif;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
@@ -3074,7 +3073,7 @@ static int sde_vbif_parse_dt(struct device_node *np,
 		vbif_len = DEFAULT_SDE_HW_BLOCK_LEN;
 
 	for (i = 0; i < off_count; i++) {
-		rc = _sde_vbif_populate(sde_cfg, vbif, prop_value,
+		rc = _sde_vbif_populate(sde_cfg, prop_value,
 				prop_count, vbif_len, i);
 		if (rc)
 			goto end;
