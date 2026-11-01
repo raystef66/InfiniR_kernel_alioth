@@ -2,7 +2,7 @@
 VERSION = 4
 PATCHLEVEL = 19
 SUBLEVEL = 325
-EXTRAVERSION = -InfiniR_Alioth_KSU_raystef66
+EXTRAVERSION = -InfiniR_Alioth_v13.0_KSU_raystef66
 NAME = "People's Front"
 
 # *DOCUMENTATION*
